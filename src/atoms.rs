@@ -1,6 +1,14 @@
 use std::ops::Index;
 
 #[derive(Default)]
+pub struct CartesianCoordinate{
+    pub x: f64,
+    pub y: f64,
+    pub z: f64
+}
+
+
+#[derive(Default)]
 pub struct AtomicNumber{
     value: usize
 }
@@ -13,9 +21,17 @@ impl AtomicNumber {
             panic!("Cannot create an atomic number {}. Not present in the periodic table", value);
         }
 
-        let mut atomic_number: AtomicNumber = Default::default();
-        atomic_number.value = value;
-        atomic_number
+        AtomicNumber{value}
+    }
+
+    /// Convert a string (slice) into an atomic number. Panics if not present
+    pub fn from_string(value: &str) -> Self{
+
+        if !ELEMENTS.contains(&value){
+            panic!("Cannot create an atomic number from atomic symbol {}", value);
+        }
+
+        AtomicNumber{value: ELEMENTS.iter().position(|&x| x == value).unwrap()}
     }
 
     /// Convert an atomic number to an atomic symbol

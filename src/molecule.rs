@@ -1,5 +1,7 @@
-use crate::atoms::AtomicNumber;
+use crate::atoms::{AtomicNumber, CartesianCoordinate};
 use crate::Forcefield;
+
+use crate::io::xyz::XYZFile;
 
 #[derive(Default)]
 pub struct Molecule{
@@ -22,12 +24,16 @@ impl Molecule{
     /// use mors::Molecule;
     /// let mol = Molecule::from_xyz_file("name");
     ///
-    pub fn  from_xyz_file(filename: &str) -> Self{
+    pub fn from_xyz_file(filename: &str) -> Self{
 
-        let mut molecule: Molecule = Default::default();
+        let xyz_file = XYZFile::new(filename);
 
-        // TODO: coordinates
-        // TODO: Atomic symbols
+        let mut molecule = Molecule{
+            coordinates:      xyz_file.coordinates,
+            atomic_numbers:   xyz_file.atomic_numbers,
+            connectivity:     Default::default(),
+            non_bonded_pairs: Default::default()
+        };
 
         molecule
     }
@@ -46,13 +52,6 @@ impl Molecule{
 
 }
 
-
-#[derive(Default)]
-struct CartesianCoordinate{
-    x: f64,
-    y: f64,
-    z: f64
-}
 
 
 #[derive(Default)]
