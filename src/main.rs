@@ -4,6 +4,7 @@ mod atom_typing;
 mod ff;
 mod io;
 mod opt;
+mod utils;
 
 use crate::molecule::Molecule;
 use crate::ff::forcefield::Forcefield;

@@ -1,4 +1,5 @@
 use std::ops::Index;
+use std::str::FromStr;
 
 #[derive(Default)]
 pub struct CartesianCoordinate{
@@ -6,6 +7,34 @@ pub struct CartesianCoordinate{
     pub y: f64,
     pub z: f64
 }
+
+impl CartesianCoordinate {
+
+    /// Create a cartesian coordinate from a set of optional strings
+    pub fn from_option_strings(x: Option<&str>,
+                               y: Option<&str>,
+                               z: Option<&str>
+                               ) -> Result<(Self), &'static str>{
+
+        for k in [x, y, z]{
+            if k.is_none() {
+                return Err("An optional was None")
+            }
+            if f64::from_str(k.unwrap()).is_err(){
+                return Err("Failed to parse float {}")
+            };
+        }
+
+        let coord = CartesianCoordinate{
+            x: x.unwrap().parse::<f64>().unwrap(),
+            y: y.unwrap().parse::<f64>().unwrap(),
+            z: z.unwrap().parse::<f64>().unwrap()
+        };
+
+        Ok(coord)
+    }
+}
+
 
 
 #[derive(Default)]
@@ -37,6 +66,12 @@ impl AtomicNumber {
     /// Convert an atomic number to an atomic symbol
     pub fn to_atomic_symbol(&self) -> &str{
         ELEMENTS.index(self.value)
+    }
+}
+
+impl PartialEq for AtomicNumber {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
     }
 }
 

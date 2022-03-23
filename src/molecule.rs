@@ -26,7 +26,7 @@ impl Molecule{
     ///
     pub fn from_xyz_file(filename: &str) -> Self{
 
-        let xyz_file = XYZFile::new(filename);
+        let xyz_file = XYZFile::new(filename).unwrap();
 
         let mut molecule = Molecule{
             coordinates:      xyz_file.coordinates,
