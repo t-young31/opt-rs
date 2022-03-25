@@ -1,4 +1,4 @@
-use crate::atoms::{AtomicNumber, CartesianCoordinate};
+use crate::atoms::{Atom, AtomicNumber, CartesianCoordinate};
 use crate::Forcefield;
 
 use crate::io::xyz::XYZFile;
@@ -11,7 +11,6 @@ pub struct Molecule{
     connectivity: Connectivity,
     non_bonded_pairs: Vec<NBPair>
 }
-
 
 impl Molecule{
 
@@ -35,6 +34,11 @@ impl Molecule{
             non_bonded_pairs: Default::default()
         };
 
+        molecule.add_bonds();
+        // molecule.add_angles();
+        // molecule.add_dihedrals();
+        // molecule.add_non_bonded_pairs();
+
         molecule
     }
 
@@ -42,20 +46,54 @@ impl Molecule{
         // TODO
     }
 
-    pub fn optimise(&mut self) -> (){
+    pub fn optimise(&mut self){
         // TODO
     }
 
-    pub fn write_xyz_file(&self) -> (){
+    pub fn write_xyz_file(&self){
         // TODO
+    }
+
+    /// Get the set of atoms
+    fn atoms(&self) -> Vec<Atom>{
+
+        let mut atoms: Vec<Atom> = Default::default();
+
+        let mut pairs = self.atomic_numbers.iter().zip(self.coordinates.iter());
+
+        for (number, coord) in pairs{
+            atoms.push(Atom{atomic_number: number.clone(),
+                                  coordinate:    coord.clone()});
+        }
+        atoms
+    }
+
+    /// Number of atoms in this molecule
+    fn num_atoms(&self) -> usize{
+        return self.atomic_numbers.len()
+    }
+
+    /// Add bonds between atoms based on their interatomic distance. For example H-H is consdiered
+    /// bonded if the r(HH) < 0.8 Å, or so. Note that this is not particularly well defined, but
+    /// essential to determining the energy with a 'classic' (i.e. non-density based) force-field
+    fn add_bonds(&mut self) {
+
+        self.connectivity.bonds.clear();
+
+        for atom_i in self.atoms(){
+
+            let neighbours: Vec<usize> = Default::default();
+
+            for atom_j in self.atoms(){
+
+            }
+        }
     }
 
 }
 
-
-
 #[derive(Default)]
-struct Connectivity {
+struct Connectivity{
     /*
     Connectivity of a molecule defined in terms of 'bonds'. Includes information about the pairs,
     triples and quadruples which define the bonds, angle and dihedral components required to
@@ -65,7 +103,6 @@ struct Connectivity {
     pub angles: Vec<Angle>,
     pub dihedrals: Vec<Dihedral>
 }
-
 
 #[derive(Default)]
 struct NBPair{

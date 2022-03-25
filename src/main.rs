@@ -1,3 +1,9 @@
+/*
+Notes and warnings:
+
+    - Units are: Å (distance)
+
+ */
 mod molecule;
 mod atoms;
 mod atom_typing;

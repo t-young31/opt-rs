@@ -48,10 +48,16 @@ impl XYZFile {
     fn add_atom_on_line(&mut self, line: String) -> Result<(), &str>{
         let mut items = line.split_whitespace();
 
-        let atomic_symbol = items.next().expect("Failed to parse atomic symbol");
-        self.atomic_numbers.push(AtomicNumber::from_string(atomic_symbol));
+        let atomic_number = AtomicNumber::from_option_string(items.next());
 
-        let coord = CartesianCoordinate::from_option_strings(items.next(), items.next(), items.next());
+        match atomic_number {
+            Ok(a) => self.atomic_numbers.push(a),
+            Err(..) => return Err("Failed to parse the atomic symbol"),
+        }
+
+        let coord = CartesianCoordinate::from_option_strings(
+            items.next(), items.next(), items.next()
+        );
 
         match coord {
             Ok(c) => self.coordinates.push(c),
@@ -105,8 +111,8 @@ mod tests{
         assert_eq!(file.coordinates.len(), 5);
         assert_eq!(file.atomic_numbers.len(), 5);
 
-        let z_carbon = AtomicNumber::from_string("C");
-        let z_hydrogen = AtomicNumber::from_string("H");
+        let z_carbon = AtomicNumber::from_string("C").unwrap();
+        let z_hydrogen = AtomicNumber::from_string("H").unwrap();
 
         assert!(file.atomic_numbers.contains(&z_carbon));
         assert!(file.atomic_numbers.contains(&z_hydrogen));
