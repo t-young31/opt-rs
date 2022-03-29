@@ -1,3 +1,5 @@
+use std::cmp::Ordering::Equal;
+use log::info;
 use crate::atoms::{Atom, AtomicNumber, CartesianCoordinate};
 use crate::Forcefield;
 
@@ -6,9 +8,9 @@ use crate::io::xyz::XYZFile;
 #[derive(Default)]
 pub struct Molecule{
 
-    coordinates: Vec<CartesianCoordinate>,
-    atomic_numbers: Vec<AtomicNumber>,
-    connectivity: Connectivity,
+    coordinates:      Vec<CartesianCoordinate>,
+    atomic_numbers:   Vec<AtomicNumber>,
+    connectivity:     Connectivity,
     non_bonded_pairs: Vec<NBPair>
 }
 
@@ -54,15 +56,18 @@ impl Molecule{
         // TODO
     }
 
-    /// Get the set of atoms
+    /// Get a copy of set of atoms associated with this molecule
     fn atoms(&self) -> Vec<Atom>{
 
         let mut atoms: Vec<Atom> = Default::default();
 
-        let mut pairs = self.atomic_numbers.iter().zip(self.coordinates.iter());
+        for (i, atomic_number) in self.atomic_numbers.iter().enumerate(){
 
-        for (number, coord) in pairs{
-            atoms.push(Atom{atomic_number: number.clone(),
+            let coord = self.coordinates.get(i)
+                                                           .expect("N_atoms != N_coords");
+
+            atoms.push(Atom{idx: i,
+                                  atomic_number: atomic_number.clone(),
                                   coordinate:    coord.clone()});
         }
         atoms
@@ -80,13 +85,32 @@ impl Molecule{
 
         self.connectivity.bonds.clear();
 
-        for atom_i in self.atoms(){
+        for atom_i in self.atoms().iter(){
 
-            let neighbours: Vec<usize> = Default::default();
+            let mut neighbours: Vec<(Atom, f64)> = Default::default();
 
             for atom_j in self.atoms(){
 
+                if atom_i.could_be_bonded_to(&atom_j){
+                    let distance = atom_i.distance_to(&atom_j);
+                    neighbours.push((atom_j, distance));
+                }
             }
+
+            neighbours.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Equal));
+
+            for k in 0..atom_i.maximal_valence(){
+
+                let possible_neighbour = neighbours.get(k);
+
+                match possible_neighbour {
+                    Some(atom) => self.connectivity.bonds.push(
+                        Bond{i: atom_i.idx, j: atom.0.idx}),
+
+                    None => break // Exhausted all the present neighbours
+                }
+            }
+
         }
     }
 
@@ -99,34 +123,34 @@ struct Connectivity{
     triples and quadruples which define the bonds, angle and dihedral components required to
     calculate the total energy of a molecule with a force-field.
     */
-    pub bonds: Vec<Bond>,
-    pub angles: Vec<Angle>,
+    pub bonds:     Vec<Bond>,
+    pub angles:    Vec<Angle>,
     pub dihedrals: Vec<Dihedral>
 }
 
 #[derive(Default)]
 struct NBPair{
-    i: u32,
-    j: u32
+    i: usize,
+    j: usize
 }
 
 #[derive(Default)]
 struct Bond{
-    i: u32,
-    j: u32
+    i: usize,
+    j: usize
 }
 
 #[derive(Default)]
 struct Angle{
-    i: u32,
-    j: u32,
-    k: u32
+    i: usize,
+    j: usize,
+    k: usize
 }
 
 #[derive(Default)]
 struct Dihedral{
-    i: u32,
-    j: u32,
-    k: u32,
-    l: u32
+    i: usize,
+    j: usize,
+    k: usize,
+    l: usize
 }

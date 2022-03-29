@@ -6,3 +6,4 @@ authors = ["Tom Young"]
 
 [dependencies]
 clap = { version = "3.1.6", features = ["derive"] }
+log = "0.4"

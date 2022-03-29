@@ -1,11 +1,13 @@
 use std::f32::consts::E;
 use std::ops::Index;
 use std::str::FromStr;
+use log::{warn};
 
 #[derive(Default)]
 pub struct Atom{
+    pub(crate) idx:           usize,
     pub(crate) atomic_number: AtomicNumber,
-    pub(crate) coordinate: CartesianCoordinate
+    pub(crate) coordinate:    CartesianCoordinate
 }
 
 
@@ -27,6 +29,8 @@ impl Atom {
 
         self.distance_to(atom) < (self.covalent_radius() + atom.covalent_radius())
     }
+
+    pub fn maximal_valence(&self) -> usize{ self.atomic_number.maximal_valence() }
 
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 }
@@ -112,8 +116,27 @@ impl AtomicNumber {
     /// Covalent radius, used to determine if two atoms are bonded
     pub fn covalent_radius(&self) -> f64{
 
-        // TODO:
-        return 1.0;
+        let radius = COVALENT_RADII_PICOMETERS.get(self.value);
+
+        if radius.is_none(){
+            warn!("Covalent radius for atom {} is not defined. Guessing at 2 Å", self.value);
+            return 2.0;
+        }
+
+        return radius.unwrap().clone() * PICOMETERS_TO_ANGSTROMS;
+    }
+
+    /// The maximum number of bonds that this atom can form under 'reasonable' circumstances
+    pub fn maximal_valence(&self) -> usize{
+
+        let valance = MAXIMAL_VALENCIES.get(self.value);
+
+        if valance.is_none(){
+            warn!("Did not find a value maximal valence value for atom {}", self.value);
+            return 6;
+        }
+
+        return valance.unwrap().clone();
     }
 }
 
@@ -136,3 +159,20 @@ static ELEMENTS: [&'static str; 118] = [
     "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn",
     "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
 ];
+
+static PICOMETERS_TO_ANGSTROMS: f64 = 0.01;
+
+static COVALENT_RADII_PICOMETERS: [f64; 86] = [
+    31.,                                                                                                   28.,
+    128., 96.,                                                               84.,  76.,  71.,  66.,  57.,  58.,
+    166., 141.,                                                             121., 111., 107., 105., 102., 106.,
+    102., 203., 176., 170., 160., 153., 139., 161., 152., 150., 124., 132., 122., 122., 120., 119., 120., 116.,
+    220., 195., 190., 175., 164., 154., 147., 146., 142., 139., 145., 144., 142., 139., 139., 138., 139., 140.,
+    244., 215.,
+207., 204., 203., 201., 199., 198., 198., 196., 194., 192., 192., 189., 190., 187.,
+                175., 187., 170., 162., 151., 144., 141., 136., 136., 132., 145., 146., 148., 140., 150., 150.
+];
+
+static MAXIMAL_VALENCIES: [usize; 38] = [
+    1, 0, 1, 2, 3, 4, 5, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7,
+    0, 1, 2, 3, 4, 5, 6, 7, 7, 5, 4, 4, 6, 3, 4, 5, 6, 7, 2, 1, 2];

@@ -9,7 +9,7 @@ use crate::atoms::{CartesianCoordinate, AtomicNumber};
 pub struct XYZFile{
 
     pub filename:       String,
-    file_lines:     Vec<String>,
+    file_lines:         Vec<String>,
 
     pub coordinates:    Vec<CartesianCoordinate>,
     pub atomic_numbers: Vec<AtomicNumber>
