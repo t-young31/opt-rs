@@ -1,15 +1,15 @@
 use std::f32::consts::E;
 use std::ops::Index;
+use std::ptr::eq;
 use std::str::FromStr;
 use log::{warn};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Atom{
     pub(crate) idx:           usize,
     pub(crate) atomic_number: AtomicNumber,
     pub(crate) coordinate:    CartesianCoordinate
 }
-
 
 impl Atom {
 
@@ -27,7 +27,13 @@ impl Atom {
     /// between them and their respective covalent radii?
     pub fn could_be_bonded_to(&self, atom: &Atom) -> bool{
 
-        self.distance_to(atom) < (self.covalent_radius() + atom.covalent_radius())
+        // Relative tolerance on whether a bond could be present
+        let tolerance = 1.2f64;
+
+        let r = self.distance_to(atom);
+        let is_identical_atom = r < 1E-8;
+
+        !is_identical_atom && r < tolerance*(self.covalent_radius() + atom.covalent_radius())
     }
 
     pub fn maximal_valence(&self) -> usize{ self.atomic_number.maximal_valence() }
@@ -35,8 +41,7 @@ impl Atom {
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 }
 
-
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct CartesianCoordinate{
     pub x: f64,
     pub y: f64,
@@ -70,7 +75,7 @@ impl CartesianCoordinate {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct AtomicNumber{
     value: usize
 }
