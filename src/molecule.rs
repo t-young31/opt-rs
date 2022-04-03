@@ -1,11 +1,11 @@
 use std::cmp::Ordering::Equal;
+use std::collections::HashSet;
 use log::info;
 use crate::atoms::{Atom, AtomicNumber, CartesianCoordinate};
 use crate::Forcefield;
 
 use crate::io::xyz::XYZFile;
 
-#[derive(Default)]
 pub struct Molecule{
 
     coordinates:      Vec<CartesianCoordinate>,
@@ -15,6 +15,9 @@ pub struct Molecule{
 }
 
 impl Molecule{
+
+    /// A blank molecule containing no atoms
+    pub fn blank() -> Self{ Molecule::from_atomic_symbols(&[]) }
 
     /// Create a Molecule from a .xyz filename
     /// # Arguments
@@ -110,6 +113,8 @@ impl Molecule{
         self.contains_bond(&Bond{i, j})
     }
 
+    fn has_dihedrals(&self) -> bool{ !self.connectivity.dihedrals.is_empty()}
+
     /// Add bonds between atoms based on their interatomic distance. For example H-H is consdiered
     /// bonded if the r(HH) < 0.8 Å, or so. Note that this is not particularly well defined, but
     /// essential to determining the energy with a 'classic' (i.e. non-density based) force-field
@@ -152,12 +157,8 @@ impl Molecule{
     ///
     fn add_angles(&mut self){
 
-        if self.num_atoms() < 3{
-            return;   // No angles in molecules with < 3 atoms
-        }
-
-        if !self.has_bonds(){
-            panic!("Cannot add angles without any bonds present")
+        if self.num_atoms() < 3 || !self.has_bonds(){
+            return;   // No MM angles in molecules with < 3 atoms or that doesn't have any bonds
         }
 
         for j in 0..self.num_atoms(){
@@ -175,6 +176,43 @@ impl Molecule{
         }
     }
 
+    /// Add all the proper dihedrals between quadruples pf bonded atoms
+    // TODO: Improper dihedrals
+    fn add_dihedrals(&mut self){
+
+        if self.num_atoms() < 4{
+            return;   // No dihedrals in molecules with < 4 atoms
+        }
+
+        if !self.has_bonds(){
+            panic!("Cannot add dihedrals without any bonds present")
+        }
+
+        let all_neighbours: Vec<Vec<usize>> = self.atoms()
+                .iter()
+                .map(|a| a.bonded_neighbour_idxs(&self.connectivity.bonds))
+                .collect();
+
+        for bond in self.connectivity.bonds.iter(){
+            // Add bonded quadruples
+
+            for neighbour_i in all_neighbours.get(bond.i).unwrap(){
+                if neighbour_i == &bond.j{ continue; }
+
+                for neighbour_j in all_neighbours.get(bond.j).unwrap(){
+                    if neighbour_j == &bond.i{ continue; }
+
+                    self.connectivity.dihedrals.insert(
+                        Dihedral{i: neighbour_i.clone(),
+                            j: bond.i,
+                            k: bond.j,
+                            l: neighbour_j.clone()}
+                    );
+                } // neighbour_j
+            }  // neighbour_i
+        } // bond
+
+    }
 }
 
 #[derive(Default, Debug)]
@@ -232,7 +270,18 @@ struct Connectivity{
     */
     pub bonds:     Vec<Bond>,
     pub angles:    Vec<Angle>,
-    pub dihedrals: Vec<Dihedral>
+    pub dihedrals: HashSet<Dihedral>
+}
+
+impl Connectivity {
+
+    /// Clear all the connectivity (bonds, angles and dihedrals)
+    pub fn clear(&mut self){
+        self.bonds.clear();
+        self.angles.clear();
+        self.dihedrals.clear();
+    }
+
 }
 
 #[derive(Default)]
@@ -242,7 +291,7 @@ struct NBPair{
 }
 
 #[derive(Default, Debug)]
-struct Bond{
+pub struct Bond{
     i: usize,
     j: usize
 }
@@ -254,6 +303,14 @@ impl Bond {
         atom.idx == self.i || atom.idx == self.j
     }
 
+    /// Given the index of an atom that may, or may not be present in this bond, return the other
+    /// atom index in the bond, if present.
+    pub fn other(&self, idx: usize) -> Option<usize>{
+
+        if      idx == self.i { Some(self.j) }
+        else if idx == self.j { Some(self.i) }
+        else{                       None     }
+    }
 }
 
 impl PartialEq for &Bond {
@@ -264,8 +321,8 @@ impl PartialEq for &Bond {
 
 impl Eq for &Bond {}
 
-#[derive(Default)]
-struct Angle{
+#[derive(Default, Debug)]
+pub struct Angle{
     i: usize,
     j: usize,
     k: usize
@@ -280,14 +337,13 @@ impl PartialEq for &Angle {
 
 impl Eq for &Angle {}
 
-#[derive(Default)]
-struct Dihedral{
+#[derive(Default, Eq, PartialEq, Hash, Debug)]
+pub struct Dihedral{
     i: usize,
     j: usize,
     k: usize,
     l: usize
 }
-
 
 
 /*
@@ -310,16 +366,9 @@ mod tests{
     /// Given a valid simple xyz file, when a Molecule is created, then the connectivity is correct
     #[test]
     fn test_molecule_from_xyz_file(){
-        std::fs::write(format!("tmp_molecule1.xyz"),
-                       "5\n\n\
-                        C     0.00000   0.00000   0.00000\n\
-                        H    -0.65860  -0.85220  -0.30120\n\
-                        H    -0.45940   0.97110  -0.28590\n\
-                        H     0.08440  -0.02940   1.10060\n\
-                        H     1.02910  -0.10990  -0.41250\n")
-            .expect("Failed to write tmp_molecule1.xyz!");
 
-        let mol = Molecule::from_xyz_file("tmp_molecule1.xyz");
+        print_methane_xyz_file("tmp_methane_1.xyz");
+        let mol = Molecule::from_xyz_file("tmp_methane_1.xyz");
         assert_eq!(mol.num_atoms(), 5);
 
         // Carbon is tetrahedral
@@ -334,14 +383,14 @@ mod tests{
         assert_eq!(mol.connectivity.angles.len(), 6);
         assert!(mol.connectivity.angles.iter().any(|b| b==&Angle{i: 1, j: 0, k: 2}));
 
-        std::fs::remove_file("tmp_molecule1.xyz");
+        remove_file_or_panic("tmp_methane_1.xyz");
     }
 
     /// Given a molecule with no atoms, when bonds are added, then no exception is thrown
     #[test]
     fn test_add_bonds_no_atoms(){
 
-        let mut mol: Molecule = Default::default();
+        let mut mol = Molecule::blank();
         assert_eq!(mol.num_atoms(), 0);
 
         mol.add_bonds();
@@ -353,7 +402,7 @@ mod tests{
     #[test]
     fn test_add_angles_no_atoms(){
 
-        let mut mol: Molecule = Default::default();
+        let mut mol = Molecule::blank();
         mol.add_angles();
 
         assert_eq!(mol.connectivity.angles.len(), 0);
@@ -367,15 +416,62 @@ mod tests{
         assert_eq!(mol.connectivity.angles.len(), 0);
     }
 
-    /// Given a molecule with 3 atoms but no bonds, when angles are added, and exception is raised
+    /// Given a molecule with 3 atoms but no bonds, no angles are added
     #[test]
-    #[should_panic]
     fn test_add_angles_no_bonds(){
 
-        let mut mol = Molecule::from_atomic_symbols(&["C", "H", "H"]);
-        mol.connectivity.bonds.clear();
+        print_water_xyz_file("tmp_water_0.xyz");
+
+        let mut mol = Molecule::from_xyz_file("tmp_water_0.xyz");
+        mol.connectivity.clear();
+        assert!(!mol.has_bonds());
 
         mol.add_angles();
+        println!("{:?}", mol.connectivity.angles);
+        assert!(mol.connectivity.angles.is_empty());
+
+        remove_file_or_panic("tmp_water_0.xyz");
     }
 
+    /// A bond of two atoms should contain both atoms and be able to return the other atom index
+    #[test]
+    fn test_bond_contains_and_other(){
+
+        let atom_i = Atom{idx: 0,
+                          atomic_number: AtomicNumber::from_string("C").unwrap(),
+                          coordinate: CartesianCoordinate::default()};
+
+        let atom_j = Atom{idx: 3,
+                          atomic_number: AtomicNumber::from_string("H").unwrap(),
+                          coordinate: CartesianCoordinate::default()};
+
+        let bond = Bond{i: atom_i.idx, j: atom_j.idx};
+
+        assert!(bond.contains(&atom_i));
+        assert!(bond.contains(&atom_j));
+
+        let mut different_atom = Atom::default();
+        different_atom.idx = 1;
+        assert!(!bond.contains(&different_atom));
+
+        assert_eq!(bond.other(0).unwrap(), 3);
+        assert_eq!(bond.other(3).unwrap(), 0);
+        assert!(bond.other(1).is_none());
+    }
+
+    /// Dihedrals should not exist for molecules with <4 atoms
+    #[test]
+    fn test_no_dihedrals_with_fewer_than_four_atoms(){
+
+        assert!(!Molecule::blank().has_dihedrals());
+        assert!(!Molecule::from_atomic_symbols(&["H"]).has_dihedrals());
+
+        print_dihydrogen_xyz_file("tmp_h2_0.xyz");
+        assert!(!Molecule::from_xyz_file("tmp_h2_0.xyz").has_dihedrals());
+        remove_file_or_panic("tmp_h2_0.xyz");
+
+        print_water_xyz_file("tmp_water_1.xyz");
+        assert!(!Molecule::from_xyz_file("tmp_water_1.xyz").has_dihedrals());
+        remove_file_or_panic("tmp_water_1.xyz");
+    }
 }

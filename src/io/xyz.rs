@@ -97,16 +97,9 @@ mod tests{
 
     #[test]
     fn test_ok_file_read(){
-        std::fs::write(format!("tmp1.xyz"),
-                       "5\n\n\
-                        C     0.00000   0.00000   0.00000\n\
-                        H    -0.65860  -0.85220  -0.30120\n\
-                        H    -0.45940   0.97110  -0.28590\n\
-                        H     0.08440  -0.02940   1.10060\n\
-                        H     1.02910  -0.10990  -0.41250\n")
-            .expect("Failed to write tmp1.xyz!");
+        print_methane_xyz_file("tmp_methane_2.xyz");
 
-        let file = XYZFile::new("tmp1.xyz").unwrap();
+        let file = XYZFile::new("tmp_methane_2.xyz").unwrap();
 
         assert_eq!(file.coordinates.len(), 5);
         assert_eq!(file.atomic_numbers.len(), 5);
@@ -117,7 +110,7 @@ mod tests{
         assert!(file.atomic_numbers.contains(&z_carbon));
         assert!(file.atomic_numbers.contains(&z_hydrogen));
 
-        std::fs::remove_file("tmp1.xyz");
+        std::fs::remove_file("tmp_methane_2.xyz");
     }
 
     #[test]

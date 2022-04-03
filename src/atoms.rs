@@ -3,6 +3,8 @@ use std::ops::Index;
 use std::ptr::eq;
 use std::str::FromStr;
 use log::{warn};
+use crate::Molecule;
+use crate::molecule::Bond;
 
 #[derive(Default, Debug)]
 pub struct Atom{
@@ -36,9 +38,24 @@ impl Atom {
         !is_identical_atom && r < tolerance*(self.covalent_radius() + atom.covalent_radius())
     }
 
+    /// Maximum coordination number i.e. valance of this atom
     pub fn maximal_valence(&self) -> usize{ self.atomic_number.maximal_valence() }
 
+    /// Covalent radius of this atom
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
+
+    /// Determine a list of atom indices that are bonded to this one
+    pub fn bonded_neighbour_idxs(&self, bonds: &Vec<Bond>) -> Vec<usize>{
+
+        let mut neighbours: Vec<usize> = Default::default();
+
+        for bond in bonds{
+            if bond.contains(self){
+                neighbours.push(bond.other(self.idx).unwrap());
+            }
+        }
+        neighbours
+    }
 }
 
 #[derive(Default, Clone, Debug)]
