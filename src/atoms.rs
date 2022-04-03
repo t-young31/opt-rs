@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::f32::consts::E;
 use std::ops::Index;
 use std::ptr::eq;
@@ -45,7 +46,7 @@ impl Atom {
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 
     /// Determine a list of atom indices that are bonded to this one
-    pub fn bonded_neighbour_idxs(&self, bonds: &Vec<Bond>) -> Vec<usize>{
+    pub fn bonded_neighbour_idxs(&self, bonds: &HashSet<Bond>) -> Vec<usize>{
 
         let mut neighbours: Vec<usize> = Default::default();
 

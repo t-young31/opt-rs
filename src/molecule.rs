@@ -145,7 +145,7 @@ impl Molecule{
             if bond == &new_bond{ return; }
         }
 
-        self.connectivity.bonds.push(new_bond);
+        self.connectivity.bonds.insert(new_bond);
     }
 
     /// Add angles between triples of mutually bonded atoms. For example,
@@ -170,7 +170,7 @@ impl Molecule{
 
                     if !self.contains_bond_between(j, k){ continue; }
 
-                    self.connectivity.angles.push(Angle{i, j, k});
+                    self.connectivity.angles.insert(Angle{i, j, k});
                 }
             }
         }
@@ -268,8 +268,8 @@ struct Connectivity{
     triples and quadruples which define the bonds, angle and dihedral components required to
     calculate the total energy of a molecule with a force-field.
     */
-    pub bonds:     Vec<Bond>,
-    pub angles:    Vec<Angle>,
+    pub bonds:     HashSet<Bond>,
+    pub angles:    HashSet<Angle>,
     pub dihedrals: HashSet<Dihedral>
 }
 
@@ -290,7 +290,7 @@ struct NBPair{
     j: usize
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Hash)]
 pub struct Bond{
     i: usize,
     j: usize
@@ -313,37 +313,46 @@ impl Bond {
     }
 }
 
-impl PartialEq for &Bond {
+impl PartialEq for Bond {
     fn eq(&self, other: &Self) -> bool {
         self.i == other.i && self.j == other.j || self.i == other.j && self.j == other.i
     }
 }
 
-impl Eq for &Bond {}
+impl Eq for Bond {}
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Hash)]
 pub struct Angle{
     i: usize,
     j: usize,
     k: usize
 }
 
-impl PartialEq for &Angle {
+impl PartialEq for Angle {
     fn eq(&self, other: &Self) -> bool {
         self.j == other.j
             && (self.i == other.i && self.k == other.k || self.i == other.k && self.k == other.i)
     }
 }
 
-impl Eq for &Angle {}
+impl Eq for Angle {}
 
-#[derive(Default, Eq, PartialEq, Hash, Debug)]
+#[derive(Default, Hash, Debug)]
 pub struct Dihedral{
     i: usize,
     j: usize,
     k: usize,
     l: usize
 }
+
+impl PartialEq for Dihedral{
+    fn eq(&self, other: &Self) -> bool {
+        (self.i == other.i && self.j == other.j && self.k == other.k && self.l == other.l)
+            || (self.i == other.l && self.j == other.k && self.k == other.j && self.l == other.i)
+    }
+}
+
+impl Eq for Dihedral {}
 
 
 /*
@@ -384,6 +393,14 @@ mod tests{
         assert!(mol.connectivity.angles.iter().any(|b| b==&Angle{i: 1, j: 0, k: 2}));
 
         remove_file_or_panic("tmp_methane_1.xyz");
+    }
+
+    /// Bonds are equivilant irrespective of the ordering
+    #[test]
+    fn test_bond_equality(){
+        assert_eq!(&Bond{i: 0, j: 1}, &Bond{i: 0, j: 1});
+        assert_eq!(&Bond{i: 0, j: 1}, &Bond{i: 1, j: 0});
+        assert_ne!(&Bond{i: 0, j: 1}, &Bond{i: 0, j: 2});
     }
 
     /// Given a molecule with no atoms, when bonds are added, then no exception is thrown
@@ -433,6 +450,16 @@ mod tests{
         remove_file_or_panic("tmp_water_0.xyz");
     }
 
+    /// The indices in a triple (angle) are ordered, so equality between two angles requires either
+    /// an identical order of atom indices or completely reversed
+    #[test]
+    fn test_angle_equality(){
+
+        assert_eq!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 0, j: 1, k: 2 });
+        assert_eq!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 2, j: 1, k: 0 });
+        assert_ne!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 0, j: 3, k: 2 });
+    }
+
     /// A bond of two atoms should contain both atoms and be able to return the other atom index
     #[test]
     fn test_bond_contains_and_other(){
@@ -473,5 +500,14 @@ mod tests{
         print_water_xyz_file("tmp_water_1.xyz");
         assert!(!Molecule::from_xyz_file("tmp_water_1.xyz").has_dihedrals());
         remove_file_or_panic("tmp_water_1.xyz");
+    }
+
+    /// Dihedrals are equivilant only with forward and reverse ordering
+    #[test]
+    fn test_dihedral_equality(){
+
+        assert_eq!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 0, j: 1, k: 2, l: 3});
+        assert_eq!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 3, j: 2, k: 1, l: 0});
+        assert_ne!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 5, j: 1, k: 2, l: 3});
     }
 }
