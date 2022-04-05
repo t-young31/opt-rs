@@ -74,8 +74,8 @@ impl Molecule{
 
         molecule.add_bonds();
         molecule.add_angles();
-        // self.add_dihedrals();
-        // self.add_non_bonded_pairs();
+        molecule.add_dihedrals();
+        // molecule.add_non_bonded_pairs();
         molecule
     }
 
@@ -182,10 +182,6 @@ impl Molecule{
 
         if self.num_atoms() < 4{
             return;   // No dihedrals in molecules with < 4 atoms
-        }
-
-        if !self.has_bonds(){
-            panic!("Cannot add dihedrals without any bonds present")
         }
 
         let all_neighbours: Vec<Vec<usize>> = self.atoms()
@@ -415,6 +411,21 @@ mod tests{
         assert!(!mol.has_bonds());
     }
 
+    /// Given hydrogen trimer with close distance, then only a single bond exists
+    #[test]
+    fn test_hypervalent_hydrogen(){
+
+        let mut h2 = Molecule::from_atomic_symbols(&["H", "H"]);
+        h2.coordinates[1] = CartesianCoordinate{x: 0.77, y: 0., z: 0.};
+        assert_eq!(h2.connectivity.bonds.len(), 1);
+
+        let mut h3 = Molecule::from_atomic_symbols(&["H", "H", "H"]);
+        h3.coordinates[1] = CartesianCoordinate{x: -0.77, y: 0., z: 0.};
+        h3.coordinates[2] = CartesianCoordinate{x: 0.77,  y: 0., z: 0.};
+
+        assert_eq!(h3.connectivity.bonds.len(), 1);
+    }
+
     /// Given a molecule with <3 atoms, when angles are added, then no exception is thrown
     #[test]
     fn test_add_angles_no_atoms(){
@@ -510,4 +521,18 @@ mod tests{
         assert_eq!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 3, j: 2, k: 1, l: 0});
         assert_ne!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 5, j: 1, k: 2, l: 3});
     }
+
+    /// Given a collection of atoms that are not bonded, then no connectivity dihedrals exist
+    #[test]
+    fn test_no_dihedral_no_bonds(){
+
+        let mut mol = Molecule::from_atomic_symbols(&["H", "H", "H", "H"]);
+        mol.coordinates[1] = CartesianCoordinate{x: 999., y: 0.,   z: 0.};
+        mol.coordinates[2] = CartesianCoordinate{x: 0.,   y: 999., z: 0.};
+        mol.coordinates[3] = CartesianCoordinate{x: 0.,   y: 0.,   z: 999.};
+
+        assert!(!mol.has_bonds());
+        assert_eq!(mol.connectivity.dihedrals.len(), 0);
+    }
+
 }

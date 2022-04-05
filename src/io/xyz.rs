@@ -110,7 +110,7 @@ mod tests{
         assert!(file.atomic_numbers.contains(&z_carbon));
         assert!(file.atomic_numbers.contains(&z_hydrogen));
 
-        std::fs::remove_file("tmp_methane_2.xyz");
+        std::fs::remove_file("tmp_methane_2.xyz").expect("Failed to remove file");
     }
 
     #[test]
@@ -121,7 +121,7 @@ mod tests{
             .expect("Failed to write tmp2.xyz!");
 
         let file = XYZFile::new("tmp2.xyz");
-        std::fs::remove_file("tmp2.xyz");
+        std::fs::remove_file("tmp2.xyz").expect("Failed to remove file");
         file.unwrap();
     }
 
@@ -135,7 +135,7 @@ mod tests{
             .expect("Failed to write tmp3.xyz!");
 
         let file = XYZFile::new("tmp3.xyz");
-        std::fs::remove_file("tmp3.xyz");
+        std::fs::remove_file("tmp3.xyz").expect("Failed to remove file");
         file.unwrap();
     }
 }

@@ -31,7 +31,7 @@ impl Atom {
     pub fn could_be_bonded_to(&self, atom: &Atom) -> bool{
 
         // Relative tolerance on whether a bond could be present
-        let tolerance = 1.2f64;
+        let tolerance = 1.3f64;
 
         let r = self.distance_to(atom);
         let is_identical_atom = r < 1E-8;
