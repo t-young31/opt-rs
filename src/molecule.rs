@@ -1,6 +1,6 @@
 use std::cmp::Ordering::Equal;
 use std::collections::HashSet;
-use log::info;
+use log::{info, logger};
 use crate::atoms::{Atom, AtomicNumber, CartesianCoordinate};
 use crate::Forcefield;
 
@@ -122,16 +122,10 @@ impl Molecule{
 
         self.connectivity.bonds.clear();
 
-        for central_atom in self.atoms().iter(){
+        for atom_i in self.atoms().iter(){
+            for neighbour in Neighbours::from_atom_and_molecule(atom_i, self).iter(){
 
-            let neighbours = Neighbours::from_atom_and_molecule(central_atom, self);
-
-            for k in 0..central_atom.maximal_valence(){
-
-                match neighbours.get(k) {
-                    Some(neighbour) => self.add_bond(central_atom, &neighbour.atom),
-                    None => break    // Exhausted all the present neighbours
-                }
+                 self.add_bond(atom_i, &neighbour.atom)
             }
         }
     }
@@ -140,9 +134,18 @@ impl Molecule{
     fn add_bond(&mut self, atom_i: &Atom, atom_j: &Atom){
 
         let new_bond = Bond{i: atom_i.idx, j: atom_j.idx};
+        let mut n_bonds = NBonds{i: 0, j: 0};
 
         for bond in self.connectivity.bonds.iter(){
             if bond == &new_bond{ return; }
+
+            if bond.contains(atom_i){n_bonds.i += 1}
+            if bond.contains(atom_j){n_bonds.j += 1}
+        }
+
+        if n_bonds.i >= atom_i.maximal_valence() || n_bonds.j >= atom_j.maximal_valence(){
+            info!("Not adding bond {}-{}. One exceeded the maximal valance", atom_i.idx, atom_j.idx);
+            return;
         }
 
         self.connectivity.bonds.insert(new_bond);
@@ -255,7 +258,13 @@ impl Neighbours {
         self.values.sort_by(|a, b|
                              a.distance.partial_cmp(&b.distance).unwrap_or(Equal));
     }
+
+    fn iter(self: &Self) -> impl Iterator<Item=&Neighbour>{
+        self.values.iter()
+    }
+
 }
+
 
 #[derive(Default)]
 struct Connectivity{
@@ -350,6 +359,12 @@ impl PartialEq for Dihedral{
 
 impl Eq for Dihedral {}
 
+/// Number of bonds present for two atoms
+struct NBonds {
+    i: usize,
+    j: usize
+}
+
 
 /*
    /$$                           /$$
@@ -417,11 +432,13 @@ mod tests{
 
         let mut h2 = Molecule::from_atomic_symbols(&["H", "H"]);
         h2.coordinates[1] = CartesianCoordinate{x: 0.77, y: 0., z: 0.};
+        h2.add_bonds();
         assert_eq!(h2.connectivity.bonds.len(), 1);
 
         let mut h3 = Molecule::from_atomic_symbols(&["H", "H", "H"]);
         h3.coordinates[1] = CartesianCoordinate{x: -0.77, y: 0., z: 0.};
         h3.coordinates[2] = CartesianCoordinate{x: 0.77,  y: 0., z: 0.};
+        h3.add_bonds();
 
         assert_eq!(h3.connectivity.bonds.len(), 1);
     }
