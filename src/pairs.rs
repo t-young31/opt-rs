@@ -1,7 +1,7 @@
 use crate::atoms::Atom;
 
 
-#[derive(Default, Hash, Debug)]
+#[derive(Default, Hash, Debug, Clone)]
 pub(crate) struct AtomPair{
     pub i: usize,
     pub j: usize
@@ -16,9 +16,9 @@ impl PartialEq for AtomPair {
 impl Eq for AtomPair {}
 
 
-#[derive(Default, Hash)]
+#[derive(Default, Hash, Debug, Clone)]
 pub(crate) struct NBPair{
-    pair: AtomPair
+    pub(crate) pair: AtomPair
 }
 
 impl NBPair {

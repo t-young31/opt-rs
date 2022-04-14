@@ -220,6 +220,7 @@ impl Molecule{
     /// Add all pairs (i, j) of atoms which are non-bonded thus are subject to Lennard Jones
     /// interactions, in a classical MM forcefield
     fn add_non_bonded_pairs(&mut self){
+        self.non_bonded_pairs.clear();
 
         for atom_i in self.atoms().iter(){
             for atom_j in self.atoms().iter(){
@@ -228,7 +229,7 @@ impl Molecule{
                    continue;  // Skip bonded pairs
                 }
 
-                if atom_i == atom_j{
+                if atom_i.idx <= atom_j.idx{
                     continue;
                 }
 
@@ -334,7 +335,7 @@ struct NBonds {
 
 #[cfg(test)]
 mod tests{
-
+    use crate::pairs::AtomPair;
     use super::*;
     use crate::utils::*;
 
@@ -507,4 +508,37 @@ mod tests{
         assert_eq!(mol.connectivity.dihedrals.len(), 0);
     }
 
+    /// Given a non-bonded H2 pair or atoms then there should be a single NB pair present
+    #[test]
+    fn test_nb_pair_for_non_bonded_h2(){
+
+        let mut h2 = Molecule::from_atomic_symbols(&["H", "H"]);
+        h2.coordinates[1].x = 9.99;
+        h2.add_non_bonded_pairs();
+
+        assert_eq!(h2.non_bonded_pairs.len(), 1);
+    }
+
+    /// Given a bonded H2 molecule then there should be no NB pairs present
+    #[test]
+    fn test_nb_pair_for_bonded_h2(){
+
+        let mut h2 = Molecule::from_atomic_symbols(&["H", "H"]);
+        h2.coordinates[1].x = 0.77;
+
+        h2.add_bonds();
+        h2.add_non_bonded_pairs();
+
+        assert_eq!(h2.non_bonded_pairs.len(), 0);
+    }
+
+    /// Given two non-bonded pairs of atoms with different ordering then they should be identical
+    #[test]
+    fn test_non_bonded_pair_equality(){
+
+        let pair_a = NBPair{pair: AtomPair{i: 0, j: 1}};
+        let pair_b = NBPair{pair: AtomPair{i: 1, j: 0}};
+
+        assert_eq!(pair_a, pair_b);
+    }
 }
