@@ -2,6 +2,7 @@
 use std::fs::File;
 use std::path::Path;
 use std::io::{self, BufRead, Write};
+use log::{info, warn};
 use crate::atoms::{CartesianCoordinate, AtomicNumber};
 
 
@@ -33,7 +34,10 @@ impl XYZFile {
                 // First two lines are number of atoms and the title
                 if i <= 1 || line.is_empty() { continue; }
 
-                xyz_file.add_atom_on_line(line);
+                match xyz_file.add_atom_on_line(line){
+                    Ok(..) => info!("Added line"),
+                    Err(..) => warn!("Failed to add line")
+                }
             }
         }
 

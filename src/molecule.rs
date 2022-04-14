@@ -1,7 +1,11 @@
 use std::cmp::Ordering::Equal;
 use std::collections::HashSet;
-use log::{info, logger};
+use log::info;
 use crate::atoms::{Atom, AtomicNumber, CartesianCoordinate};
+use crate::connectivity::bonds::Bond;
+use crate::connectivity::angles::Angle;
+use crate::connectivity::dihedrals::Dihedral;
+use crate::pairs::NBPair;
 use crate::Forcefield;
 
 use crate::io::xyz::XYZFile;
@@ -11,7 +15,7 @@ pub struct Molecule{
     coordinates:      Vec<CartesianCoordinate>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
-    non_bonded_pairs: Vec<NBPair>
+    non_bonded_pairs: HashSet<NBPair>
 }
 
 impl Molecule{
@@ -51,18 +55,6 @@ impl Molecule{
         Molecule::from_atomic_nums_and_coords(atomic_numbers, coords)
     }
 
-    pub fn set_forcefield(&mut self, ff: Forcefield) -> (){
-        // TODO
-    }
-
-    pub fn optimise(&mut self){
-        // TODO
-    }
-
-    pub fn write_xyz_file(&self){
-        // TODO
-    }
-
     /// Construct a molecule from a set of atomic numbers and coordinates of each atom
     fn from_atomic_nums_and_coords(atomic_numbers: Vec<AtomicNumber>,
                                    coordinates:    Vec<CartesianCoordinate>) -> Self{
@@ -75,8 +67,20 @@ impl Molecule{
         molecule.add_bonds();
         molecule.add_angles();
         molecule.add_dihedrals();
-        // molecule.add_non_bonded_pairs();
+        molecule.add_non_bonded_pairs();
         molecule
+    }
+
+    pub fn set_forcefield(&mut self, ff: Forcefield) -> (){
+        // TODO
+    }
+
+    pub fn optimise(&mut self){
+        // TODO
+    }
+
+    pub fn write_xyz_file(&self){
+        // TODO
     }
 
     /// Get a copy of set of atoms associated with this molecule
@@ -110,7 +114,7 @@ impl Molecule{
     }
 
     fn contains_bond_between(&self, i: usize, j: usize) -> bool{
-        self.contains_bond(&Bond{i, j})
+        i != j && self.contains_bond(&Bond::from_atom_indices(i, j))
     }
 
     fn has_dihedrals(&self) -> bool{ !self.connectivity.dihedrals.is_empty()}
@@ -133,7 +137,7 @@ impl Molecule{
     /// Add a bond between two atoms, provided it is not already present
     fn add_bond(&mut self, atom_i: &Atom, atom_j: &Atom){
 
-        let new_bond = Bond{i: atom_i.idx, j: atom_j.idx};
+        let new_bond = Bond::from_atoms(atom_i, atom_j);
         let mut n_bonds = NBonds{i: 0, j: 0};
 
         for bond in self.connectivity.bonds.iter(){
@@ -195,21 +199,43 @@ impl Molecule{
         for bond in self.connectivity.bonds.iter(){
             // Add bonded quadruples
 
-            for neighbour_i in all_neighbours.get(bond.i).unwrap(){
-                if neighbour_i == &bond.j{ continue; }
+            for neighbour_i in all_neighbours.get(bond.pair.i).unwrap(){
+                if neighbour_i == &bond.pair.j{ continue; }
 
-                for neighbour_j in all_neighbours.get(bond.j).unwrap(){
-                    if neighbour_j == &bond.i{ continue; }
+                for neighbour_j in all_neighbours.get(bond.pair.j).unwrap(){
+                    if neighbour_j == &bond.pair.i{ continue; }
 
                     self.connectivity.dihedrals.insert(
                         Dihedral{i: neighbour_i.clone(),
-                            j: bond.i,
-                            k: bond.j,
+                            j: bond.pair.i,
+                            k: bond.pair.j,
                             l: neighbour_j.clone()}
                     );
                 } // neighbour_j
             }  // neighbour_i
         } // bond
+
+    }
+
+    /// Add all pairs (i, j) of atoms which are non-bonded thus are subject to Lennard Jones
+    /// interactions, in a classical MM forcefield
+    fn add_non_bonded_pairs(&mut self){
+
+        for atom_i in self.atoms().iter(){
+            for atom_j in self.atoms().iter(){
+
+                if self.contains_bond_between(atom_i.idx, atom_j.idx){
+                   continue;  // Skip bonded pairs
+                }
+
+                if atom_i == atom_j{
+                    continue;
+                }
+
+                self.non_bonded_pairs.insert(NBPair::from_atoms(atom_i, atom_j));
+
+            }
+        }
 
     }
 }
@@ -265,7 +291,6 @@ impl Neighbours {
 
 }
 
-
 #[derive(Default)]
 struct Connectivity{
     /*
@@ -288,76 +313,6 @@ impl Connectivity {
     }
 
 }
-
-#[derive(Default)]
-struct NBPair{
-    i: usize,
-    j: usize
-}
-
-#[derive(Default, Debug, Hash)]
-pub struct Bond{
-    i: usize,
-    j: usize
-}
-
-impl Bond {
-
-    /// Does this bond contain a particular atom?
-    pub fn contains(&self, atom: &Atom) -> bool{
-        atom.idx == self.i || atom.idx == self.j
-    }
-
-    /// Given the index of an atom that may, or may not be present in this bond, return the other
-    /// atom index in the bond, if present.
-    pub fn other(&self, idx: usize) -> Option<usize>{
-
-        if      idx == self.i { Some(self.j) }
-        else if idx == self.j { Some(self.i) }
-        else{                       None     }
-    }
-}
-
-impl PartialEq for Bond {
-    fn eq(&self, other: &Self) -> bool {
-        self.i == other.i && self.j == other.j || self.i == other.j && self.j == other.i
-    }
-}
-
-impl Eq for Bond {}
-
-#[derive(Default, Debug, Hash)]
-pub struct Angle{
-    i: usize,
-    j: usize,
-    k: usize
-}
-
-impl PartialEq for Angle {
-    fn eq(&self, other: &Self) -> bool {
-        self.j == other.j
-            && (self.i == other.i && self.k == other.k || self.i == other.k && self.k == other.i)
-    }
-}
-
-impl Eq for Angle {}
-
-#[derive(Default, Hash, Debug)]
-pub struct Dihedral{
-    i: usize,
-    j: usize,
-    k: usize,
-    l: usize
-}
-
-impl PartialEq for Dihedral{
-    fn eq(&self, other: &Self) -> bool {
-        (self.i == other.i && self.j == other.j && self.k == other.k && self.l == other.l)
-            || (self.i == other.l && self.j == other.k && self.k == other.j && self.l == other.i)
-    }
-}
-
-impl Eq for Dihedral {}
 
 /// Number of bonds present for two atoms
 struct NBonds {
@@ -394,10 +349,10 @@ mod tests{
         // Carbon is tetrahedral
         assert_eq!(mol.connectivity.bonds.len(), 4);
 
-        let expected_bond = Bond{i: 0, j: 1};
+        let expected_bond = Bond::from_atom_indices(0, 1);
         assert!(mol.contains_bond(&expected_bond));
 
-        let not_expected_bond = Bond{i: 0, j: 0};
+        let not_expected_bond = Bond::from_atom_indices(0, 99);
         assert!(!mol.contains_bond(&not_expected_bond));
 
         assert_eq!(mol.connectivity.angles.len(), 6);
@@ -409,9 +364,9 @@ mod tests{
     /// Bonds are equivilant irrespective of the ordering
     #[test]
     fn test_bond_equality(){
-        assert_eq!(&Bond{i: 0, j: 1}, &Bond{i: 0, j: 1});
-        assert_eq!(&Bond{i: 0, j: 1}, &Bond{i: 1, j: 0});
-        assert_ne!(&Bond{i: 0, j: 1}, &Bond{i: 0, j: 2});
+        assert_eq!(&Bond::from_atom_indices(0, 1), &Bond::from_atom_indices(0, 1));
+        assert_eq!(&Bond::from_atom_indices(0, 1), &Bond::from_atom_indices(1, 0));
+        assert_ne!(&Bond::from_atom_indices(0, 1), &Bond::from_atom_indices(0, 2));
     }
 
     /// Given a molecule with no atoms, when bonds are added, then no exception is thrown
@@ -500,7 +455,7 @@ mod tests{
                           atomic_number: AtomicNumber::from_string("H").unwrap(),
                           coordinate: CartesianCoordinate::default()};
 
-        let bond = Bond{i: atom_i.idx, j: atom_j.idx};
+        let bond = Bond::from_atoms(&atom_i, &atom_j);
 
         assert!(bond.contains(&atom_i));
         assert!(bond.contains(&atom_j));

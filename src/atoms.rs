@@ -1,11 +1,8 @@
 use std::collections::HashSet;
-use std::f32::consts::E;
 use std::ops::Index;
-use std::ptr::eq;
 use std::str::FromStr;
 use log::{warn};
-use crate::Molecule;
-use crate::molecule::Bond;
+use crate::connectivity::bonds::Bond;
 
 #[derive(Default, Debug)]
 pub struct Atom{
@@ -58,6 +55,15 @@ impl Atom {
         neighbours
     }
 }
+
+impl PartialEq for Atom {
+    fn eq(&self, other: &Self) -> bool {
+        self.idx == other.idx
+    }
+}
+
+impl Eq for Atom {}
+
 
 #[derive(Default, Clone, Debug)]
 pub struct CartesianCoordinate{

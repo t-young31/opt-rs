@@ -7,10 +7,12 @@ Notes and warnings:
 mod molecule;
 mod atoms;
 mod atom_typing;
+mod connectivity;
 mod ff;
 mod io;
 mod opt;
 mod utils;
+mod pairs;
 
 use crate::molecule::Molecule;
 use crate::ff::forcefield::Forcefield;
