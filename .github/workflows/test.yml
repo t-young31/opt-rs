@@ -50,6 +50,6 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           # required for private repositories:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: 9e7902bd-b53b-46f1-a945-bb1af467c3e3
           files: ./lcov.info
           fail_ci_if_error: true
