@@ -11,5 +11,3 @@ pub trait Forcefield {
 
     fn gradient(&self, coordinates: &Vec<CartesianCoordinate>);
 }
-
-

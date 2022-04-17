@@ -1,11 +1,13 @@
 use crate::{Forcefield, Molecule};
 use crate::atoms::CartesianCoordinate;
 
-pub(crate) struct UFF;
+pub(crate) struct UFF{
+    atom_types: Vec<UFFAtomType>
+}
 
 
 impl Forcefield for UFF {
-    fn new(molecule: &Molecule) -> Self{
+    pub(crate) fn new(molecule: &Molecule) -> Self{
         todo!();
         UFF{}
     }

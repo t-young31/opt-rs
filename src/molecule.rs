@@ -8,7 +8,6 @@ use crate::connectivity::dihedrals::Dihedral;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
-use crate::ff::uff::core::UFF;
 
 
 pub struct Molecule{
@@ -72,17 +71,12 @@ impl Molecule{
         molecule
     }
 
-    /// Set a force field
-    pub fn set_forcefield(&mut self, ff_name: &str) -> (){
-
-
-
-    }
-
-    pub fn energy(&mut self, forcefield: &dyn Forcefield){
+    /// Energy of this molecule using a FF
+    pub fn energy(&self, forcefield: &dyn Forcefield){
         // TODO
     }
 
+    /// Optimise the positions of the atoms given a forcefield
     pub fn optimise(&mut self, forcefield: &dyn Forcefield){
         // TODO
     }
