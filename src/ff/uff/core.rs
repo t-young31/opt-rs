@@ -27,7 +27,7 @@ impl Forcefield for UFF {
     /// to each atom
     fn set_atom_types(&mut self, molecule: &Molecule) {
 
-        let mut match_qualities: [usize; ATOM_TYPES.len()] = [0; ATOM_TYPES.len()];
+        let mut match_qualities: [i64; ATOM_TYPES.len()] = [0; ATOM_TYPES.len()];
 
         for atom in molecule.atoms().iter(){
 
@@ -41,6 +41,7 @@ impl Forcefield for UFF {
                 .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
                 .map(|(index, _)| index)
                 .expect("Failed to find a best match");
+
 
             self.atom_types.push(ATOM_TYPES[best_match].clone());
         }
@@ -57,3 +58,32 @@ impl Forcefield for UFF {
 }
 
 
+/*
+   /$$                           /$$
+  | $$                          | $$
+ /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
+|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
+  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
+  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
+  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
+   \___/   \_______/|_______/    \___/ |_______/
+ */
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+
+    /// Given
+    #[test]
+    fn test_h_atom_ff(){
+
+        let mol = Molecule::from_atomic_symbols(&["H"]);
+
+        let uff = UFF::new(&mol);
+        assert_eq!(uff.atom_types.len(), 1);
+
+        let atom_type = uff.atom_types[0].clone();
+        assert_eq!(&atom_type, ATOM_TYPES.get(0).expect("Failed to get H atom type"));
+    }
+
+}

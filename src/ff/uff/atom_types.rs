@@ -3,7 +3,7 @@ use crate::ff::uff::atom_typing::UFFAtomType;
 
 pub(crate) const ATOM_TYPES: [UFFAtomType; 127] = [
 UFFAtomType{name: "H_", atomic_symbol: "H", bridging: false, aromatic: false, valency: 1, oxidation_state: 0, r: 0.354, theta: 3.14159, x: 2.886, d: 0.105, zeta: 12.73, z_eff: 1.912}, 
-UFFAtomType{name: "H_b", atomic_symbol: "H", bridging: true, aromatic: false, valency: 0, oxidation_state: 0, r: 0.460, theta: 1.45735, x: 2.886, d: 0.111, zeta: 12.0, z_eff: 1.787}, 
+UFFAtomType{name: "H_b", atomic_symbol: "H", bridging: true, aromatic: false, valency: 2, oxidation_state: 0, r: 0.460, theta: 1.45735, x: 2.886, d: 0.111, zeta: 12.0, z_eff: 1.787}, 
 UFFAtomType{name: "He4+4", atomic_symbol: "He", bridging: false, aromatic: false, valency: 0, oxidation_state: 4, r: 0.849, theta: 3.14159, x: 3.851, d: 0.505, zeta: 11.278, z_eff: 1.792}, 
 UFFAtomType{name: "Li", atomic_symbol: "Li", bridging: false, aromatic: false, valency: 0, oxidation_state: 0, r: 1.336, theta: 1.91061, x: 3.021, d: 0.274, zeta: 13.969, z_eff: 2.703}, 
 UFFAtomType{name: "Be3+2", atomic_symbol: "Be", bridging: false, aromatic: false, valency: 0, oxidation_state: 2, r: 1.074, theta: 1.91061, x: 4.499, d: 0.274, zeta: 13.969, z_eff: 2.703}, 

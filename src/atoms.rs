@@ -13,6 +13,11 @@ pub struct Atom{
 
 impl Atom {
 
+    /// Atomic symbol of this atom
+    pub fn atomic_symbol(&self) -> &str{
+        self.atomic_number.to_atomic_symbol()
+    }
+
     /// Evaluate the distance to another atom, slowly
     pub fn distance_to(&self, atom: &Atom) -> f64{
         let c0 = &self.coordinate;
@@ -44,6 +49,7 @@ impl Atom {
 
     /// Determine a list of atom indices that are bonded to this one
     pub fn bonded_neighbour_idxs(&self, bonds: &HashSet<Bond>) -> Vec<usize>{
+        // TODO: Remove multiple calls of this function
 
         let mut neighbours: Vec<usize> = Default::default();
 
@@ -53,6 +59,12 @@ impl Atom {
             }
         }
         neighbours
+    }
+
+    /// Number of bonded neighbours
+    pub fn num_bonded_neighbours(&self, bonds: &HashSet<Bond>) -> usize{
+
+        bonds.iter().filter(|b| b.contains(self)).count()
     }
 }
 

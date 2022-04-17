@@ -17,38 +17,39 @@ class AtomType:
         self.theta = DEG_TO_RAD * float(self.theta)
         self.bridging = self.name.endswith('_b')
         self.aromatic = self.name.endswith('_R')
-
         self.atomic_symbol = self.name[0] if '_' in self.name else self.name[:2]
+
+        self.valency = 0
+        self._set_valency()
+
+        self.oxidation_state = 0
+        self._set_oxidation_state()
+
+    def _set_valency(self) -> None:
 
         try:
             self.valency = int(next(char.isdigit() for char
                                     in self.name.split('_')[0]))
         except StopIteration:
-            self.valency = 0
+            pass
 
         if self.name.endswith('_'):
             self.valency = 1
+
+        if self.bridging:
+            self.valency = 2
+
+        return None
+
+    def _set_oxidation_state(self) -> None:
 
         try:
             val = self.name.split('+')[1]
             self.oxidation_state = int(val) if val != 'q' else 4
         except IndexError:
-            self.oxidation_state = 0
+            pass
 
-        """
-        name:            String,  // Standard name of the type
-        bridging:        bool,    // Is this bridging?
-        aromatic:        bool,    // Is this aromatic?
-        valency:         usize,   // Number of bonded neighbours
-        oxidation_state: usize,   // Formal charge
-
-        r:     f64,     // Bonded distance (Å)
-        theta: f64,     // Angle (radians)
-        x:     f64,     // Non-bonded distance (Å)
-        d:     f64,     // Non-bonded energy (kcal mol-1)
-        zeta:  f64,     // Non-bonded scale
-        z_eff: f64      // Effective charge (e)
-        """
+        return None
 
     @property
     def rust_struct(self) -> str:

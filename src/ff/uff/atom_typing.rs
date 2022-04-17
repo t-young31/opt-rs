@@ -5,7 +5,7 @@ use crate::Molecule;
 /// https://doi.org/10.1021/ja00051a040
 
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub(crate) struct UFFAtomType{
 
     pub name:            &'static str,  // Standard name of the type
@@ -29,19 +29,20 @@ impl UFFAtomType {
     /// How well does an atom within a molecule match this atom type. Larger value <=> better match
     pub(crate) fn match_quality(&self,
                                 atom:     &Atom,
-                                molecule: &Molecule) -> usize{
+                                molecule: &Molecule) -> i64{
 
-        let mut value: usize = 0;
+        let mut value: i64 = 0;
 
-        if atom.atomic_number.to_atomic_symbol() == self.atomic_symbol{
-            value += 1
-        }
-
-        if atom.bonded_neighbour_idxs(&molecule.bonds()).len() == self.valency{
-            value += 1;
-        }
-
+        value += self.match_quality_atomic_symbol(atom);
+        value -= (atom.num_bonded_neighbours(molecule.bonds()) as i64 - self.valency as i64).abs();
         value
+    }
+
+    /// How well does the atomic symbol match?
+    fn match_quality_atomic_symbol(&self, atom: &Atom) -> i64{
+
+        if atom.atomic_symbol() == self.atomic_symbol{ 2 }
+        else { 0 }
     }
 
 }
