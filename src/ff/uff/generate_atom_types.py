@@ -15,15 +15,19 @@ class AtomType:
         self.name, self.r, self.theta, self.x, self.d, self.zeta, self.z = items
 
         self.theta = DEG_TO_RAD * float(self.theta)
-
         self.bridging = self.name.endswith('_b')
         self.aromatic = self.name.endswith('_R')
+
+        self.atomic_symbol = self.name[0] if '_' in self.name else self.name[:2]
 
         try:
             self.valency = int(next(char.isdigit() for char
                                     in self.name.split('_')[0]))
         except StopIteration:
             self.valency = 0
+
+        if self.name.endswith('_'):
+            self.valency = 1
 
         try:
             val = self.name.split('+')[1]
@@ -50,6 +54,7 @@ class AtomType:
     def rust_struct(self) -> str:
         return ('UFFAtomType{' +
                 f'name: "{self.name}", '
+                f'atomic_symbol: "{self.atomic_symbol}", '
                 f'bridging: {"true" if self.bridging else "false"}, '
                 f'aromatic: {"true" if self.aromatic else "false"}, '
                 f'valency: {self.valency}, '
@@ -70,7 +75,7 @@ if __name__ == '__main__':
     with open('atom_types.rs', 'w') as file:
 
         print('use crate::ff::uff::atom_typing::UFFAtomType;\n\n\n'
-              'static ATOM_TYPES: [UFFAtomType; 127] = [', file=file)
+              'pub(crate) const ATOM_TYPES: [UFFAtomType; 127] = [', file=file)
 
         for atom_type in atom_types:
             print(f'{atom_type.rust_struct}, ', file=file)

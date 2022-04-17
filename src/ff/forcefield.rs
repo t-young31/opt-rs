@@ -5,7 +5,7 @@ pub trait Forcefield {
 
     fn new(molecule: &Molecule) -> Self where Self: Sized;
 
-    fn set_atom_types(&self, molecule: &Molecule);
+    fn set_atom_types(&mut self, molecule: &Molecule);
 
     fn energy(&self, coordinates: &Vec<CartesianCoordinate>);
 

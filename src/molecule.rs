@@ -93,12 +93,11 @@ impl Molecule{
 
         for (i, atomic_number) in self.atomic_numbers.iter().enumerate(){
 
-            let coord = self.coordinates.get(i)
-                                                           .expect("N_atoms != N_coords");
+            let coord = self.coordinates.get(i).expect("N_atoms != N_coords");
 
             atoms.push(Atom{idx: i,
-                                  atomic_number: atomic_number.clone(),
-                                  coordinate:    coord.clone()});
+                            atomic_number: atomic_number.clone(),
+                            coordinate:    coord.clone()});
         }
         atoms
     }
@@ -107,6 +106,9 @@ impl Molecule{
     pub(crate) fn num_atoms(&self) -> usize{
         return self.atomic_numbers.len()
     }
+
+    /// Bonds within this molecule
+    pub(crate) fn bonds(&self) -> &HashSet<Bond>{ return &self.connectivity.bonds; }
 
     /// Does this molecule have any associated bonds?
     fn has_bonds(&self) -> bool{ return !self.connectivity.bonds.is_empty() }

@@ -6,9 +6,9 @@ use crate::connectivity::bonds::Bond;
 
 #[derive(Default, Debug)]
 pub struct Atom{
-    pub(crate) idx:           usize,
-    pub(crate) atomic_number: AtomicNumber,
-    pub(crate) coordinate:    CartesianCoordinate
+    pub(crate) idx:             usize,
+    pub(crate) atomic_number:   AtomicNumber,
+    pub(crate) coordinate:      CartesianCoordinate
 }
 
 impl Atom {
