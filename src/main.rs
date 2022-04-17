@@ -4,9 +4,10 @@ Notes and warnings:
     - Units are: Å (distance)
 
  */
+extern crate core;
+
 mod molecule;
 mod atoms;
-mod atom_typing;
 mod connectivity;
 mod ff;
 mod io;
@@ -14,9 +15,11 @@ mod opt;
 mod utils;
 mod pairs;
 
+use clap::Parser;
+
 use crate::molecule::Molecule;
 use crate::ff::forcefield::Forcefield;
-use clap::Parser;
+use crate::ff::uff::core::UFF;
 
 
 #[derive(Parser, Debug)]
@@ -35,9 +38,14 @@ fn main() {
     let args = CommandLineArguments::parse();
 
     let mut mol = Molecule::from_xyz_file(&args.xyz_filename);
-    mol.set_forcefield(Forcefield::from_string(&args.forcefield_name));
-    mol.optimise();
-    mol.write_xyz_file();
+
+    match args.forcefield_name.as_str() {
+        "UFF" => mol.optimise(&UFF::new(&mol)),
+        _ => panic!("Cannot set a forcefield. Unknown type")
+    }
+
+    mol.write_xyz_file("opt.xyz");
+
 
     // 0. Setup
     // 	1. Read in .xyz

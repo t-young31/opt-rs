@@ -5,9 +5,10 @@ use crate::atoms::{Atom, AtomicNumber, CartesianCoordinate};
 use crate::connectivity::bonds::Bond;
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::Dihedral;
+use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
-use crate::io::xyz::XYZFile;
+use crate::ff::uff::core::UFF;
 
 
 pub struct Molecule{
@@ -15,7 +16,7 @@ pub struct Molecule{
     coordinates:      Vec<CartesianCoordinate>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
-    non_bonded_pairs: HashSet<NBPair>
+    non_bonded_pairs: HashSet<NBPair>,
 }
 
 impl Molecule{
@@ -71,16 +72,24 @@ impl Molecule{
         molecule
     }
 
-    pub fn set_forcefield(&mut self, ff: Forcefield) -> (){
+    /// Set a force field
+    pub fn set_forcefield(&mut self, ff_name: &str) -> (){
+
+
+
+    }
+
+    pub fn energy(&mut self, forcefield: &dyn Forcefield){
         // TODO
     }
 
-    pub fn optimise(&mut self){
+    pub fn optimise(&mut self, forcefield: &dyn Forcefield){
         // TODO
     }
 
-    pub fn write_xyz_file(&self){
-        // TODO
+    /// Write a .xyz file for this molecule
+    pub fn write_xyz_file(&self, filename: &str){
+        XYZFile::write(filename, &self);
     }
 
     /// Get a copy of set of atoms associated with this molecule

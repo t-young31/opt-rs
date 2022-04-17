@@ -1,17 +1,15 @@
+use crate::atoms::CartesianCoordinate;
+use crate::Molecule;
 
-#[derive(Default)]
-pub struct Forcefield{
+pub trait Forcefield {
 
+    fn new(molecule: &Molecule) -> Self where Self: Sized;
+
+    fn set_atom_types(&self, molecule: &Molecule);
+
+    fn energy(&self, coordinates: &Vec<CartesianCoordinate>);
+
+    fn gradient(&self, coordinates: &Vec<CartesianCoordinate>);
 }
 
-impl Forcefield {
 
-    /// Initialise a forcefield from a string. Will panic if a suitable candidate cannot be found
-    pub fn from_string(name: &str) -> Self{
-
-        let mut ff: Forcefield = Default::default();
-
-        ff
-    }
-
-}

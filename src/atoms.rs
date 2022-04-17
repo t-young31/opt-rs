@@ -215,7 +215,6 @@ static MAXIMAL_VALENCIES: [usize; 38] = [
 #[cfg(test)]
 mod tests{
     use super::*;
-    use crate::utils::*;
 
     /// Given an atomic number from a number or string, then they should be identical
     #[test]
