@@ -4,17 +4,18 @@
 
 #[derive(Default, Debug)]
 pub(crate) struct UFFAtomType{
-    name:            String,  // Standard name of the type
-    bridging:        bool,    // Is this bridging?
-    aromatic:        bool,    // Is this aromatic?
-    valency:         usize,   // Number of bonded neighbours
-    oxidation_state: usize,   // Formal charge
 
-    r:     f64,     // Bonded distance (Å)
-    theta: f64,     // Angle (radians)
-    x:     f64,     // Non-bonded distance (Å)
-    d:     f64,     // Non-bonded energy (kcal mol-1)
-    zeta:  f64,     // Non-bonded scale
-    z_eff: f64      // Effective charge (e)
+    pub name:            &'static str,  // Standard name of the type
+    pub bridging:        bool,          // Is this bridging?
+    pub aromatic:        bool,          // Is this aromatic?
+    pub valency:         usize,         // Number of bonded neighbours
+    pub oxidation_state: usize,         // Formal charge
+
+    pub r:     f64,                     // Bonded distance (Å)
+    pub theta: f64,                     // Angle (radians)
+    pub x:     f64,                     // Non-bonded distance (Å)
+    pub d:     f64,                     // Non-bonded energy (kcal mol-1)
+    pub zeta:  f64,                     // Non-bonded scale
+    pub z_eff: f64                      // Effective charge (e)
 }
 
