@@ -106,6 +106,11 @@ pub struct AtomicNumber{
 
 impl AtomicNumber {
 
+    /// Zero indexed index of this atomic number in the periodic table
+    fn index(&self) -> usize{
+        return self.value - 1
+    }
+
     /// Create an atomic number, must be present in the elements
     pub fn from_integer(value: usize) -> Result<Self, &'static str>{
 
@@ -134,21 +139,21 @@ impl AtomicNumber {
             return Err("Cannot create an atomic number from a symbol not in the periodic table");
         }
 
-        Ok(AtomicNumber{value: ELEMENTS.iter().position(|&x| x == value).unwrap()})
+        Ok(AtomicNumber{value: ELEMENTS.iter().position(|&x| x == value).unwrap() + 1})
     }
 
     /// Convert an atomic number to an atomic symbol
     pub fn to_atomic_symbol(&self) -> &str{
-        ELEMENTS.index(self.value)
+        ELEMENTS.index(self.index())
     }
 
     /// Covalent radius, used to determine if two atoms are bonded
     pub fn covalent_radius(&self) -> f64{
 
-        let radius = COVALENT_RADII_PICOMETERS.get(self.value);
+        let radius = COVALENT_RADII_PICOMETERS.get(self.index());
 
         if radius.is_none(){
-            warn!("Covalent radius for atom {} is not defined. Guessing at 2 Å", self.value);
+            warn!("Covalent radius for atom {} is not defined. Guessing at 2 Å", self.index());
             return 2.0;
         }
 
@@ -158,10 +163,10 @@ impl AtomicNumber {
     /// The maximum number of bonds that this atom can form under 'reasonable' circumstances
     pub fn maximal_valence(&self) -> usize{
 
-        let valance = MAXIMAL_VALENCIES.get(self.value);
+        let valance = MAXIMAL_VALENCIES.get(self.index());
 
         if valance.is_none(){
-            warn!("Did not find a value maximal valence value for atom {}", self.value);
+            warn!("Did not find a value maximal valence value for atomic number {}", self.value);
             return 6;
         }
 
@@ -205,3 +210,18 @@ static COVALENT_RADII_PICOMETERS: [f64; 86] = [
 static MAXIMAL_VALENCIES: [usize; 38] = [
     1, 0, 1, 2, 3, 4, 5, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7,
     0, 1, 2, 3, 4, 5, 6, 7, 7, 5, 4, 4, 6, 3, 4, 5, 6, 7, 2, 1, 2];
+
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+    use crate::utils::*;
+
+    /// Given an atomic number from a number or string, then they should be identical
+    #[test]
+    fn test_atom_init(){
+        assert_eq!(AtomicNumber::from_integer(1), AtomicNumber::from_string("H"));
+    }
+
+}
+

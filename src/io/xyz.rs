@@ -1,26 +1,25 @@
-// xyz file parsing. See https://en.wikipedia.org/wiki/XYZ_file_format for a description
+use std::borrow::BorrowMut;
 use std::fs::File;
 use std::path::Path;
 use std::io::{self, BufRead, Write};
 use log::{info, warn};
 use crate::atoms::{CartesianCoordinate, AtomicNumber};
+use crate::Molecule;
 
 
 #[derive(Default)]
 pub struct XYZFile{
 
     pub filename:       String,
-    file_lines:         Vec<String>,
-
     pub coordinates:    Vec<CartesianCoordinate>,
     pub atomic_numbers: Vec<AtomicNumber>
 }
 
-
+/// xyz file parsing. See https://en.wikipedia.org/wiki/XYZ_file_format for a description
 impl XYZFile {
 
     /// Create an xyz file and extract coordinates from an xyz file
-    pub fn new(filename: &str) -> Result<Self, &'static str>{
+    pub fn read(filename: &str) -> Result<Self, &'static str>{
 
         if !filename.ends_with(".xyz") {
             panic!("Cannot read {}. File must end with .xyz", filename)
@@ -34,7 +33,7 @@ impl XYZFile {
                 // First two lines are number of atoms and the title
                 if i <= 1 || line.is_empty() { continue; }
 
-                match xyz_file.add_atom_on_line(line){
+                match xyz_file.append_atom_on_line(line){
                     Ok(..) => info!("Added line"),
                     Err(..) => warn!("Failed to add line")
                 }
@@ -48,8 +47,36 @@ impl XYZFile {
         Ok(xyz_file)
     }
 
+    /// Write an xyz file given
+    pub fn write(filename: &str, molecule: &Molecule){
+
+        // Open a file in write-only mode, returns `io::Result<File>`
+        let mut file = match File::create(&Path::new(filename)) {
+            Err(why) => panic!("Couldn't create {}", why),
+            Ok(file) => file,
+        };
+
+        Self::write_line(format!("{}", molecule.num_atoms()), file.borrow_mut());
+        Self::write_line(String::from(""), file.borrow_mut());
+
+        for atom in molecule.atoms().iter(){
+            Self::write_line(format!("{an:<3}{x:11.6}{y:11.6}{z:11.6}",
+                                     an=atom.atomic_number.to_atomic_symbol(),
+                                     x=atom.coordinate.x,
+                                     y=atom.coordinate.y,
+                                     z=atom.coordinate.z),
+            file.borrow_mut())
+        }
+
+    }
+
+    /// Write a single line to an open file
+    fn write_line(string: String, file: &mut File){
+        file.write((string+"\n").as_bytes()).expect("Failed to write line");
+    }
+
     /// Add the atomic number and coordinate for an atom on a line
-    fn add_atom_on_line(&mut self, line: String) -> Result<(), &str>{
+    fn append_atom_on_line(&mut self, line: String) -> Result<(), &str>{
         let mut items = line.split_whitespace();
 
         let atomic_number = AtomicNumber::from_option_string(items.next());
@@ -71,7 +98,6 @@ impl XYZFile {
         Ok(())
     }
 }
-
 
 /// Read a set of file lines into an iterator
 fn read_lines<P>(filename: P) -> io::Lines<io::BufReader<File>>
@@ -103,7 +129,7 @@ mod tests{
     fn test_ok_file_read(){
         print_methane_xyz_file("tmp_methane_2.xyz");
 
-        let file = XYZFile::new("tmp_methane_2.xyz").unwrap();
+        let file = XYZFile::read("tmp_methane_2.xyz").unwrap();
 
         assert_eq!(file.coordinates.len(), 5);
         assert_eq!(file.atomic_numbers.len(), 5);
@@ -124,7 +150,7 @@ mod tests{
                        "5\n\n")
             .expect("Failed to write tmp2.xyz!");
 
-        let file = XYZFile::new("tmp2.xyz");
+        let file = XYZFile::read("tmp2.xyz");
         std::fs::remove_file("tmp2.xyz").expect("Failed to remove file");
         file.unwrap();
     }
@@ -138,8 +164,23 @@ mod tests{
                         H     0.00000   0.00000\n")
             .expect("Failed to write tmp3.xyz!");
 
-        let file = XYZFile::new("tmp3.xyz");
+        let file = XYZFile::read("tmp3.xyz");
         std::fs::remove_file("tmp3.xyz").expect("Failed to remove file");
         file.unwrap();
+    }
+
+    #[test]
+    fn test_read_then_write(){
+        print_methane_xyz_file("tmp_trtw1.xyz");
+
+        let mol1 = Molecule::from_xyz_file("tmp_trtw1.xyz");
+        XYZFile::write("tmp_trtw2.xyz", &mol1);
+
+        let mol2 = Molecule::from_xyz_file("tmp_trtw2.xyz");
+
+        assert_eq!(mol1.num_atoms(), mol2.num_atoms());
+
+        std::fs::remove_file("tmp_trtw1.xyz").expect("Failed to remove file");
+        std::fs::remove_file("tmp_trtw2.xyz").expect("Failed to remove file");
     }
 }

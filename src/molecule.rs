@@ -7,8 +7,8 @@ use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::Dihedral;
 use crate::pairs::NBPair;
 use crate::Forcefield;
-
 use crate::io::xyz::XYZFile;
+
 
 pub struct Molecule{
 
@@ -34,7 +34,7 @@ impl Molecule{
     ///
     pub fn from_xyz_file(filename: &str) -> Self{
 
-        let xyz_file = XYZFile::new(filename).unwrap();
+        let xyz_file = XYZFile::read(filename).unwrap();
 
         Molecule::from_atomic_nums_and_coords(xyz_file.atomic_numbers, xyz_file.coordinates)
     }
@@ -84,7 +84,7 @@ impl Molecule{
     }
 
     /// Get a copy of set of atoms associated with this molecule
-    fn atoms(&self) -> Vec<Atom>{
+    pub(crate) fn atoms(&self) -> Vec<Atom>{
 
         let mut atoms: Vec<Atom> = Default::default();
 
@@ -101,7 +101,7 @@ impl Molecule{
     }
 
     /// Number of atoms in this molecule
-    fn num_atoms(&self) -> usize{
+    pub(crate) fn num_atoms(&self) -> usize{
         return self.atomic_numbers.len()
     }
 
@@ -234,7 +234,6 @@ impl Molecule{
                 }
 
                 self.non_bonded_pairs.insert(NBPair::from_atoms(atom_i, atom_j));
-
             }
         }
 
@@ -264,9 +263,6 @@ impl Neighbours {
         neighbours.sort_by_distance();
         neighbours
     }
-
-    /// Get a neighbour, defined by its index
-    pub fn get(&self, index: usize) -> Option<&Neighbour>{ self.values.get(index) }
 
     /// Add neighbours to a central atom while guessing the bonds
     fn add_all_while_guessing_bonds(&mut self, central_atom: &Atom, molecule: &Molecule){

@@ -1,0 +1,44 @@
+\documentclass[10pt]{article}
+\usepackage{bm, url, graphicx, amsmath, color}
+\nonstopmode
+
+\title{Forcefields}
+\author{...}
+
+\begin{document}
+
+\maketitle
+
+\section{UFF}
+The theory presented here is adapted from Rappe et. al, JACS, 1992.
+\subsection{Bond distances}
+
+Equlibrium pairwise distances are given by
+
+\begin{equation}
+    r_{ij} = r_i + r_j + r_\text{BO} + r_\text{EN}
+\end{equation}
+
+where $r_k$ is the covalant radius of atom $k$, $r_{BO}$ a correction based on the bond order between the two atoms and $r_{EN}$ a correction for the electronegativity.
+
+\begin{equation}
+    r_\text{BO} = -\lambda (r_i + r_j) \ln(n)
+\end{equation}
+
+where $\lambda = 0.1332$ and $n$ the bond order. For example, $n=1.5$ for aromatic bonds.
+
+\begin{equation}
+    r_\text{EN} = r_i r_j \frac{(\sqrt{\chi_i} - \sqrt{\chi_j})^2}{\chi_i r_i \chi_j r_j}
+\end{equation}
+
+where $\chi_k$ is the GMP electronegativity of atom $k$.
+
+\subsection{Force constants}
+
+
+
+
+
+
+
+\end{document} 
