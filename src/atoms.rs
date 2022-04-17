@@ -76,7 +76,6 @@ impl PartialEq for Atom {
 
 impl Eq for Atom {}
 
-
 #[derive(Default, Clone, Debug)]
 pub struct CartesianCoordinate{
     pub x: f64,
@@ -192,6 +191,20 @@ impl PartialEq for AtomicNumber {
     }
 }
 
+/// GMP (generalized Mulliken-Pauling) electronegativity from
+pub fn gmp_electronegativity(atomic_symbol: &str) -> f64{
+
+    let atomic_number = AtomicNumber::from_string(atomic_symbol).unwrap();
+
+    match GMP_ELECTRONEGATIVITIES.get(atomic_number.index()) {
+        Some(value) => value.clone(),
+        None => {
+            warn!("Using a default value of the electronegativity");
+            5.0
+        }
+    }
+}
+
 static ELEMENTS: [&'static str; 118] = [
     "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg",
     "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr",
@@ -223,6 +236,13 @@ static MAXIMAL_VALENCIES: [usize; 38] = [
     1, 0, 1, 2, 3, 4, 5, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7,
     0, 1, 2, 3, 4, 5, 6, 7, 7, 5, 4, 4, 6, 3, 4, 5, 6, 7, 2, 1, 2];
 
+
+static GMP_ELECTRONEGATIVITIES: [f64; 51] = [
+    4.53, 9.66, 3.01, 4.88, 5.11, 5.34, 6.90, 8.74, 10.87, 11.04, 2.84, 3.95, 4.06, 4.17,
+    5.46, 6.93, 8.56, 9.47, 2.42, 3.23, 3.40, 3.47, 3.65, 3.42, 3.33, 3.76, 4.11, 4.47,
+    4.20, 5.11, 3.64, 4.05, 5.19, 6.43, 7.79, 8.51, 2.33, 3.02, 3.83, 3.40, 3.55, 3.47,
+    3.29, 3.58, 3.98, 4.32, 4.44, 5.03, 3.51, 3.99, 4.90
+];
 
 #[cfg(test)]
 mod tests{

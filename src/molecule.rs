@@ -12,7 +12,7 @@ use crate::Forcefield;
 
 pub struct Molecule{
 
-    coordinates:      Vec<CartesianCoordinate>,
+    pub coordinates:  Vec<CartesianCoordinate>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
     non_bonded_pairs: HashSet<NBPair>,
@@ -127,7 +127,7 @@ impl Molecule{
     /// Add bonds between atoms based on their interatomic distance. For example H-H is consdiered
     /// bonded if the r(HH) < 0.8 Å, or so. Note that this is not particularly well defined, but
     /// essential to determining the energy with a 'classic' (i.e. non-density based) force-field
-    fn add_bonds(&mut self) {
+    pub(crate) fn add_bonds(&mut self) {
 
         self.connectivity.bonds.clear();
 
@@ -137,6 +137,8 @@ impl Molecule{
                  self.add_bond(atom_i, &neighbour.atom)
             }
         }
+
+        // TODO: set bond orders
     }
 
     /// Add a bond between two atoms, provided it is not already present
@@ -323,6 +325,7 @@ struct NBonds {
 }
 
 
+
 /*
    /$$                           /$$
   | $$                          | $$
@@ -336,7 +339,7 @@ struct NBonds {
 
 #[cfg(test)]
 mod tests{
-    use crate::pairs::AtomPair;
+    use crate::pairs::{AtomPair, distance};
     use super::*;
     use crate::utils::*;
 
@@ -359,6 +362,8 @@ mod tests{
 
         assert_eq!(mol.connectivity.angles.len(), 6);
         assert!(mol.connectivity.angles.iter().any(|b| b==&Angle{i: 1, j: 0, k: 2}));
+
+        assert!(is_close(distance(0, 1, &mol.coordinates), 1.1, 1E-1));
 
         remove_file_or_panic("tmp_methane_1.xyz");
     }

@@ -35,6 +35,9 @@ impl UFFAtomType {
 
         value += self.match_quality_atomic_symbol(atom);
         value -= (atom.num_bonded_neighbours(molecule.bonds()) as i64 - self.valency as i64).abs();
+
+        // TODO: Match on more things
+
         value
     }
 
@@ -44,7 +47,6 @@ impl UFFAtomType {
         if atom.atomic_symbol() == self.atomic_symbol{ 2 }
         else { 0 }
     }
-
 }
 
 

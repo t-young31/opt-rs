@@ -1,4 +1,9 @@
-use crate::atoms::Atom;
+use crate::atoms::{Atom, CartesianCoordinate};
+
+#[inline(always)]
+pub fn distance(i: usize, j: usize, x: &Vec<CartesianCoordinate>) -> f64{
+    ((x[i].x - x[j].x).powi(2) + (x[i].y - x[j].y).powi(2) + (x[i].z - x[j].z).powi(2)).sqrt()
+}
 
 
 #[derive(Default, Hash, Debug, Clone)]

@@ -4,8 +4,10 @@ use crate::pairs::AtomPair;
 
 #[derive(Default, Debug, Hash)]
 pub struct Bond{
-    pub(crate) pair: AtomPair
+    pub(crate) pair:  AtomPair,
+    pub(crate) order: BondOrder
 }
+
 
 impl Bond {
 
@@ -21,7 +23,8 @@ impl Bond {
             panic!("Cannot create a bonded pair between identical atoms")
         }
 
-        Bond{pair: AtomPair{i, j}}
+        Bond{pair:  AtomPair{i, j},
+             order: BondOrder::Single}
     }
 
     /// Does this bond contain a particular atom?
@@ -44,3 +47,32 @@ impl PartialEq for Bond {
 }
 
 impl Eq for Bond {}
+
+
+#[derive(Debug, Hash)]
+pub enum BondOrder{
+    Single,
+    Aromatic,
+    Double,
+    Triple,
+    Quadruple
+}
+
+impl Default for BondOrder {
+
+    fn default() -> Self{
+        BondOrder::Single
+    }
+}
+
+
+/// Determine the fractional bond order as a float
+pub fn bond_order(bo: &BondOrder) -> f64{
+    match bo {
+        BondOrder::Single =>    1.0,
+        BondOrder::Aromatic =>  1.5,
+        BondOrder::Double =>    2.0,
+        BondOrder::Triple =>    3.0,
+        BondOrder::Quadruple => 4.0,
+    }
+}

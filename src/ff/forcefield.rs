@@ -7,7 +7,15 @@ pub trait Forcefield {
 
     fn set_atom_types(&mut self, molecule: &Molecule);
 
-    fn energy(&self, coordinates: &Vec<CartesianCoordinate>);
+    fn energy(&mut self, coordinates: &Vec<CartesianCoordinate>) -> f64;
 
-    fn gradient(&self, coordinates: &Vec<CartesianCoordinate>);
+    fn gradient(&mut self, coordinates: &Vec<CartesianCoordinate>) -> &Vec<CartesianCoordinate>;
+}
+
+pub trait EnergyFunction{
+    fn energy(&self, coordinates: &Vec<CartesianCoordinate>) -> f64;
+
+    fn add_gradient(&self,
+                    coordinates:      &Vec<CartesianCoordinate>,
+                    current_gradient: &Vec<CartesianCoordinate>) -> &Vec<CartesianCoordinate>;
 }
