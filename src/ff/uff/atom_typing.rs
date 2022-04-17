@@ -2,8 +2,9 @@
 /// https://doi.org/10.1021/ja00051a040
 
 
-struct UFFAtomType{
-    name:            str,     // Standard name of the type
+#[derive(Default, Debug)]
+pub(crate) struct UFFAtomType{
+    name:            String,  // Standard name of the type
     bridging:        bool,    // Is this bridging?
     aromatic:        bool,    // Is this aromatic?
     valency:         usize,   // Number of bonded neighbours

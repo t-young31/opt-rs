@@ -1,15 +1,17 @@
 use crate::{Forcefield, Molecule};
 use crate::atoms::CartesianCoordinate;
+use crate::ff::uff::atom_typing::UFFAtomType;
 
+#[derive(Default, Debug)]
 pub(crate) struct UFF{
     atom_types: Vec<UFFAtomType>
 }
 
 
 impl Forcefield for UFF {
-    pub(crate) fn new(molecule: &Molecule) -> Self{
+    fn new(molecule: &Molecule) -> Self{
         todo!();
-        UFF{}
+        UFF::default()
     }
 
     fn set_atom_types(&self, molecule: &Molecule) {
