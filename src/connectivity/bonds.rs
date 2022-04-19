@@ -65,14 +65,75 @@ impl Default for BondOrder {
     }
 }
 
+impl BondOrder {
 
-/// Determine the fractional bond order as a float
-pub fn bond_order(bo: &BondOrder) -> f64{
-    match bo {
-        BondOrder::Single =>    1.0,
-        BondOrder::Aromatic =>  1.5,
-        BondOrder::Double =>    2.0,
-        BondOrder::Triple =>    3.0,
-        BondOrder::Quadruple => 4.0,
+    /// Determine the fractional bond order as a floa
+    pub(crate) fn value(&self) -> f64{
+        match self {
+            BondOrder::Single =>    1.0,
+            BondOrder::Aromatic =>  1.5,
+            BondOrder::Double =>    2.0,
+            BondOrder::Triple =>    3.0,
+            BondOrder::Quadruple => 4.0,
+        }
+    }
+
+}
+
+
+/*
+   /$$                           /$$
+  | $$                          | $$
+ /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
+|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
+  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
+  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
+  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
+   \___/   \_______/|_______/    \___/ |_______/
+ */
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+
+    /// Given bond with indices in either order then they should be the same
+    #[test]
+    fn test_bond_equality(){
+        assert_eq!(Bond::from_atom_indices(0, 1), Bond::from_atom_indices(1, 0));
+    }
+
+    /// Given bond with indices then it contains one of the atoms
+    #[test]
+    fn test_bond_contains(){
+
+        let atom_a = Atom::default();
+        let mut atom_b = Atom::default();
+        atom_b.idx = 1;
+
+        assert!(Bond::from_atoms(&atom_a, &atom_b).contains(&atom_a));
+        assert!(Bond::from_atoms(&atom_a, &atom_b).contains(&atom_b));
+
+        let mut atom_c = atom_b.clone();
+        atom_c.idx = 3;
+        assert!(!Bond::from_atoms(&atom_a, &atom_b).contains(&atom_c));
+
+    }
+
+    /// Test that the other atom index within a bond can be easily accessed
+    #[test]
+    fn test_bond_other_idx(){
+        assert_eq!(Bond::from_atom_indices(0, 1).other(0).unwrap(), 1);
+        assert_eq!(Bond::from_atom_indices(0, 1).other(1).unwrap(), 0);
+        assert!(Bond::from_atom_indices(0, 1).other(2).is_none());
+
+    }
+
+    /// Test bond order values are ordered correctly
+    #[test]
+    fn test_bond_order_value(){
+        assert!(BondOrder::Single.value() < BondOrder::Aromatic.value());
+        assert!(BondOrder::Aromatic.value() < BondOrder::Double.value());
+        assert!(BondOrder::Double.value() < BondOrder::Triple.value());
+        assert!(BondOrder::Triple.value() < BondOrder::Quadruple.value());
     }
 }

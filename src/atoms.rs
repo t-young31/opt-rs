@@ -1,10 +1,10 @@
 use std::collections::HashSet;
-use std::ops::Index;
+use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 use std::str::FromStr;
 use log::{warn};
 use crate::connectivity::bonds::Bond;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Atom{
     pub(crate) idx:             usize,
     pub(crate) atomic_number:   AtomicNumber,
@@ -110,6 +110,67 @@ impl CartesianCoordinate {
     }
 }
 
+impl Add for CartesianCoordinate {        // +  operator
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {x: self.x + other.x,
+              y: self.y + other.y,
+              z: self.z + other.z}
+    }
+}
+
+impl Sub for CartesianCoordinate {        // -  operator
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z}
+    }
+}
+
+impl AddAssign for CartesianCoordinate {   // +=  operator
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+        self.z += rhs.z;
+    }
+}
+
+impl SubAssign for CartesianCoordinate {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+        self.z -= rhs.z;
+    }
+}
+
+impl Index<usize> for CartesianCoordinate {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            n => panic!("Invalid Vector3d index: {}", n)
+        }
+    }
+}
+
+impl IndexMut<usize> for CartesianCoordinate {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            n => panic!("Invalid Vector3d index: {}", n)
+        }
+    }
+}
+
+
 #[derive(Default, Clone, Debug)]
 pub struct AtomicNumber{
     value: usize
@@ -141,7 +202,6 @@ impl AtomicNumber {
 
         AtomicNumber::from_string(value.unwrap())
     }
-
 
     /// Convert a string (slice) into an atomic number. Panics if not present
     pub fn from_string(value: &str) -> Result<Self, &'static str>{
@@ -183,6 +243,19 @@ impl AtomicNumber {
 
         return valance.unwrap().clone();
     }
+
+    /// GMP (generalized Mulliken-Pauling) electronegativity from https://doi.org/10.1021/j100161a070
+    pub fn gmp_electronegativity(&self) -> f64{
+
+        match GMP_ELECTRONEGATIVITIES.get(self.index()) {
+            Some(value) => value.clone(),
+            None => {
+                warn!("Using a default value of the electronegativity");
+                5.0
+            }
+        }
+    }
+
 }
 
 impl PartialEq for AtomicNumber {
@@ -191,19 +264,7 @@ impl PartialEq for AtomicNumber {
     }
 }
 
-/// GMP (generalized Mulliken-Pauling) electronegativity from
-pub fn gmp_electronegativity(atomic_symbol: &str) -> f64{
 
-    let atomic_number = AtomicNumber::from_string(atomic_symbol).unwrap();
-
-    match GMP_ELECTRONEGATIVITIES.get(atomic_number.index()) {
-        Some(value) => value.clone(),
-        None => {
-            warn!("Using a default value of the electronegativity");
-            5.0
-        }
-    }
-}
 
 static ELEMENTS: [&'static str; 118] = [
     "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg",
@@ -237,12 +298,25 @@ static MAXIMAL_VALENCIES: [usize; 38] = [
     0, 1, 2, 3, 4, 5, 6, 7, 7, 5, 4, 4, 6, 3, 4, 5, 6, 7, 2, 1, 2];
 
 
+// Values tabulated from https://doi.org/10.1021/acs.jctc.8b00669
 static GMP_ELECTRONEGATIVITIES: [f64; 51] = [
     4.53, 9.66, 3.01, 4.88, 5.11, 5.34, 6.90, 8.74, 10.87, 11.04, 2.84, 3.95, 4.06, 4.17,
     5.46, 6.93, 8.56, 9.47, 2.42, 3.23, 3.40, 3.47, 3.65, 3.42, 3.33, 3.76, 4.11, 4.47,
     4.20, 5.11, 3.64, 4.05, 5.19, 6.43, 7.79, 8.51, 2.33, 3.02, 3.83, 3.40, 3.55, 3.47,
     3.29, 3.58, 3.98, 4.32, 4.44, 5.03, 3.51, 3.99, 4.90
 ];
+
+
+/*
+   /$$                           /$$
+  | $$                          | $$
+ /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
+|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
+  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
+  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
+  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
+   \___/   \_______/|_______/    \___/ |_______/
+ */
 
 #[cfg(test)]
 mod tests{

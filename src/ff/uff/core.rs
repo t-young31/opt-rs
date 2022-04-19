@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 use crate::{Forcefield, Molecule};
-use crate::atoms::{CartesianCoordinate, gmp_electronegativity};
-use crate::connectivity::bonds::bond_order;
+use crate::atoms::CartesianCoordinate;
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::forcefield::EnergyFunction;
 use crate::ff::uff::atom_typing::UFFAtomType;
@@ -45,7 +44,7 @@ impl UFF {
 
             let i = bond.pair.i;
             let j = bond.pair.j;
-            let r0 = self.r0(i, j, bond_order(&bond.order));
+            let r0 = self.r0(i, j, bond.order.value());
             let k = self.k_bond(i, j, r0);
 
             self.energy_functions.push(Box::new(HarmonicBond{i, j, r0, k}));
@@ -67,11 +66,11 @@ impl UFF {
         let r_i = self.atom_types[i].r;
         let r_j = self.atom_types[j].r;
 
-        let chi_i = gmp_electronegativity(self.atom_types[i].atomic_symbol);
-        let chi_j = gmp_electronegativity(self.atom_types[j].atomic_symbol);
+        let chi_i = self.atom_types[i].gmp_electronegativity();
+        let chi_j = self.atom_types[j].gmp_electronegativity();
 
-        r_i*r_j * ((chi_i.sqrt() - chi_j.sqrt()).powi(2)
-                   / (chi_i*r_i + chi_j*r_j))
+        r_i * r_j * ((chi_i.sqrt() - chi_j.sqrt()).powi(2)
+                     / (chi_i*r_i + chi_j*r_j))
     }
 
     /// Force constant for a harmonic bond [eqn. 6]
@@ -137,7 +136,7 @@ impl Forcefield for UFF {
         self.zero_gradient();
 
         for function in self.energy_functions.iter(){
-            function.add_gradient(&self.gradient, coordinates);
+            function.add_gradient(coordinates, &mut self.gradient);
         }
 
         &self.gradient
@@ -216,6 +215,53 @@ mod tests{
 
         // Energy is non-zero
         assert!(!is_close(uff.energy(&h2.coordinates), 0.0, 1E-5))
+    }
+
+    /// Ensure the electronegativity correction on a bond length is close to that in the paper
+    #[test]
+    fn test_r_en_correction(){
+
+        let mut uff = UFF::new(&Molecule::blank());
+
+        for atom_type_str in ["Si3", "O_3_z"]{
+
+            uff.atom_types.push(ATOM_TYPES.iter()
+                .find(|a| a.name == atom_type_str)
+                .unwrap()
+                .clone())
+        }
+
+        assert!(is_close(uff.r_en(0, 1), 0.0533, 1E-2));
+    }
+
+    /// Test numerical vs analytical gradient evaluation for H2
+    #[test]
+    fn test_num_vs_anal_grad_h2(){
+
+        let mut h2 = h2();
+        let mut uff = UFF::new(&h2);
+
+        let grad = h2.gradient(&mut uff);
+        let num_grad = h2.numerical_gradient(&mut uff);
+
+
+        for i in 0..h2.num_atoms(){
+            for k in 0..3{
+                assert!(is_close(grad[i][k], num_grad[i][k], 1E-6));
+            }
+        }
+    }
+
+    /// Test that numerical gradients doesn't shift atoms
+    #[test]
+    fn test_numerical_gradient_leaves_coordinates_unchanged(){
+
+        let mut h2 = h2();
+        let mut uff = UFF::new(&h2);
+        let init_energy = h2.energy(&mut uff);
+
+        let _ = h2.numerical_gradient(&mut uff);
+        assert!(is_very_close(h2.energy(&mut uff), init_energy));
     }
 
 }

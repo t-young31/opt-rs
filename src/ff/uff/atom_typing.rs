@@ -1,4 +1,4 @@
-use crate::atoms::Atom;
+use crate::atoms::{Atom, AtomicNumber};
 use crate::Molecule;
 
 /// See Table 1 in J. Am. Chem. Soc. 1992, 114, 25, 10024–10035
@@ -46,6 +46,12 @@ impl UFFAtomType {
 
         if atom.atomic_symbol() == self.atomic_symbol{ 2 }
         else { 0 }
+    }
+
+    /// GMP (generalized Mulliken-Pauling) electronegativity
+    pub fn gmp_electronegativity(&self) -> f64{
+
+        AtomicNumber::from_string(self.atomic_symbol).unwrap().gmp_electronegativity()
     }
 }
 

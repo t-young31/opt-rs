@@ -20,8 +20,16 @@ impl EnergyFunction for HarmonicBond {
 
     /// Add the gradient for this term
     fn add_gradient(&self,
-                    coordinates:      &Vec<CartesianCoordinate>,
-                    current_gradient: &Vec<CartesianCoordinate>) -> &Vec<CartesianCoordinate> {
-        todo!()
+                    x:        &Vec<CartesianCoordinate>,
+                    gradient: &mut Vec<CartesianCoordinate>){
+
+        let r = distance(self.i, self.j, x);
+
+        for k in 0..3{
+            let val = self.k * (1.0 - self.r0 / r) * (x[self.i][k] - x[self.j][k]);
+
+            gradient[self.i][k] += val;
+            gradient[self.j][k] -= val;
+        }
     }
 }

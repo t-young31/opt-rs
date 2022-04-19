@@ -12,10 +12,11 @@ pub trait Forcefield {
     fn gradient(&mut self, coordinates: &Vec<CartesianCoordinate>) -> &Vec<CartesianCoordinate>;
 }
 
+
 pub trait EnergyFunction{
     fn energy(&self, coordinates: &Vec<CartesianCoordinate>) -> f64;
 
     fn add_gradient(&self,
                     coordinates:      &Vec<CartesianCoordinate>,
-                    current_gradient: &Vec<CartesianCoordinate>) -> &Vec<CartesianCoordinate>;
+                    current_gradient: &mut Vec<CartesianCoordinate>);
 }

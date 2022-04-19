@@ -72,9 +72,41 @@ impl Molecule{
     }
 
     /// Energy of this molecule using a FF
-    pub fn energy(&self, forcefield: &dyn Forcefield){
-        // TODO
+    pub fn energy(&self, forcefield: &mut dyn Forcefield) -> f64{
+        forcefield.energy(&self.coordinates)
     }
+
+    /// Gradient of the energy with respect to the positions
+    pub fn gradient(&mut self,
+                    forcefield: &mut dyn Forcefield) -> Vec<CartesianCoordinate>{
+        forcefield.gradient(&self.coordinates).clone()
+    }
+
+    /// Numerical gradient evaluated using central differences
+    pub fn numerical_gradient(&mut self,
+                              forcefield: &mut dyn Forcefield) -> Vec<CartesianCoordinate>{
+
+        let h: f64 = 1E-6;
+        let mut grad = self.coordinates.clone();
+
+        for i in 0..self.num_atoms(){
+            for (k, _) in ['x', 'y', 'z'].iter().enumerate(){
+
+                let mut coords = self.coordinates.clone();
+
+                coords[i][k] -= h;                                              //  -> -h
+                let e_minus = forcefield.energy(&coords);
+
+                coords[i][k] += 2.0 * h;                                        //  -> +h
+                let e_plus = forcefield.energy(&coords);
+
+                grad[i][k] = (e_plus - e_minus) / (2.0 * h);
+            }
+        }
+
+        grad
+    }
+
 
     /// Optimise the positions of the atoms given a forcefield
     pub fn optimise(&mut self, forcefield: &dyn Forcefield){
