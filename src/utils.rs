@@ -6,8 +6,13 @@ pub fn is_very_close(x: f64, y: f64) -> bool{
 
 pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
     // Are two numbers close to within an absolute tolerance?
+
+    if (x - y).abs() <= atol{
+        return true
+    }
+
     println!("\nleft = {}\nright = {}", x, y);
-    (x - y).abs() <= atol
+    return false
 }
 
 

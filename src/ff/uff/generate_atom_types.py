@@ -60,6 +60,7 @@ class AtomType:
                 f'aromatic: {"true" if self.aromatic else "false"}, '
                 f'valency: {self.valency}, '
                 f'oxidation_state: {self.oxidation_state}, '
+                f'environment: CoordinationEnvironment::None, '
                 f'r: {self.r}, '
                 f'theta: {self.theta:.5f}, '
                 f'x: {self.x}, '
@@ -75,7 +76,8 @@ if __name__ == '__main__':
 
     with open('atom_types.rs', 'w') as file:
 
-        print('use crate::ff::uff::atom_typing::UFFAtomType;\n\n\n'
+        print('use crate::ff::uff::atom_typing::{CoordinationEnvironment, '
+              'UFFAtomType};\n\n\n'
               'pub(crate) const ATOM_TYPES: [UFFAtomType; 127] = [', file=file)
 
         for atom_type in atom_types:

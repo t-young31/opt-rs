@@ -1,17 +1,28 @@
 use std::collections::HashSet;
-use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
-use std::str::FromStr;
+use std::ops::Index;
 use log::{warn};
 use crate::connectivity::bonds::Bond;
+use crate::coordinates::CartesianCoordinate;
+
 
 #[derive(Default, Debug, Clone)]
 pub struct Atom{
-    pub(crate) idx:             usize,
-    pub(crate) atomic_number:   AtomicNumber,
-    pub(crate) coordinate:      CartesianCoordinate
+    pub(crate) idx:               usize,
+    pub(crate) atomic_number:     AtomicNumber,
+    pub(crate) coordinate:        CartesianCoordinate,
+    pub(crate) bonded_neighbours: Vec<usize>
 }
 
 impl Atom {
+
+    /// Construct an atom from only an atomic index and an atomic symbol
+    pub fn from_idx_and_atomic_symbol(idx: usize, atomic_symbol: &str) -> Self{
+
+        Atom{idx,
+             atomic_number: AtomicNumber::from_string(atomic_symbol).unwrap(),
+             coordinate: CartesianCoordinate::default(),
+             bonded_neighbours: Default::default()}
+    }
 
     /// Atomic symbol of this atom
     pub fn atomic_symbol(&self) -> &str{
@@ -47,25 +58,13 @@ impl Atom {
     /// Covalent radius of this atom
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 
-    /// Determine a list of atom indices that are bonded to this one
-    pub fn bonded_neighbour_idxs(&self, bonds: &HashSet<Bond>) -> Vec<usize>{
-        // TODO: Remove multiple calls of this function
-
-        let mut neighbours: Vec<usize> = Default::default();
-
-        for bond in bonds{
-            if bond.contains(self){
-                neighbours.push(bond.other(self.idx).unwrap());
-            }
-        }
-        neighbours
-    }
-
     /// Number of bonded neighbours
     pub fn num_bonded_neighbours(&self, bonds: &HashSet<Bond>) -> usize{
 
         bonds.iter().filter(|b| b.contains(self)).count()
     }
+
+    pub fn group(&self) -> usize{self.atomic_number.group()}
 }
 
 impl PartialEq for Atom {
@@ -75,101 +74,6 @@ impl PartialEq for Atom {
 }
 
 impl Eq for Atom {}
-
-#[derive(Default, Clone, Debug)]
-pub struct CartesianCoordinate{
-    pub x: f64,
-    pub y: f64,
-    pub z: f64
-}
-
-impl CartesianCoordinate {
-
-    /// Create a cartesian coordinate from a set of optional strings
-    pub fn from_option_strings(x: Option<&str>,
-                               y: Option<&str>,
-                               z: Option<&str>
-                               ) -> Result<Self, &'static str>{
-
-        for k in [x, y, z]{
-            if k.is_none() {
-                return Err("An optional was None")
-            }
-            if f64::from_str(k.unwrap()).is_err(){
-                return Err("Failed to parse float")
-            };
-        }
-
-        let coord = CartesianCoordinate{
-            x: x.unwrap().parse::<f64>().unwrap(),
-            y: y.unwrap().parse::<f64>().unwrap(),
-            z: z.unwrap().parse::<f64>().unwrap()
-        };
-
-        Ok(coord)
-    }
-}
-
-impl Add for CartesianCoordinate {        // +  operator
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self {x: self.x + other.x,
-              y: self.y + other.y,
-              z: self.z + other.z}
-    }
-}
-
-impl Sub for CartesianCoordinate {        // -  operator
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        Self {x: self.x - other.x,
-            y: self.y - other.y,
-            z: self.z - other.z}
-    }
-}
-
-impl AddAssign for CartesianCoordinate {   // +=  operator
-    fn add_assign(&mut self, rhs: Self) {
-        self.x += rhs.x;
-        self.y += rhs.y;
-        self.z += rhs.z;
-    }
-}
-
-impl SubAssign for CartesianCoordinate {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.x -= rhs.x;
-        self.y -= rhs.y;
-        self.z -= rhs.z;
-    }
-}
-
-impl Index<usize> for CartesianCoordinate {
-    type Output = f64;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        match index {
-            0 => &self.x,
-            1 => &self.y,
-            2 => &self.z,
-            n => panic!("Invalid Vector3d index: {}", n)
-        }
-    }
-}
-
-impl IndexMut<usize> for CartesianCoordinate {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        match index {
-            0 => &mut self.x,
-            1 => &mut self.y,
-            2 => &mut self.z,
-            n => panic!("Invalid Vector3d index: {}", n)
-        }
-    }
-}
-
 
 #[derive(Default, Clone, Debug)]
 pub struct AtomicNumber{
@@ -256,6 +160,23 @@ impl AtomicNumber {
         }
     }
 
+    /// Group in the periodic table of this atom
+    pub fn group(&self) -> usize{
+
+        let index = self.index();
+        let mut x = index;
+
+        if index == 0{ return 1 }
+
+        x += 16;  // Period 1
+
+        if index > 3 { x += 10 }
+        if index > 11{ x += 10 }
+        if index > 55{ x -= 14 }
+        if index > 87{ x -= 14 }
+
+        x % 18 + 1
+    }
 }
 
 impl PartialEq for AtomicNumber {
@@ -263,7 +184,6 @@ impl PartialEq for AtomicNumber {
         self.value == other.value
     }
 }
-
 
 
 static ELEMENTS: [&'static str; 118] = [
@@ -328,5 +248,22 @@ mod tests{
         assert_eq!(AtomicNumber::from_integer(1), AtomicNumber::from_string("H"));
     }
 
-}
+    /// Test that the group is correct for some random elements
+    #[test]
+    fn test_atom_group(){
 
+        fn group(symbol: &str) -> usize{
+            AtomicNumber::from_string(symbol).unwrap().group()
+        }
+
+        assert_eq!(group("H"), 1);
+        assert_eq!(group("He"), 18);
+        assert_eq!(group("Be"), 2);
+        assert_eq!(group("C"), 14);
+        assert_eq!(group("P"), 15);
+        assert_eq!(group("Mo"), 6);
+        assert_eq!(group("Po"), 16);
+        assert_eq!(group("Ds"), 10);
+        assert_eq!(group("Cd"), 12);
+    }
+}

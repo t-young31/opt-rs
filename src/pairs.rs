@@ -1,4 +1,6 @@
-use crate::atoms::{Atom, CartesianCoordinate};
+use crate::atoms::Atom;
+use crate::coordinates::CartesianCoordinate;
+
 
 #[inline(always)]
 pub fn distance(i: usize, j: usize, x: &Vec<CartesianCoordinate>) -> f64{

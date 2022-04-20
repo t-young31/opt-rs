@@ -14,6 +14,7 @@ mod io;
 mod opt;
 mod utils;
 mod pairs;
+mod coordinates;
 
 use clap::Parser;
 

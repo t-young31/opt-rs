@@ -32,6 +32,11 @@ impl Bond {
         atom.idx == self.pair.i || atom.idx == self.pair.j
     }
 
+    /// Does this bond contain a particular atomic index?
+    pub fn contains_index(&self, idx: usize) -> bool{
+        idx == self.pair.i || idx == self.pair.j
+    }
+
     /// Given the index of an atom that may, or may not be present in this bond, return the other
     /// atom index in the bond, if present.
     pub fn other(&self, idx: usize) -> Option<usize>{
@@ -49,7 +54,7 @@ impl PartialEq for Bond {
 impl Eq for Bond {}
 
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, PartialEq)]
 pub enum BondOrder{
     Single,
     Aromatic,

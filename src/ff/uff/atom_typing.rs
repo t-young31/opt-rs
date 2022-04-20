@@ -14,6 +14,7 @@ pub(crate) struct UFFAtomType{
     pub aromatic:        bool,          // Is this aromatic?
     pub valency:         usize,         // Number of bonded neighbours
     pub oxidation_state: usize,         // Formal charge
+    pub environment:     CoordinationEnvironment,
 
     pub r:     f64,                     // Bonded distance (Å)
     pub theta: f64,                     // Angle (radians)
@@ -23,6 +24,22 @@ pub(crate) struct UFFAtomType{
     pub z_eff: f64                      // Effective charge (e)
 }
 
+
+#[derive(Debug, Hash, PartialEq, Clone)]
+pub enum CoordinationEnvironment{
+    None,
+    Linear,
+    Bent,
+    TrigonalPlanar,
+    SquarePlanar,
+    Tetrahedral,
+    TrigonalBipyramidal,
+    Octahedral
+}
+
+impl Default for CoordinationEnvironment {
+    fn default() -> Self { CoordinationEnvironment::None }
+}
 
 impl UFFAtomType {
 
@@ -34,7 +51,7 @@ impl UFFAtomType {
         let mut value: i64 = 0;
 
         value += self.match_quality_atomic_symbol(atom);
-        value -= (atom.num_bonded_neighbours(molecule.bonds()) as i64 - self.valency as i64).abs();
+        value -= (atom.bonded_neighbours.len() as i64 - self.valency as i64).abs();
 
         // TODO: Match on more things
 
@@ -52,6 +69,19 @@ impl UFFAtomType {
     pub fn gmp_electronegativity(&self) -> f64{
 
         AtomicNumber::from_string(self.atomic_symbol).unwrap().gmp_electronegativity()
+    }
+
+    /// Set the coordination environment of this atom type given an atom with bonded neighbours
+    pub fn set_coordination_environment(&mut self, atom: &Atom){
+
+        let valency = atom.bonded_neighbours.len();
+
+        if atom.group() == 16 && valency == 2{
+            self.environment = CoordinationEnvironment::Bent;
+        }
+
+
+        //TODO
     }
 }
 

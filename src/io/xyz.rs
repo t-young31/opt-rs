@@ -3,7 +3,8 @@ use std::fs::File;
 use std::path::Path;
 use std::io::{self, BufRead, Write};
 use log::{info, warn};
-use crate::atoms::{CartesianCoordinate, AtomicNumber};
+use crate::atoms::AtomicNumber;
+use crate::coordinates::CartesianCoordinate;
 use crate::Molecule;
 
 

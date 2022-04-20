@@ -1,4 +1,4 @@
-use crate::atoms::CartesianCoordinate;
+use crate::coordinates::CartesianCoordinate;
 use crate::ff::forcefield::EnergyFunction;
 use crate::pairs::distance;
 

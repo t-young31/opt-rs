@@ -1,4 +1,4 @@
-use crate::atoms::CartesianCoordinate;
+use crate::coordinates::CartesianCoordinate;
 use crate::Molecule;
 
 pub trait Forcefield {

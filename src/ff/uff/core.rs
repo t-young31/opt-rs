@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use crate::{Forcefield, Molecule};
-use crate::atoms::CartesianCoordinate;
+use crate::coordinates::CartesianCoordinate;
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::forcefield::EnergyFunction;
 use crate::ff::uff::atom_typing::UFFAtomType;
@@ -114,7 +114,10 @@ impl Forcefield for UFF {
                 .map(|(index, _)| index)
                 .expect("Failed to find a best match");
 
-            self.atom_types.push(ATOM_TYPES[best_match].clone());
+            let mut atom_type = ATOM_TYPES[best_match].clone();
+            atom_type.set_coordination_environment(atom);
+
+            self.atom_types.push(atom_type);
         }
     }
 
@@ -157,6 +160,8 @@ impl Forcefield for UFF {
 
 #[cfg(test)]
 mod tests{
+    use crate::connectivity::bonds::{Bond, BondOrder};
+    use crate::pairs::distance;
     use super::*;
     use crate::utils::*;
 
@@ -262,6 +267,40 @@ mod tests{
 
         let _ = h2.numerical_gradient(&mut uff);
         assert!(is_very_close(h2.energy(&mut uff), init_energy));
+    }
+
+    /// The UFF force field should have a minimum in the energy of H2 around 0.741 Å
+    #[test]
+    fn test_minimum_in_h2_is_near_true_bond_length(){
+
+        let mut min_energy = f64::MAX;
+        let mut min_r = f64::MAX;
+
+        let mut h2 = h2();
+        let mut uff = UFF::new(&h2);
+
+        assert_eq!(h2.bonds().get(&Bond::from_atom_indices(0, 1)).unwrap().order,
+                   BondOrder::Single);
+
+        // Ensure the minimum energy bond length is the same as the one obtained from avogadro
+        assert!(is_close(uff.r0(0, 1, BondOrder::Single.value()), 0.708, 1E-3));
+
+        for i in 0..100{
+            let r = 0.5 + (i as f64 * 0.01);   // 0.5 + x Å
+
+            h2.coordinates[0].x = r;
+
+            assert!(is_very_close(distance(0, 1, &h2.coordinates), r));
+
+            let energy = uff.energy(&h2.coordinates);
+
+            if energy < min_energy{
+                min_energy = energy;
+                min_r = r;
+            }
+        }
+
+        assert!(is_close(min_r, 0.741, 1E-1))
     }
 
 }

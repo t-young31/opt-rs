@@ -1,10 +1,11 @@
 use std::cmp::Ordering::Equal;
 use std::collections::HashSet;
 use log::info;
-use crate::atoms::{Atom, AtomicNumber, CartesianCoordinate};
+use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::Bond;
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::Dihedral;
+use crate::coordinates::CartesianCoordinate;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
@@ -107,7 +108,6 @@ impl Molecule{
         grad
     }
 
-
     /// Optimise the positions of the atoms given a forcefield
     pub fn optimise(&mut self, forcefield: &dyn Forcefield){
         // TODO
@@ -127,9 +127,15 @@ impl Molecule{
 
             let coord = self.coordinates.get(i).expect("N_atoms != N_coords");
 
-            atoms.push(Atom{idx: i,
-                            atomic_number: atomic_number.clone(),
-                            coordinate:    coord.clone()});
+            let mut neighbours: Vec<usize> = self.connectivity.bonds.iter()
+                .filter(|b| b.contains_index(i))
+                .map(|b| b.other(i).unwrap())
+                .collect();
+
+            atoms.push(Atom{idx:         i,
+                            atomic_number:     atomic_number.clone(),
+                            coordinate:        coord.clone(),
+                            bonded_neighbours: neighbours});
         }
         atoms
     }
@@ -232,7 +238,7 @@ impl Molecule{
 
         let all_neighbours: Vec<Vec<usize>> = self.atoms()
                 .iter()
-                .map(|a| a.bonded_neighbour_idxs(&self.connectivity.bonds))
+                .map(|a| a.bonded_neighbours.clone())
                 .collect();
 
         for bond in self.connectivity.bonds.iter(){
@@ -253,7 +259,6 @@ impl Molecule{
                 } // neighbour_j
             }  // neighbour_i
         } // bond
-
     }
 
     /// Add all pairs (i, j) of atoms which are non-bonded thus are subject to Lennard Jones
@@ -265,11 +270,11 @@ impl Molecule{
             for atom_j in self.atoms().iter(){
 
                 if self.contains_bond_between(atom_i.idx, atom_j.idx){
-                   continue;  // Skip bonded pairs
+                    continue;  // Skip bonded pairs
                 }
 
                 if atom_i.idx <= atom_j.idx{
-                    continue;
+                    continue;  // Only add unique pairs
                 }
 
                 self.non_bonded_pairs.insert(NBPair::from_atoms(atom_i, atom_j));
@@ -486,13 +491,8 @@ mod tests{
     #[test]
     fn test_bond_contains_and_other(){
 
-        let atom_i = Atom{idx: 0,
-                          atomic_number: AtomicNumber::from_string("C").unwrap(),
-                          coordinate: CartesianCoordinate::default()};
-
-        let atom_j = Atom{idx: 3,
-                          atomic_number: AtomicNumber::from_string("H").unwrap(),
-                          coordinate: CartesianCoordinate::default()};
+        let atom_i = Atom::from_idx_and_atomic_symbol(0, "C");
+        let atom_j = Atom::from_idx_and_atomic_symbol(3, "H");
 
         let bond = Bond::from_atoms(&atom_i, &atom_j);
 
