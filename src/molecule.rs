@@ -13,6 +13,7 @@ use crate::Forcefield;
 
 pub struct Molecule{
 
+    pub charge: usize,
     pub coordinates:  Vec<CartesianCoordinate>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
@@ -61,6 +62,7 @@ impl Molecule{
                                    coordinates:    Vec<CartesianCoordinate>) -> Self{
 
         let mut molecule = Molecule{coordinates,
+            charge: 0,
             atomic_numbers,
             connectivity:     Default::default(),
             non_bonded_pairs: Default::default()};
@@ -135,9 +137,22 @@ impl Molecule{
             atoms.push(Atom{idx:         i,
                             atomic_number:     atomic_number.clone(),
                             coordinate:        coord.clone(),
-                            bonded_neighbours: neighbours});
+                            bonded_neighbours: neighbours,
+                            formal_charge:     0});
         }
+
+        self.set_formal_charges(&mut atoms);
+
         atoms
+    }
+
+    /// Set the formal charges for a set of atoms given this connectivity
+    fn set_formal_charges(&self, atoms: &mut Vec<Atom>){
+
+        // Assign + to least electronegative atom and - to most
+        // distribute evenly between equiv atoms
+
+        todo!()
     }
 
     /// Number of atoms in this molecule
@@ -170,10 +185,10 @@ impl Molecule{
         self.connectivity.bonds.clear();
 
         for atom_i in self.atoms().iter(){
-            for neighbour in Neighbours::from_atom_and_molecule(atom_i, self).iter(){
 
-                 self.add_bond(atom_i, &neighbour.atom)
-            }
+            Neighbours::from_atom_and_molecule(atom_i, self)
+                .iter()
+                .map(|n| self.add_bond(atom_i, &n.atom));
         }
 
         // TODO: set bond orders
