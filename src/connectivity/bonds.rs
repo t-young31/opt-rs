@@ -1,13 +1,13 @@
+use std::ops::Index;
 use crate::atoms::Atom;
 use crate::pairs::AtomPair;
 
 
-#[derive(Default, Debug, Hash)]
+#[derive(Default, Debug, Hash, Clone)]
 pub struct Bond{
     pub(crate) pair:  AtomPair,
     pub(crate) order: BondOrder
 }
-
 
 impl Bond {
 
@@ -53,8 +53,22 @@ impl PartialEq for Bond {
 
 impl Eq for Bond {}
 
+impl Index<usize> for Bond {
+    type Output = usize;
 
-#[derive(Debug, Hash, PartialEq)]
+    /// Index of the atoms that comprise this bond
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.pair.i,
+            1 => &self.pair.j,
+            n => panic!("Invalid Vector3d index: {}", n)
+        }
+    }
+}
+
+
+
+#[derive(Debug, Hash, PartialEq, Clone)]
 pub enum BondOrder{
     Single,
     Aromatic,

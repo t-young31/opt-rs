@@ -3,6 +3,7 @@ use std::ops::Index;
 use log::{info, warn};
 use crate::connectivity::bonds::Bond;
 use crate::coordinates::CartesianCoordinate;
+use crate::utils::is_very_close;
 
 
 #[derive(Default, Debug, Clone)]
@@ -11,7 +12,7 @@ pub struct Atom{
     pub(crate) atomic_number:     AtomicNumber,
     pub(crate) coordinate:        CartesianCoordinate,
     pub(crate) bonded_neighbours: Vec<usize>,
-    pub(crate) formal_charge:     usize
+    pub(crate) formal_charge:     f64
 }
 
 impl Atom {
@@ -28,7 +29,7 @@ impl Atom {
              atomic_number:     AtomicNumber::from_string(atomic_symbol).unwrap(),
              coordinate:        CartesianCoordinate::default(),
              bonded_neighbours: Default::default(),
-             formal_charge:     0}
+             formal_charge:     0.0}
     }
 
     /// Atomic symbol of this atom
@@ -65,19 +66,13 @@ impl Atom {
     /// Covalent radius of this atom
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 
-    /// Number of bonded neighbours
-    pub fn num_bonded_neighbours(&self, bonds: &HashSet<Bond>) -> usize{
-
-        bonds.iter().filter(|b| b.contains(self)).count()
-    }
-
     /// Group that this atom is in within the periodic table
     pub fn group(&self) -> usize{self.atomic_number.group()}
 
     /// Is this atom a d8 transition metal, defined by
     pub fn is_d8(&self) -> bool {
 
-        self.is_a_transition_metal() && self.group() - self.formal_charge == 8
+        self.is_a_transition_metal() && is_very_close(self.group() as f64 - self.formal_charge, 8.0)
     }
 
     /// Is this atom a transition metal?
@@ -90,6 +85,41 @@ impl Atom {
     /// This this atom a metal?
     pub fn is_metal(&self) -> bool{
         METALLIC_ELEMENTS.contains(&self.atomic_symbol())
+    }
+
+    /// Number of valance electrons that could participate in bonding
+    pub fn num_valance_electrons(&self) -> i32{
+
+        match self.group() {
+            1 => 1,
+            2 => 2,
+            13 => 3,
+            14 => 4,
+            15 => 5,
+            16 => 6,
+            17 => 7,
+            _ => 0
+        }
+
+        // TODO: Metals
+    }
+
+    /// Number of unpaired electrons that may be present on this atom
+    pub fn num_possible_unpaired_electrons(&self) -> i32{
+
+        if self.group() < 13{
+            warn!("Unknown number of unpaired electrons. Returning 0");
+            return 0;
+        }
+
+        self.num_valance_electrons() - self.bonded_neighbours.len() as i32
+    }
+
+    /// Can this atom form multiple bonds with others?
+    pub fn can_form_multiple_bonds(&self) -> bool{
+        static GROUPS: [usize; 3] = [14, 15, 16];
+
+        GROUPS.contains(&self.group())
     }
 }
 
@@ -209,6 +239,7 @@ impl AtomicNumber {
 
         x % 18 + 1
     }
+
 }
 
 impl PartialEq for AtomicNumber {
