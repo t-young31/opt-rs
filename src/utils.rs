@@ -16,17 +16,6 @@ pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
 }
 
 
-/*
-   /$$                           /$$
-  | $$                          | $$
- /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
-|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
-  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
-  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
-  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
-   \___/   \_______/|_______/    \___/ |_______/
- */
-
 pub(crate) fn remove_file_or_panic(filename: &str){
     std::fs::remove_file(filename).expect("Failed to remove file")
 }
@@ -52,7 +41,6 @@ pub(crate) fn print_dihydrogen_xyz_file(filename: &str){
         .expect(filename)
 }
 
-
 pub(crate) fn print_water_xyz_file(filename: &str){
 
     std::fs::write(filename,
@@ -60,5 +48,49 @@ pub(crate) fn print_water_xyz_file(filename: &str){
                         O    -0.00110   0.36310  -0.00000\n\
                         H    -0.82500  -0.18190  -0.00000\n\
                         H     0.82610  -0.18120   0.00000\n")
+        .expect(filename)
+}
+
+
+pub(crate) fn print_ethene_xyz_file(filename: &str){
+
+    std::fs::write(filename,
+                   "6\n\n\
+C         -4.22149        2.30283        0.00000\n\
+C         -2.90167        2.47646        0.00000\n\
+H         -4.69362        1.69525        0.76527\n\
+H         -4.83470        2.76763       -0.76527\n\
+H         -2.28846        2.01166        0.76527\n\
+H         -2.42954        3.08405       -0.76527\n")
+        .expect(filename)
+}
+
+pub(crate) fn print_h2coh_xyz_file(filename: &str){
+
+    std::fs::write(filename,
+                   "5\n\n\
+C         -4.15592        2.32790       -0.02306\n\
+O         -2.94565        2.49183       -0.02968\n\
+H         -4.61267        1.71790        0.74844\n\
+H         -4.78306        2.78690       -0.78277\n\
+H         -2.52046        3.03273       -0.71007\n")
+        .expect(filename)
+}
+
+pub(crate) fn print_pdcl2nh3h_xyz_file(filename: &str){
+
+    std::fs::write(filename,
+                   "11\n\n
+Pd        -1.47702       -0.03376        0.00040\n\
+Cl        -1.30219       -2.34599       -0.00127\n\
+Cl        -1.65184        2.27864       -0.00187\n\
+N         -3.48953       -0.16197        0.00064\n\
+N          0.53554        0.09400        0.00017\n\
+H         -3.86878        0.39258        0.80030\n\
+H         -3.79567       -1.15526        0.09806\n\
+H         -3.85655        0.22609       -0.89684\n\
+H          0.84241        1.09170        0.00023\n\
+H          0.90826       -0.38020       -0.85254\n\
+H          0.90845       -0.38034        0.85272\n")
         .expect(filename)
 }

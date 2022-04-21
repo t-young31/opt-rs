@@ -31,10 +31,12 @@ pub enum CoordinationEnvironment{
     Linear,
     Bent,
     TrigonalPlanar,
+    TrigonalPyramidal,
     SquarePlanar,
     Tetrahedral,
     TrigonalBipyramidal,
-    Octahedral
+    Octahedral,
+    Unknown
 }
 
 impl Default for CoordinationEnvironment {
@@ -76,12 +78,37 @@ impl UFFAtomType {
 
         let valency = atom.bonded_neighbours.len();
 
-        if atom.group() == 16 && valency == 2{
-            self.environment = CoordinationEnvironment::Bent;
+        match valency {
+            0 => {self.environment = CoordinationEnvironment::None;},
+
+            1 => {self.environment = CoordinationEnvironment::Linear;}
+
+            2 => {
+                match atom.group() {
+                    15 | 16 => {self.environment = CoordinationEnvironment::Bent;},
+                    _  => {self.environment = CoordinationEnvironment::Linear;}
+                }
+            }
+
+            3 => {
+                match atom.group() {
+                    15 => {self.environment = CoordinationEnvironment::TrigonalPyramidal;},
+                    _ => {self.environment = CoordinationEnvironment::TrigonalPlanar;}
+                }
+            }
+
+            4 => {
+                if atom.is_d8() || atom.atomic_symbol() == "Xe"{
+                    self.environment = CoordinationEnvironment::SquarePlanar;
+                }
+                else {self.environment = CoordinationEnvironment::Tetrahedral;}
+            }
+            5 => {self.environment = CoordinationEnvironment::TrigonalBipyramidal;}
+
+            6 => {self.environment = CoordinationEnvironment::Octahedral;}
+
+            _ => {self.environment = CoordinationEnvironment::Unknown;}
         }
-
-
-        //TODO
     }
 }
 

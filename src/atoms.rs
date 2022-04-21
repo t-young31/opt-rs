@@ -1,8 +1,9 @@
 use std::collections::HashSet;
 use std::ops::Index;
-use log::{warn};
+use log::{info, warn};
 use crate::connectivity::bonds::Bond;
 use crate::coordinates::CartesianCoordinate;
+use crate::utils::is_very_close;
 
 
 #[derive(Default, Debug, Clone)]
@@ -10,18 +11,25 @@ pub struct Atom{
     pub(crate) idx:               usize,
     pub(crate) atomic_number:     AtomicNumber,
     pub(crate) coordinate:        CartesianCoordinate,
-    pub(crate) bonded_neighbours: Vec<usize>
+    pub(crate) bonded_neighbours: Vec<usize>,
+    pub(crate) formal_charge:     f64
 }
 
 impl Atom {
+
+    /// Minimal constructor for an atom with an atomic index of 0
+    pub fn from_atomic_symbol(atomic_symbol: &str) -> Self{
+        Atom::from_idx_and_atomic_symbol(0, atomic_symbol)
+    }
 
     /// Construct an atom from only an atomic index and an atomic symbol
     pub fn from_idx_and_atomic_symbol(idx: usize, atomic_symbol: &str) -> Self{
 
         Atom{idx,
-             atomic_number: AtomicNumber::from_string(atomic_symbol).unwrap(),
-             coordinate: CartesianCoordinate::default(),
-             bonded_neighbours: Default::default()}
+             atomic_number:     AtomicNumber::from_string(atomic_symbol).unwrap(),
+             coordinate:        CartesianCoordinate::default(),
+             bonded_neighbours: Default::default(),
+             formal_charge:     0.0}
     }
 
     /// Atomic symbol of this atom
@@ -58,13 +66,67 @@ impl Atom {
     /// Covalent radius of this atom
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 
-    /// Number of bonded neighbours
-    pub fn num_bonded_neighbours(&self, bonds: &HashSet<Bond>) -> usize{
+    /// Group that this atom is in within the periodic table
+    pub fn group(&self) -> usize{self.atomic_number.group()}
 
-        bonds.iter().filter(|b| b.contains(self)).count()
+    /// Is this atom a d8 transition metal, defined by
+    pub fn is_d8(&self) -> bool {
+        self.is_a_transition_metal() && is_very_close(self.dn(), 8.0)
     }
 
-    pub fn group(&self) -> usize{self.atomic_number.group()}
+    /// Number of d electrons
+    pub fn dn(&self) -> f64{
+
+        match self.is_a_transition_metal() {
+            true => {self.group() as f64 - self.formal_charge},
+            false => {0.0}
+        }
+    }
+
+    /// Is this atom a transition metal?
+    pub fn is_a_transition_metal(&self) -> bool{
+        let a = self.atomic_number.value;
+
+        a < 31 && a > 20 || a < 48 && a > 38 || a < 81 && a > 71 || a < 113 && a > 103
+    }
+
+    /// This this atom a metal?
+    pub fn is_metal(&self) -> bool{
+        METALLIC_ELEMENTS.contains(&self.atomic_symbol())
+    }
+
+    /// Number of valance electrons that could participate in bonding
+    pub fn num_valance_electrons(&self) -> i32{
+
+        match self.group() {
+            13 => 3,
+            14 => 4,
+            15 => 5,
+            16 => 6,
+            17 => 7,
+            _ => self.group() as i32
+        }
+
+        // TODO: Metals
+    }
+
+    /// Number of unpaired electrons that may be present on this atom
+    pub fn num_possible_unpaired_electrons(&self) -> i32{
+
+        if self.group() < 13{
+            warn!("Unknown number of unpaired electrons. Returning 0");
+            return 0;
+        }
+
+        self.num_valance_electrons() - self.bonded_neighbours.len() as i32
+    }
+
+    /// Can this atom form multiple bonds with others?
+    pub fn can_form_multiple_bonds(&self) -> bool{
+        static GROUPS: [usize; 3] = [14, 15, 16];
+
+        GROUPS.contains(&self.group())
+    }
 }
 
 impl PartialEq for Atom {
@@ -74,6 +136,7 @@ impl PartialEq for Atom {
 }
 
 impl Eq for Atom {}
+
 
 #[derive(Default, Clone, Debug)]
 pub struct AtomicNumber{
@@ -168,6 +231,11 @@ impl AtomicNumber {
 
         if index == 0{ return 1 }
 
+        if index >= 56 && index <= 70 || index >= 88 && index <= 102{
+            info!("Lanthanides and actinides do not have a defined group. Returning 0");
+            return 0;
+        }
+
         x += 16;  // Period 1
 
         if index > 3 { x += 10 }
@@ -177,6 +245,7 @@ impl AtomicNumber {
 
         x % 18 + 1
     }
+
 }
 
 impl PartialEq for AtomicNumber {
@@ -198,6 +267,15 @@ static ELEMENTS: [&'static str; 118] = [
     "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md",
     "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn",
     "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
+];
+
+static METALLIC_ELEMENTS: [&'static str; 92] =  [
+    "Li", "Be", "Na", "Mg", "Al", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu",
+    "Zn", "Ga", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn",
+    "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
+    "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "Fr", "Ra",
+    "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf",
+    "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv"
 ];
 
 static PICOMETERS_TO_ANGSTROMS: f64 = 0.01;
@@ -265,5 +343,16 @@ mod tests{
         assert_eq!(group("Po"), 16);
         assert_eq!(group("Ds"), 10);
         assert_eq!(group("Cd"), 12);
+        assert_eq!(group("Yb"), 0);
+    }
+
+    /// Test whether atoms are metals
+    #[test]
+    fn test_metallic_atoms(){
+
+        assert!(Atom::from_atomic_symbol("Na").is_metal());
+        assert!(!Atom::from_atomic_symbol("C").is_metal());
+        assert!(Atom::from_atomic_symbol("Pt").is_metal());
+        assert!(Atom::from_atomic_symbol("Pt").is_a_transition_metal());
     }
 }

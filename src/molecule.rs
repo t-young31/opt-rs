@@ -2,7 +2,7 @@ use std::cmp::Ordering::Equal;
 use std::collections::HashSet;
 use log::info;
 use crate::atoms::{Atom, AtomicNumber};
-use crate::connectivity::bonds::Bond;
+use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::Dihedral;
 use crate::coordinates::CartesianCoordinate;
@@ -13,6 +13,7 @@ use crate::Forcefield;
 
 pub struct Molecule{
 
+    pub charge:       i32,
     pub coordinates:  Vec<CartesianCoordinate>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
@@ -61,6 +62,7 @@ impl Molecule{
                                    coordinates:    Vec<CartesianCoordinate>) -> Self{
 
         let mut molecule = Molecule{coordinates,
+            charge: 0,
             atomic_numbers,
             connectivity:     Default::default(),
             non_bonded_pairs: Default::default()};
@@ -127,7 +129,7 @@ impl Molecule{
 
             let coord = self.coordinates.get(i).expect("N_atoms != N_coords");
 
-            let mut neighbours: Vec<usize> = self.connectivity.bonds.iter()
+            let neighbours: Vec<usize> = self.connectivity.bonds.iter()
                 .filter(|b| b.contains_index(i))
                 .map(|b| b.other(i).unwrap())
                 .collect();
@@ -135,9 +137,46 @@ impl Molecule{
             atoms.push(Atom{idx:         i,
                             atomic_number:     atomic_number.clone(),
                             coordinate:        coord.clone(),
-                            bonded_neighbours: neighbours});
+                            bonded_neighbours: neighbours,
+                            formal_charge:     0.0});
         }
+
+        self.set_formal_charges(&mut atoms);
+
         atoms
+    }
+
+    /// Set the formal charges for a set of atoms given this connectivity
+    fn set_formal_charges(&self, atoms: &mut Vec<Atom>){
+
+        // Assign + to least electronegative atom and - to most
+        // distribute evenly between equiv atoms. Check for hypervalency
+
+        let mut remaining_charge: i32 = self.charge;
+
+        for atom in atoms.iter_mut(){
+            let mut n = atom.num_valance_electrons() as f64;
+            for bond in self.connectivity.bonds.iter().filter(|b| b.contains(atom)){
+                n -= bond.order.value();
+            }
+
+            while n > 2.0 {
+                n -= 2.0;   // Subtract any possible non-bonded pairs
+            }
+
+            if n.abs() > 1E-6 { // Has some unassigned electrons
+                if remaining_charge > 0{
+                    n += 1.0;
+                    remaining_charge -= 1;
+                }
+                if remaining_charge < 0{
+                    n -= 1.0;
+                    remaining_charge += 1;
+                }
+            }
+
+            atom.formal_charge = n;
+        }
     }
 
     /// Number of atoms in this molecule
@@ -165,18 +204,59 @@ impl Molecule{
     /// Add bonds between atoms based on their interatomic distance. For example H-H is consdiered
     /// bonded if the r(HH) < 0.8 Å, or so. Note that this is not particularly well defined, but
     /// essential to determining the energy with a 'classic' (i.e. non-density based) force-field
-    pub(crate) fn add_bonds(&mut self) {
+    pub(crate) fn add_bonds(&mut self){
 
         self.connectivity.bonds.clear();
 
         for atom_i in self.atoms().iter(){
-            for neighbour in Neighbours::from_atom_and_molecule(atom_i, self).iter(){
 
-                 self.add_bond(atom_i, &neighbour.atom)
+            for n in Neighbours::from_atom_and_molecule(atom_i, self).iter(){
+                self.add_bond(atom_i, &n.atom);
             }
         }
 
-        // TODO: set bond orders
+        self.set_bond_orders();
+    }
+
+    /// Set bond orders for all bonds in this molecule
+    fn set_bond_orders(&mut self){
+
+        let atoms = self.atoms();
+
+        // Iterator though a vector of bonds as the hashset doesn't support iter_mut
+        let mut bonds: Vec<_> = self.connectivity.bonds.clone().into_iter().collect();
+
+        for bond in bonds.iter_mut(){
+
+            bond.order = BondOrder::Single;   // Default to a single bond
+
+            let atom_i = &atoms[bond.pair.i];
+            let atom_j = &atoms[bond.pair.j];
+
+            if !(atom_i.can_form_multiple_bonds() && atom_j.can_form_multiple_bonds()) {
+                continue;
+            }
+
+            let mut n = atom_i.num_possible_unpaired_electrons();
+            let mut m = atom_j.num_possible_unpaired_electrons();
+
+            if n.min(m) == 0{
+                continue; // One of the atoms doesn't have enough electrons to form a multiple bond
+            }
+
+            // Assume a single lone pair of electrons
+            if n > 3 {n -= 2;}
+            if m > 3 {m -= 2;}
+
+
+            match n.min(m) {
+                1 => {bond.order = BondOrder::Double;}
+                2 => {bond.order = BondOrder::Triple;}
+                _ => {bond.order = BondOrder::Single;}
+            }
+        }
+
+        self.connectivity.set_bonds_from_vector_of_bonds(bonds);
     }
 
     /// Add a bond between two atoms, provided it is not already present
@@ -353,6 +433,14 @@ impl Connectivity {
         self.dihedrals.clear();
     }
 
+    /// Given a vector of bonds set the connectivity
+    fn set_bonds_from_vector_of_bonds(&mut self, bonds: Vec<Bond>){
+        self.bonds.clear();
+
+        for bond in bonds{
+            self.bonds.insert(bond);
+        }
+    }
 }
 
 /// Number of bonds present for two atoms
@@ -578,5 +666,83 @@ mod tests{
         let pair_b = NBPair{pair: AtomPair{i: 1, j: 0}};
 
         assert_eq!(pair_a, pair_b);
+    }
+
+    /// Test that some bond orders are correct
+    #[test]
+    fn test_bond_order_water(){
+
+        let filename = "test_tbow.xyz";
+        print_water_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
+
+        for bond in mol.bonds().iter(){
+            assert_eq!(bond.order, BondOrder::Single);
+        }
+
+        remove_file_or_panic(filename);
+    }
+    #[test]
+    fn test_bond_order_ethene(){
+
+        let filename = "test_tboe.xyz";
+        print_ethene_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
+
+        for bond in mol.bonds().iter(){
+            if bond.contains_index(0) && bond.contains_index(1){
+                assert_eq!(bond.order, BondOrder::Double);
+            }
+            else{
+                assert_eq!(bond.order, BondOrder::Single);
+            }
+        }
+
+        remove_file_or_panic(filename);
+    }
+    #[test]
+    fn test_bond_order_h2cnh2(){
+
+        let filename = "test_tbonh2.xyz";
+        print_ethene_xyz_file(filename);
+        let mut mol = Molecule::from_xyz_file(filename);
+        mol.atomic_numbers[1] = AtomicNumber::from_string("N").unwrap();
+        mol.connectivity.clear();
+        mol.add_bonds();
+
+        let expected_bond = Bond{pair: AtomPair{i: 0, j: 1}, order: BondOrder::Double};
+        assert!(mol.bonds().contains(&expected_bond));  // C=N
+
+        remove_file_or_panic(filename);
+    }
+    #[test]
+    fn test_bond_order_protonated_formaldehyde(){
+
+        let filename = "test_tbopf.xyz";
+        print_h2coh_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
+
+        let expected_bond = Bond{pair: AtomPair{i: 0, j: 1}, order: BondOrder::Double};
+        assert!(mol.bonds().contains(&expected_bond));
+
+        let o_atom = &mol.atoms()[1];
+        assert_eq!(o_atom.atomic_symbol(), "O");
+        assert!(is_very_close(o_atom.formal_charge, 1.0));
+
+        remove_file_or_panic(filename);
+    }
+
+    /// Test that a square planar Pd complex has a d8 atom
+    #[test]
+    fn test_square_planar_complex_has_d8_atom(){
+
+        let filename = "pd_complex_tspchda.xyz";
+        print_pdcl2nh3h_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
+
+        assert_eq!(mol.atomic_numbers[0].to_atomic_symbol(), "Pd");
+        assert!(mol.atoms()[0].is_d8());
+
+        remove_file_or_panic(filename);
     }
 }
