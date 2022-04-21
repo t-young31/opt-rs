@@ -2,20 +2,23 @@ use crate::coordinates::CartesianCoordinate;
 use crate::ff::forcefield::EnergyFunction;
 use crate::pairs::distance;
 
-
-pub struct HarmonicBond{
+pub struct HarmonicAngleTypeA{
     pub(crate) i:  usize,
     pub(crate) j:  usize,
-    pub(crate) r0: f64,
-    pub(crate) k_ij:  f64
+    pub(crate) k:  usize,
+    pub(crate) k_ijk: f64,
+    pub(crate) n:  f64
 }
 
 
-impl EnergyFunction for HarmonicBond {
+impl EnergyFunction for HarmonicAngleTypeA {
 
     /// Energy: k/2 (r-r_0)^2
     fn energy(&self, coordinates: &Vec<CartesianCoordinate>) -> f64 {
-        self.k_ij /2.0 * (distance(self.i, self.j, coordinates) - self.r0).powi(2)
+
+        let theta = (r1.dot(r2) / (distance(r1) * distance(r2))).arccos();
+
+        (self.k_ijk / self.n.powi(2)) * (1.0 - (self.n * theta).cos())
     }
 
     /// Add the gradient for this term
@@ -23,13 +26,6 @@ impl EnergyFunction for HarmonicBond {
                     x:        &Vec<CartesianCoordinate>,
                     gradient: &mut Vec<CartesianCoordinate>){
 
-        let r = distance(self.i, self.j, x);
-
-        for k in 0..3{
-            let val = self.k_ij * (1.0 - self.r0 / r) * (x[self.i][k] - x[self.j][k]);
-
-            gradient[self.i][k] += val;
-            gradient[self.j][k] -= val;
-        }
+        todo!()
     }
 }

@@ -187,6 +187,12 @@ impl Molecule{
     /// Bonds within this molecule
     pub(crate) fn bonds(&self) -> &HashSet<Bond>{ return &self.connectivity.bonds; }
 
+    /// Angles within this molecule
+    pub(crate) fn angles(&self) -> &HashSet<Angle>{ return &self.connectivity.angles; }
+
+    /// Dihedrals within this molecule
+    pub(crate) fn dihedrals(&self) -> &HashSet<Dihedral>{ return &self.connectivity.dihedrals; }
+
     /// Does this molecule have any associated bonds?
     fn has_bonds(&self) -> bool{ return !self.connectivity.bonds.is_empty() }
 

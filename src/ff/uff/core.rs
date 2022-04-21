@@ -3,7 +3,7 @@ use crate::{Forcefield, Molecule};
 use crate::coordinates::CartesianCoordinate;
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::forcefield::EnergyFunction;
-use crate::ff::uff::atom_typing::UFFAtomType;
+use crate::ff::uff::atom_typing::{CoordinationEnvironment, UFFAtomType};
 use crate::ff::uff::atom_types::ATOM_TYPES;
 
 
@@ -45,9 +45,9 @@ impl UFF {
             let i = bond.pair.i;
             let j = bond.pair.j;
             let r0 = self.r0(i, j, bond.order.value());
-            let k = self.k_bond(i, j, r0);
+            let k_ij = self.k_ij(i, j, r0);
 
-            self.energy_functions.push(Box::new(HarmonicBond{i, j, r0, k}));
+            self.energy_functions.push(Box::new(HarmonicBond{i, j, r0, k_ij }));
         }
     }
 
@@ -74,10 +74,34 @@ impl UFF {
     }
 
     /// Force constant for a harmonic bond [eqn. 6]
-    fn k_bond(&self, i: usize, j: usize, r0: f64) -> f64{
+    fn k_ij(&self, i: usize, j: usize, r0: f64) -> f64{
         664.12 * (self.atom_types[i].z_eff * self.atom_types[j].z_eff) / r0.powi(3)
     }
 
+    /// Add a term for an angle bend
+    fn add_angle_bend(&mut self, molecule: &Molecule){
+
+        for angle in molecule.angles(){
+            let i = angle.i;
+            let j = angle.j;
+            let k = angle.k;
+
+            let atom_type = &self.atom_types[j];
+
+            let theta0 = atom_type.theta;
+            let k_ijk = self.k_ijk(i, j, k, theta0);
+            let mut bend_type = 'B';
+            let n: f64 = 0.0;
+
+            match atom_type.environment {
+                CoordinationEnvironment::Linear => {bend_type = 'A'; n = }
+            }
+
+
+            self.energy_functions.push(Box::new(bend));
+        }
+
+    }
 }
 
 

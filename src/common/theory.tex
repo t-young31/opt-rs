@@ -16,7 +16,7 @@ The theory presented here is adapted from Rappe et. al, JACS, 1992.
 Equlibrium pairwise distances are given by
 
 \begin{equation}
-    r_{ij} = r_i + r_j + r_\text{BO} + r_\text{EN}
+    r_0 = r_i + r_j + r_\text{BO} + r_\text{EN}
 \end{equation}
 
 where $r_k$ is the covalant radius of atom $k$, $r_{BO}$ a correction based on the bond order between the two atoms and $r_{EN}$ a correction for the electronegativity.
@@ -31,14 +31,61 @@ where $\lambda = 0.1332$ and $n$ the bond order. For example, $n=1.5$ for aromat
     r_\text{EN} = r_i r_j \frac{(\sqrt{\chi_i} - \sqrt{\chi_j})^2}{\chi_i r_i \chi_j r_j}
 \end{equation}
 
-where $\chi_k$ is the GMP electronegativity of atom $k$.
+where $\chi_k$ is the GMP electronegativity of atom $k$. The energy is then a simple
+harmonic stretch
 
-\subsection{Force constants}
-
-
-
-
-
+\begin{equation}
+    E_{b} = \frac{k}{2}(r - r_0)^2
+\end{equation}
 
 
-\end{document} 
+\subsection{Bond Force Constants}
+
+Bond stretch force constants are defined as
+
+\begin{equation}
+    k_{ij} = 664.12 \frac{Z_i^* Z_j^*}{r_{ij}^3}
+\end{equation}
+
+where $Z_k^*$ is the effective atomic charges in units of $e$ and the energy in
+kcal mol$^{-1}$.
+
+\subsection{Angle Bends}
+
+In general, UFF defines the energy of an angle bend as
+
+\begin{equation}
+    E_{\theta} = k_{ijk} \sum_{n=0}^m C_n \cos(n\theta)
+\end{equation}
+
+where for linear ($n=1$), trigonal-planar ($n=3$), square-planar ($n=4$) and
+octahedral ($n=4$)
+
+\begin{equation}
+    E_{\theta}^\text{Type A} = \frac{k_{ijk}}{n^2} (1 - \cos(n\theta))
+\end{equation}
+
+and for other coordination envrionments with an equilibrum bond angle ($\theta_0$)
+
+\begin{equation}
+    E_{\theta}^\text{Type B} = k_{ijk}(C_0 + C_1\cos(\theta) + C_2\cos(2\theta))
+\end{equation}
+\begin{equation}
+    C_2 = \frac{1}{4\sin^2(\theta_0)} \quad ;\quad C_1 = -4C_2\cos(\theta_0)
+    \quad ; \quad C_0 = C_2(2\cos^2(\theta_0) + 1)
+\end{equation}
+
+\subsection{Angle Force Constants}
+
+Angle force constants are defined as
+
+\begin{equation}
+    k_{ijk} = \beta \frac{Z_i^* Z_k^*}{r_{ik}^5} r_{ij}r_{jk}
+    \left[r_{ij}r_{jk}(1-\cos^2(\theta_0)) - r_{ik}^2\cos(\theta_0) \right]
+\end{equation}
+\begin{equation}
+    \beta = \frac{664.12}{r_{ij} r_{jk}}
+\end{equation}
+
+
+\end{document}
