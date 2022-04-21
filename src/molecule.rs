@@ -722,14 +722,26 @@ mod tests{
         print_h2coh_xyz_file(filename);
         let mol = Molecule::from_xyz_file(filename);
 
-        println!("{:?}", mol.bonds());
-
         let expected_bond = Bond{pair: AtomPair{i: 0, j: 1}, order: BondOrder::Double};
         assert!(mol.bonds().contains(&expected_bond));
 
         let o_atom = &mol.atoms()[1];
         assert_eq!(o_atom.atomic_symbol(), "O");
         assert!(is_very_close(o_atom.formal_charge, 1.0));
+
+        remove_file_or_panic(filename);
+    }
+
+    /// Test that a square planar Pd complex has a d8 atom
+    #[test]
+    fn test_square_planar_complex_has_d8_atom(){
+
+        let filename = "pd_complex_tspchda.xyz";
+        print_pdcl2nh3h_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
+
+        assert_eq!(mol.atomic_numbers[0].to_atomic_symbol(), "Pd");
+        assert!(mol.atoms()[0].is_d8());
 
         remove_file_or_panic(filename);
     }

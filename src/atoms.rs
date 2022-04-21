@@ -71,8 +71,16 @@ impl Atom {
 
     /// Is this atom a d8 transition metal, defined by
     pub fn is_d8(&self) -> bool {
+        self.is_a_transition_metal() && is_very_close(self.dn(), 8.0)
+    }
 
-        self.is_a_transition_metal() && is_very_close(self.group() as f64 - self.formal_charge, 8.0)
+    /// Number of d electrons
+    pub fn dn(&self) -> f64{
+
+        match self.is_a_transition_metal() {
+            true => {self.group() as f64 - self.formal_charge},
+            false => {0.0}
+        }
     }
 
     /// Is this atom a transition metal?
@@ -91,14 +99,12 @@ impl Atom {
     pub fn num_valance_electrons(&self) -> i32{
 
         match self.group() {
-            1 => 1,
-            2 => 2,
             13 => 3,
             14 => 4,
             15 => 5,
             16 => 6,
             17 => 7,
-            _ => 0
+            _ => self.group() as i32
         }
 
         // TODO: Metals
