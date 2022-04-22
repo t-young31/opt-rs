@@ -1,4 +1,5 @@
-use crate::coordinates::CartesianCoordinate;
+use std::collections::HashSet;
+use crate::coordinates::Point;
 use crate::ff::forcefield::EnergyFunction;
 use crate::pairs::distance;
 
@@ -13,15 +14,21 @@ pub struct HarmonicBond{
 
 impl EnergyFunction for HarmonicBond {
 
+    fn involves_idxs(&self, idxs: Vec<usize>) -> bool {
+        idxs.len() == 2 && HashSet::from([self.i, self.j]) == HashSet::from_iter(idxs)
+    }
+
+    fn force_constant(&self) -> f64 { self.k_ij }
+
     /// Energy: k/2 (r-r_0)^2
-    fn energy(&self, coordinates: &Vec<CartesianCoordinate>) -> f64 {
+    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
         self.k_ij /2.0 * (distance(self.i, self.j, coordinates) - self.r0).powi(2)
     }
 
     /// Add the gradient for this term
     fn add_gradient(&self,
-                    x:        &Vec<CartesianCoordinate>,
-                    gradient: &mut Vec<CartesianCoordinate>){
+                    x:        &Vec<Point>,
+                    gradient: &mut Vec<Point>){
 
         let r = distance(self.i, self.j, x);
 

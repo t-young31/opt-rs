@@ -5,7 +5,7 @@ use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::Dihedral;
-use crate::coordinates::CartesianCoordinate;
+use crate::coordinates::Point;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
@@ -14,7 +14,7 @@ use crate::Forcefield;
 pub struct Molecule{
 
     pub charge:       i32,
-    pub coordinates:  Vec<CartesianCoordinate>,
+    pub coordinates:  Vec<Point>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
     non_bonded_pairs: HashSet<NBPair>,
@@ -46,12 +46,12 @@ impl Molecule{
     pub fn from_atomic_symbols(symbols: &[&str]) -> Self{
 
         let mut atomic_numbers: Vec<AtomicNumber> = Default::default();
-        let mut coords: Vec<CartesianCoordinate> = Default::default();
+        let mut coords: Vec<Point> = Default::default();
 
         for symbol in symbols{
 
             atomic_numbers.push(AtomicNumber::from_string(symbol).unwrap());
-            coords.push(CartesianCoordinate::default());
+            coords.push(Point::default());
         }
 
         Molecule::from_atomic_nums_and_coords(atomic_numbers, coords)
@@ -59,7 +59,7 @@ impl Molecule{
 
     /// Construct a molecule from a set of atomic numbers and coordinates of each atom
     fn from_atomic_nums_and_coords(atomic_numbers: Vec<AtomicNumber>,
-                                   coordinates:    Vec<CartesianCoordinate>) -> Self{
+                                   coordinates:    Vec<Point>) -> Self{
 
         let mut molecule = Molecule{coordinates,
             charge: 0,
@@ -81,13 +81,13 @@ impl Molecule{
 
     /// Gradient of the energy with respect to the positions
     pub fn gradient(&mut self,
-                    forcefield: &mut dyn Forcefield) -> Vec<CartesianCoordinate>{
+                    forcefield: &mut dyn Forcefield) -> Vec<Point>{
         forcefield.gradient(&self.coordinates).clone()
     }
 
     /// Numerical gradient evaluated using central differences
     pub fn numerical_gradient(&mut self,
-                              forcefield: &mut dyn Forcefield) -> Vec<CartesianCoordinate>{
+                              forcefield: &mut dyn Forcefield) -> Vec<Point>{
 
         let h: f64 = 1E-6;
         let mut grad = self.coordinates.clone();
@@ -151,6 +151,7 @@ impl Molecule{
 
         // Assign + to least electronegative atom and - to most
         // distribute evenly between equiv atoms. Check for hypervalency
+        // TODO: make this better
 
         let mut remaining_charge: i32 = self.charge;
 
@@ -293,20 +294,21 @@ impl Molecule{
     ///    /
     ///   i
     ///
-    fn add_angles(&mut self){
+    pub(crate) fn add_angles(&mut self){
 
         if self.num_atoms() < 3 || !self.has_bonds(){
             return;   // No MM angles in molecules with < 3 atoms or that doesn't have any bonds
         }
 
         for j in 0..self.num_atoms(){
-            for i in j+1..self.num_atoms(){
+
+            for i in 0..self.num_atoms(){
 
                 if !self.contains_bond_between(i, j){ continue; }
 
-                for k in i+1..self.num_atoms(){
+                for k in 0..self.num_atoms(){
 
-                    if !self.contains_bond_between(j, k){ continue; }
+                    if i == k || !self.contains_bond_between(j, k){ continue; }
 
                     self.connectivity.angles.insert(Angle{i, j, k});
                 }
@@ -316,7 +318,7 @@ impl Molecule{
 
     /// Add all the proper dihedrals between quadruples pf bonded atoms
     // TODO: Improper dihedrals
-    fn add_dihedrals(&mut self){
+    pub(crate) fn add_dihedrals(&mut self){
 
         if self.num_atoms() < 4{
             return;   // No dihedrals in molecules with < 4 atoms
@@ -349,7 +351,7 @@ impl Molecule{
 
     /// Add all pairs (i, j) of atoms which are non-bonded thus are subject to Lennard Jones
     /// interactions, in a classical MM forcefield
-    fn add_non_bonded_pairs(&mut self){
+    pub(crate) fn add_non_bonded_pairs(&mut self){
         self.non_bonded_pairs.clear();
 
         for atom_i in self.atoms().iter(){
@@ -524,13 +526,13 @@ mod tests{
     fn test_hypervalent_hydrogen(){
 
         let mut h2 = Molecule::from_atomic_symbols(&["H", "H"]);
-        h2.coordinates[1] = CartesianCoordinate{x: 0.77, y: 0., z: 0.};
+        h2.coordinates[1] = Point {x: 0.77, y: 0., z: 0.};
         h2.add_bonds();
         assert_eq!(h2.connectivity.bonds.len(), 1);
 
         let mut h3 = Molecule::from_atomic_symbols(&["H", "H", "H"]);
-        h3.coordinates[1] = CartesianCoordinate{x: -0.77, y: 0., z: 0.};
-        h3.coordinates[2] = CartesianCoordinate{x: 0.77,  y: 0., z: 0.};
+        h3.coordinates[1] = Point {x: -0.77, y: 0., z: 0.};
+        h3.coordinates[2] = Point {x: 0.77,  y: 0., z: 0.};
         h3.add_bonds();
 
         assert_eq!(h3.connectivity.bonds.len(), 1);
@@ -632,9 +634,9 @@ mod tests{
     fn test_no_dihedral_no_bonds(){
 
         let mut mol = Molecule::from_atomic_symbols(&["H", "H", "H", "H"]);
-        mol.coordinates[1] = CartesianCoordinate{x: 999., y: 0.,   z: 0.};
-        mol.coordinates[2] = CartesianCoordinate{x: 0.,   y: 999., z: 0.};
-        mol.coordinates[3] = CartesianCoordinate{x: 0.,   y: 0.,   z: 999.};
+        mol.coordinates[1] = Point {x: 999., y: 0.,   z: 0.};
+        mol.coordinates[2] = Point {x: 0.,   y: 999., z: 0.};
+        mol.coordinates[3] = Point {x: 0.,   y: 0.,   z: 999.};
 
         assert!(!mol.has_bonds());
         assert_eq!(mol.connectivity.dihedrals.len(), 0);

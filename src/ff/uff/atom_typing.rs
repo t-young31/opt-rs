@@ -110,6 +110,34 @@ impl UFFAtomType {
             _ => {self.environment = CoordinationEnvironment::Unknown;}
         }
     }
+
+    /// What type of bend is this atom? Defined by its coordination environment
+    pub fn bend_type(&self) -> char{
+
+        let type_a_environments = [
+            CoordinationEnvironment::Linear,
+            CoordinationEnvironment::TrigonalPlanar,
+            CoordinationEnvironment::SquarePlanar,
+            CoordinationEnvironment::Octahedral
+        ];
+
+        match type_a_environments.contains(&self.environment) {
+            true  => 'A',
+            false => 'B'
+        }
+    }
+
+    /// n defining the equilibrium bend angle π/n
+    pub fn bend_n(&self) -> f64{
+
+        match self.environment {
+            CoordinationEnvironment::Linear =>         1.,
+            CoordinationEnvironment::TrigonalPlanar => 3.,
+            CoordinationEnvironment::SquarePlanar =>   4.,
+            CoordinationEnvironment::Octahedral =>     4.,
+            _ =>                                       0.
+        }
+    }
 }
 
 

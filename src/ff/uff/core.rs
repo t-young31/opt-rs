@@ -1,10 +1,14 @@
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use crate::{Forcefield, Molecule};
-use crate::coordinates::CartesianCoordinate;
+use crate::connectivity::bonds::Bond;
+use crate::coordinates::Point;
+use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::forcefield::EnergyFunction;
 use crate::ff::uff::atom_typing::{CoordinationEnvironment, UFFAtomType};
 use crate::ff::uff::atom_types::ATOM_TYPES;
+use crate::pairs::AtomPair;
 
 
 #[derive(Default)]
@@ -13,8 +17,11 @@ pub(crate) struct UFF{
     atom_types:       Vec<UFFAtomType>,
     energy_functions: Vec<Box<dyn EnergyFunction>>,
 
+    // Cache of equilibrium bond distances (r0)
+    r0_cache:         HashMap<AtomPair, f64>,
+
     energy:           f64,
-    gradient:         Vec<CartesianCoordinate>,
+    gradient:         Vec<Point>,
 }
 
 impl UFF {
@@ -23,7 +30,7 @@ impl UFF {
     fn set_zero_gradient(&mut self, molecule: &Molecule){
 
         for _ in 0..molecule.num_atoms(){
-            self.gradient.push(CartesianCoordinate::default());
+            self.gradient.push(Point::default());
         }
     }
 
@@ -45,6 +52,8 @@ impl UFF {
             let i = bond.pair.i;
             let j = bond.pair.j;
             let r0 = self.r0(i, j, bond.order.value());
+            self.r0_cache.insert(bond.pair.clone(), r0);
+
             let k_ij = self.k_ij(i, j, r0);
 
             self.energy_functions.push(Box::new(HarmonicBond{i, j, r0, k_ij }));
@@ -79,28 +88,60 @@ impl UFF {
     }
 
     /// Add a term for an angle bend
-    fn add_angle_bend(&mut self, molecule: &Molecule){
+    fn add_angle_bends(&mut self, molecule: &Molecule) {
 
-        for angle in molecule.angles(){
+        for angle in molecule.angles() {
+
             let i = angle.i;
             let j = angle.j;
             let k = angle.k;
 
             let atom_type = &self.atom_types[j];
+            let k_ijk = self.k_ijk(i, j, k, molecule);
 
-            let theta0 = atom_type.theta;
-            let k_ijk = self.k_ijk(i, j, k, theta0);
-            let mut bend_type = 'B';
-            let n: f64 = 0.0;
+            match atom_type.bend_type() {
+                'A' => {
+                    self.energy_functions.push(Box::new(
+                        HarmonicAngleTypeA{i, j, k, k_ijk, n: atom_type.bend_n()}
+                    ));
+                },
+                'B' => {
+                    let c2 = 1. / (4. * atom_type.theta.sin().powi(2));
+                    let c1 = -4. * c2 * atom_type.theta.cos();
+                    let c0 = c2 * (2. * atom_type.theta.cos().powi(2) + 1.);
 
-            match atom_type.environment {
-                CoordinationEnvironment::Linear => {bend_type = 'A'; n = }
+                    self.energy_functions.push(Box::new(
+                        HarmonicAngleTypeB{i, j, k, k_ijk, c0, c1, c2}
+                    ));
+                },
+                _ => panic!("Cannot match on unsupported atom type")
             }
-
-
-            self.energy_functions.push(Box::new(bend));
         }
+    }
 
+    /// Bend force constant
+    fn k_ijk(&self, i: usize, j: usize, k: usize, molecule: &Molecule) -> f64{
+
+        let theta0 = self.atom_types[j].theta;
+
+        let r0_ij = self.r0_cache.get(&AtomPair{i: i, j: j})
+                                        .expect("Failed to get r_ij");
+        let r0_jk = self.r0_cache.get(&AtomPair{i: j, j: k})
+                                        .expect("Failed to get r_jk");
+
+        // Cosine rule to calculate the equilibrium distance between the (probably) non-bonded atoms
+        let r0_ik = (r0_ij.powi(2) + r0_jk.powi(2)
+                          - 2. * r0_ij * r0_jk * theta0.cos()).sqrt();
+
+        let z_i = self.atom_types[i].z_eff;
+        let z_k = self.atom_types[k].z_eff;
+
+        let beta = 664.12 / (r0_ij * r0_jk);
+
+        beta * ((z_i * z_k) / r0_ik.powi(5))
+             * (r0_ij * r0_jk * (1. - theta0.cos().powi(2))
+                - r0_ik.powi(2) * theta0.cos()
+               )
     }
 }
 
@@ -114,6 +155,7 @@ impl Forcefield for UFF {
         ff.set_atom_types(molecule);
         ff.set_zero_gradient(molecule);
         ff.add_bond_stretch(molecule);     // E_R
+        ff.add_angle_bends(molecule);
 
         ff
     }
@@ -146,7 +188,7 @@ impl Forcefield for UFF {
     }
 
     /// Evaluate the total energy of the sustem
-    fn energy(&mut self, coordinates: &Vec<CartesianCoordinate>) -> f64{
+    fn energy(&mut self, coordinates: &Vec<Point>) -> f64{
 
         self.energy = 0.0;
 
@@ -158,7 +200,7 @@ impl Forcefield for UFF {
     }
 
     /// Evaluate the gradient {dE/dX_ik, ...} for atom i and Cartesian component k
-    fn gradient(&mut self, coordinates: &Vec<CartesianCoordinate>) -> &Vec<CartesianCoordinate>{
+    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Point>{
 
         self.zero_gradient();
 
@@ -184,6 +226,7 @@ impl Forcefield for UFF {
 
 #[cfg(test)]
 mod tests{
+    use std::borrow::Borrow;
     use crate::connectivity::bonds::{Bond, BondOrder};
     use crate::pairs::distance;
     use super::*;
@@ -325,6 +368,40 @@ mod tests{
         }
 
         assert!(is_close(min_r, 0.741, 1E-1))
+    }
+
+    #[test]
+    fn test_angle_bend_amide(){
+
+        fn atom_type(string: &str) -> UFFAtomType{
+            ATOM_TYPES.iter().filter(|t| t.name ==string).next().unwrap().clone()
+        }
+
+        let mut ff = UFF::default();
+
+        ff.atom_types.push(atom_type("C_R"));
+        ff.atom_types.push(atom_type("N_R"));
+        ff.atom_types.push(atom_type("C_3"));
+
+        let mut mol = Molecule::from_atomic_symbols(&["C", "N", "C"]);
+        mol.coordinates[0].x = -1.0;
+        mol.coordinates[2].x = 1.0;
+        mol.add_bonds();
+        mol.add_angles();
+
+        assert_eq!(mol.bonds().len(), 2);  // Two C-N bonds
+        assert_eq!(mol.angles().len(), 1); // Single amide angle
+
+        ff.add_bond_stretch(&mol);
+        ff.add_angle_bends(&mol);
+
+        let bend = ff.energy_functions.iter()
+                                         .find(|f| f.as_ref().involves_idxs(Vec::from([0, 1, 2])))
+                                         .unwrap()
+                                         .as_ref();
+
+        // Ensure the force constant is close that in the UFF paper (kcal mol-1 rad-2)
+        assert!(is_close(bend.force_constant(), 105.5, 1E-1));
     }
 
 }
