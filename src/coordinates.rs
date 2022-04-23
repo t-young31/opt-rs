@@ -1,6 +1,6 @@
 use std::str::FromStr;
-use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
-use crate::pairs::distance;
+use std::ops::{Add, Sub, Index, IndexMut};
+
 
 /// Point in 3D space
 #[derive(Default, Clone, Debug)]
@@ -76,7 +76,6 @@ impl<'a, 'b> Sub<&'b Point> for &'a Point {        // -  operator
                  z: self.z - other.z}
     }
 }
-
 
 impl Index<usize> for Point {
     type Output = f64;

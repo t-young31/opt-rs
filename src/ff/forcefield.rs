@@ -19,7 +19,8 @@ pub trait EnergyFunction{
 
     fn force_constant(&self) -> f64;
 
-    fn energy(&self, coordinates: &Vec<Point>) -> f64;
+    fn energy(&self,
+              coordinates: &Vec<Point>) -> f64;
 
     fn add_gradient(&self,
                     coordinates:      &Vec<Point>,

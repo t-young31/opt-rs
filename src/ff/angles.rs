@@ -18,19 +18,40 @@ impl EnergyFunction for HarmonicAngleTypeA {
     fn force_constant(&self) -> f64 { self.k_ijk }
 
     /// Energy: k/n^2 (1-cos(nθ))
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, X: &Vec<Point>) -> f64 {
 
-        let theta = theta(self, coordinates);
+        let theta = theta(self, X);
 
         (self.k_ijk / self.n.powi(2)) * (1.0 - (self.n * theta).cos())
     }
 
     /// Add the gradient for this term
     fn add_gradient(&self,
-                    x:        &Vec<Point>,
+                    X:        &Vec<Point>,
                     gradient: &mut Vec<Point>){
 
-        todo!()
+        let x_i = X[self.i].x;
+        let y_i = X[self.i].y;
+        let z_i = X[self.i].z;
+
+        let x_j = X[self.j].x;
+        let y_j = X[self.j].y;
+        let z_j = X[self.j].z;
+
+        let x_k = X[self.k].x;
+        let y_k = X[self.k].y;
+        let z_k = X[self.k].z;
+
+        gradient[self.i].x += -self.k_ijk*((-x_i + x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-x_j + x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.i].y += -self.k_ijk*((-y_i + y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-y_j + y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.i].z += -self.k_ijk*((-z_i + z_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-z_j + z_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (z_j/2. - z_k/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.j].x += -self.k_ijk*((x_i - x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-x_j + x_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + (-x_i + 2.*x_j - x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.j].y += -self.k_ijk*((y_i - y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-y_j + y_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + (-y_i + 2.*y_j - y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.j].z += -self.k_ijk*((z_i - z_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-z_i + 2.*z_j - z_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (z_i/2. - z_j + z_k/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.k].x += -self.k_ijk*((x_i - x_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (x_j - x_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.k].y += -self.k_ijk*((y_i - y_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (y_j - y_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.k].z += -self.k_ijk*((-z_i/2. + z_j/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + (z_i - z_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+
     }
 }
 
@@ -52,19 +73,40 @@ impl EnergyFunction for HarmonicAngleTypeB {
     fn force_constant(&self) -> f64 { self.k_ijk }
 
     /// Energy: k(c0 + c1 cos(θ) + c2 cos(2θ))
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, X: &Vec<Point>) -> f64 {
 
-       let theta = theta(self, coordinates);
+       let theta = theta(self, X);
 
         self.k_ijk * (self.c0 + self.c1 * theta.cos() + self.c2 * (2. * theta).cos())
     }
 
     /// Add the gradient for this term
     fn add_gradient(&self,
-                    x:        &Vec<Point>,
+                    X:        &Vec<Point>,
                     gradient: &mut Vec<Point>){
 
-        todo!()
+        let x_i = X[self.i].x;
+        let y_i = X[self.i].y;
+        let z_i = X[self.i].z;
+
+        let x_j = X[self.j].x;
+        let y_j = X[self.j].y;
+        let z_j = X[self.j].z;
+
+        let x_k = X[self.k].x;
+        let y_k = X[self.k].y;
+        let z_k = X[self.k].z;
+
+        gradient[self.i].x += self.k_ijk*(self.c1*(-x_i + x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-x_j + x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + 2.*self.c2*((-x_i + x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-x_j + x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.i].y += self.k_ijk*(self.c1*(-y_i + y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-y_j + y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + 2.*self.c2*((-y_i + y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-y_j + y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.i].z += self.k_ijk*(self.c1*(-z_i + z_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-z_j + z_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(z_j/2. - z_k/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + 2.*self.c2*((-z_i + z_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-z_j + z_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (z_j/2. - z_k/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.j].x += self.k_ijk*(self.c1*(x_i - x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-x_j + x_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + self.c1*(-x_i + 2.*x_j - x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + 2.*self.c2*((x_i - x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-x_j + x_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + (-x_i + 2.*x_j - x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.j].y += self.k_ijk*(self.c1*(y_i - y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-y_j + y_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + self.c1*(-y_i + 2.*y_j - y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + 2.*self.c2*((y_i - y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-y_j + y_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + (-y_i + 2.*y_j - y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.j].z += self.k_ijk*(self.c1*(z_i - z_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-z_i + 2.*z_j - z_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(z_i/2. - z_j + z_k/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + 2.*self.c2*((z_i - z_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-z_i + 2.*z_j - z_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (z_i/2. - z_j + z_k/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.k].x += self.k_ijk*(self.c1*(x_i - x_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(x_j - x_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + 2.*self.c2*((x_i - x_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (x_j - x_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.k].y += self.k_ijk*(self.c1*(y_i - y_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(y_j - y_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + 2.*self.c2*((y_i - y_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (y_j - y_k)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+        gradient[self.k].z += self.k_ijk*(self.c1*(-z_i/2. + z_j/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + self.c1*(z_i - z_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + 2.*self.c2*((-z_i/2. + z_j/2.)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).powf(1.5)) + (z_i - z_j)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
+
     }
 }
 
@@ -93,11 +135,56 @@ impl HarmonicAngle for HarmonicAngleTypeB {
 
 /// Value of the angle between three atoms (i, j, k)
 #[inline(always)]
-fn theta(angle:       &dyn HarmonicAngle,
-         coordinates: &Vec<Point>) -> f64{
+fn theta(angle: &dyn HarmonicAngle,
+         X:     &Vec<Point>) -> f64{
 
-    let r1: Vector3D = &coordinates[angle.i()] - &coordinates[angle.j()];
-    let r2: Vector3D = &coordinates[angle.k()] - &coordinates[angle.j()];
+    let r1: Vector3D = &X[angle.i()] - &X[angle.j()];
+    let r2: Vector3D = &X[angle.k()] - &X[angle.j()];
 
     (r1.dot(&r2) / (r1.length() * r2.length())).acos()
 }
+
+
+/*
+   /$$                           /$$
+  | $$                          | $$
+ /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
+|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
+  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
+  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
+  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
+   \___/   \_______/|_______/    \___/ |_______/
+ */
+
+#[cfg(test)]
+mod tests{
+
+    use super::*;
+    use crate::utils::*;
+
+    struct TestHarmonicAngle{i: usize, j: usize, k: usize}
+
+    impl HarmonicAngle for TestHarmonicAngle{
+        fn i(&self) -> usize {self.i}
+        fn j(&self) -> usize {self.j}
+        fn k(&self) -> usize {self.k}
+    }
+
+    /// Ensure a bend angle can be calculated correctly. Compared to an Avogadro reference
+    #[test]
+    fn test_angle_calculation(){
+
+        // Coordinates for a H2O molecule
+        let x: Vec<Point> = Vec::from([
+            Point{x: -2.17305, y: -1.64172, z: 0.01027},
+            Point{x: -1.18373, y: -1.60261, z: -0.00725},
+            Point{x: -2.46242, y: -0.77749, z: -0.37700}
+        ]);
+
+        let angle = theta(&TestHarmonicAngle{i: 1, j: 0, k: 2}, &x);
+
+        assert!(is_close(angle, 1.8239, 1E-3));
+    }
+
+}
+

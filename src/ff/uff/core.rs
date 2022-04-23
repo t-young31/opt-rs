@@ -1,12 +1,11 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use crate::{Forcefield, Molecule};
-use crate::connectivity::bonds::Bond;
 use crate::coordinates::Point;
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::forcefield::EnergyFunction;
-use crate::ff::uff::atom_typing::{CoordinationEnvironment, UFFAtomType};
+use crate::ff::uff::atom_typing::UFFAtomType;
 use crate::ff::uff::atom_types::ATOM_TYPES;
 use crate::pairs::AtomPair;
 
@@ -45,7 +44,7 @@ impl UFF {
     }
 
     /// Add a bond stretching term to the FF for all bonds present in a molecule
-    fn add_bond_stretch(&mut self, molecule: &Molecule){
+    fn add_bond_stretches(&mut self, molecule: &Molecule){
 
         for bond in molecule.bonds(){
 
@@ -97,7 +96,7 @@ impl UFF {
             let k = angle.k;
 
             let atom_type = &self.atom_types[j];
-            let k_ijk = self.k_ijk(i, j, k, molecule);
+            let k_ijk = self.k_ijk(i, j, k);
 
             match atom_type.bend_type() {
                 'A' => {
@@ -120,7 +119,7 @@ impl UFF {
     }
 
     /// Bend force constant
-    fn k_ijk(&self, i: usize, j: usize, k: usize, molecule: &Molecule) -> f64{
+    fn k_ijk(&self, i: usize, j: usize, k: usize) -> f64{
 
         let theta0 = self.atom_types[j].theta;
 
@@ -154,7 +153,7 @@ impl Forcefield for UFF {
         let mut ff = UFF::default();
         ff.set_atom_types(molecule);
         ff.set_zero_gradient(molecule);
-        ff.add_bond_stretch(molecule);     // E_R
+        ff.add_bond_stretches(molecule);     // E_R
         ff.add_angle_bends(molecule);
 
         ff
@@ -226,7 +225,7 @@ impl Forcefield for UFF {
 
 #[cfg(test)]
 mod tests{
-    use std::borrow::Borrow;
+
     use crate::connectivity::bonds::{Bond, BondOrder};
     use crate::pairs::distance;
     use super::*;
@@ -240,6 +239,24 @@ mod tests{
         mol.add_bonds();
 
         mol
+    }
+
+    /// Is a analytical gradient close to a numerical one?
+    fn gradient_is_close(mol: &mut Molecule, ff: &mut UFF) -> bool{
+
+        let grad = mol.gradient(ff);
+        let num_grad = mol.numerical_gradient(ff);
+
+        for i in 0..grad.len(){
+            for k in 0..3{
+                if !is_close(grad[i][k], num_grad[i][k], 1E-6){
+                    println!("{} not close to {}", grad[i][k], num_grad[i][k]);
+                    return false;
+                };
+            }
+        }
+
+        true
     }
 
     /// Given a H atom then the optimal atom type should be selected
@@ -313,15 +330,7 @@ mod tests{
         let mut h2 = h2();
         let mut uff = UFF::new(&h2);
 
-        let grad = h2.gradient(&mut uff);
-        let num_grad = h2.numerical_gradient(&mut uff);
-
-
-        for i in 0..h2.num_atoms(){
-            for k in 0..3{
-                assert!(is_close(grad[i][k], num_grad[i][k], 1E-6));
-            }
-        }
+        assert!(gradient_is_close(&mut h2, &mut uff));
     }
 
     /// Test that numerical gradients doesn't shift atoms
@@ -392,7 +401,7 @@ mod tests{
         assert_eq!(mol.bonds().len(), 2);  // Two C-N bonds
         assert_eq!(mol.angles().len(), 1); // Single amide angle
 
-        ff.add_bond_stretch(&mol);
+        ff.add_bond_stretches(&mol);
         ff.add_angle_bends(&mol);
 
         let bend = ff.energy_functions.iter()
@@ -401,7 +410,21 @@ mod tests{
                                          .as_ref();
 
         // Ensure the force constant is close that in the UFF paper (kcal mol-1 rad-2)
-        assert!(is_close(bend.force_constant(), 105.5, 1E-1));
+        assert!(is_close(bend.force_constant(), 105.5, 15.));
     }
 
+
+    /// Test numerical vs analytical gradient evaluation for H2O
+    #[test]
+    fn test_num_vs_anal_grad_h2o(){
+
+        let filename = "water_tnvagh.xyz";
+        print_water_xyz_file(filename);
+        let mut h2o = Molecule::from_xyz_file(filename);
+        let mut uff = UFF::new(&h2o);
+
+        assert!(gradient_is_close(&mut h2o, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
 }
