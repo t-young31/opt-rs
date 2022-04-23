@@ -3,6 +3,13 @@ use crate::coordinates::{Point, Vector3D};
 use crate::ff::forcefield::EnergyFunction;
 
 
+trait HarmonicAngle{
+    fn i(&self) -> usize;
+    fn j(&self) -> usize;
+    fn k(&self) -> usize;
+}
+
+
 pub struct HarmonicAngleTypeA{
     pub(crate) i:     usize,
     pub(crate) j:     usize,
@@ -18,29 +25,29 @@ impl EnergyFunction for HarmonicAngleTypeA {
     fn force_constant(&self) -> f64 { self.k_ijk }
 
     /// Energy: k/n^2 (1-cos(nθ))
-    fn energy(&self, X: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
 
-        let theta = theta(self, X);
+        let theta = theta(self, coordinates);
 
         (self.k_ijk / self.n.powi(2)) * (1.0 - (self.n * theta).cos())
     }
 
     /// Add the gradient for this term
     fn add_gradient(&self,
-                    X:        &Vec<Point>,
-                    gradient: &mut Vec<Point>){
+                    coordinates: &Vec<Point>,
+                    gradient:    &mut Vec<Point>){
 
-        let x_i = X[self.i].x;
-        let y_i = X[self.i].y;
-        let z_i = X[self.i].z;
+        let x_i = coordinates[self.i].x;
+        let y_i = coordinates[self.i].y;
+        let z_i = coordinates[self.i].z;
 
-        let x_j = X[self.j].x;
-        let y_j = X[self.j].y;
-        let z_j = X[self.j].z;
+        let x_j = coordinates[self.j].x;
+        let y_j = coordinates[self.j].y;
+        let z_j = coordinates[self.j].z;
 
-        let x_k = X[self.k].x;
-        let y_k = X[self.k].y;
-        let z_k = X[self.k].z;
+        let x_k = coordinates[self.k].x;
+        let y_k = coordinates[self.k].y;
+        let z_k = coordinates[self.k].z;
 
         gradient[self.i].x += -self.k_ijk*((-x_i + x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-x_j + x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
         gradient[self.i].y += -self.k_ijk*((-y_i + y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-y_j + y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(self.n*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(self.n*(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
@@ -54,7 +61,11 @@ impl EnergyFunction for HarmonicAngleTypeA {
 
     }
 }
-
+impl HarmonicAngle for HarmonicAngleTypeA {
+    fn i(&self) -> usize {self.i}
+    fn j(&self) -> usize {self.j}
+    fn k(&self) -> usize {self.k}
+}
 
 pub struct HarmonicAngleTypeB{
     pub(crate) i:     usize,
@@ -73,29 +84,29 @@ impl EnergyFunction for HarmonicAngleTypeB {
     fn force_constant(&self) -> f64 { self.k_ijk }
 
     /// Energy: k(c0 + c1 cos(θ) + c2 cos(2θ))
-    fn energy(&self, X: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
 
-       let theta = theta(self, X);
+       let theta = theta(self, coordinates);
 
         self.k_ijk * (self.c0 + self.c1 * theta.cos() + self.c2 * (2. * theta).cos())
     }
 
     /// Add the gradient for this term
     fn add_gradient(&self,
-                    X:        &Vec<Point>,
-                    gradient: &mut Vec<Point>){
+                    coordinates: &Vec<Point>,
+                    gradient:    &mut Vec<Point>){
 
-        let x_i = X[self.i].x;
-        let y_i = X[self.i].y;
-        let z_i = X[self.i].z;
+        let x_i = coordinates[self.i].x;
+        let y_i = coordinates[self.i].y;
+        let z_i = coordinates[self.i].z;
 
-        let x_j = X[self.j].x;
-        let y_j = X[self.j].y;
-        let z_j = X[self.j].z;
+        let x_j = coordinates[self.j].x;
+        let y_j = coordinates[self.j].y;
+        let z_j = coordinates[self.j].z;
 
-        let x_k = X[self.k].x;
-        let y_k = X[self.k].y;
-        let z_k = X[self.k].z;
+        let x_k = coordinates[self.k].x;
+        let y_k = coordinates[self.k].y;
+        let z_k = coordinates[self.k].z;
 
         gradient[self.i].x += self.k_ijk*(self.c1*(-x_i + x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-x_j + x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + 2.*self.c2*((-x_i + x_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-x_j + x_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
         gradient[self.i].y += self.k_ijk*(self.c1*(-y_i + y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + self.c1*(-y_j + y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + 2.*self.c2*((-y_i + y_j)*((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).powf(1.5)*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()) + (-y_j + y_k)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt()))*(2.*(((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k))/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2)).sqrt()*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k)).sqrt())).acos()).sin()/(-((x_i - x_j)*(-x_j + x_k) + (y_i - y_j)*(-y_j + y_k) + (z_i - z_j)*(-z_j + z_k)).powi(2)/(((x_i - x_j).powi(2) + (y_i - y_j).powi(2) + (z_i - z_j).powi(2))*((x_j - x_k).powi(2) + (y_j - y_k).powi(2) + (z_i - z_j)*(-z_j + z_k))) + 1.).sqrt());
@@ -109,37 +120,25 @@ impl EnergyFunction for HarmonicAngleTypeB {
 
     }
 }
-
-
-trait HarmonicAngle{
-    fn i(&self) -> usize;
-    fn j(&self) -> usize;
-    fn k(&self) -> usize;
-}
-
-fn involves_idxs(angle: &dyn HarmonicAngle, idxs: Vec<usize>) -> bool {
-    idxs.len() == 3 && HashSet::from([angle.i(), angle.j(), angle.k()]) == HashSet::from_iter(idxs)
-}
-
-impl HarmonicAngle for HarmonicAngleTypeA {
-    fn i(&self) -> usize {self.i}
-    fn j(&self) -> usize {self.j}
-    fn k(&self) -> usize {self.k}
-}
 impl HarmonicAngle for HarmonicAngleTypeB {
     fn i(&self) -> usize {self.i}
     fn j(&self) -> usize {self.j}
     fn k(&self) -> usize {self.k}
 }
 
+fn involves_idxs(angle: &dyn HarmonicAngle, idxs: Vec<usize>) -> bool {
+    idxs.len() == 3 && HashSet::from([angle.i(), angle.j(), angle.k()]) == HashSet::from_iter(idxs)
+}
+
+
 
 /// Value of the angle between three atoms (i, j, k)
 #[inline(always)]
-fn theta(angle: &dyn HarmonicAngle,
-         X:     &Vec<Point>) -> f64{
+fn theta(angle:       &dyn HarmonicAngle,
+         coordinates: &Vec<Point>) -> f64{
 
-    let r1: Vector3D = &X[angle.i()] - &X[angle.j()];
-    let r2: Vector3D = &X[angle.k()] - &X[angle.j()];
+    let r1: Vector3D = &coordinates[angle.i()] - &coordinates[angle.j()];
+    let r2: Vector3D = &coordinates[angle.k()] - &coordinates[angle.j()];
 
     (r1.dot(&r2) / (r1.length() * r2.length())).acos()
 }
