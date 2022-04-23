@@ -259,6 +259,10 @@ mod tests{
         true
     }
 
+    fn atom_type(string: &str) -> UFFAtomType{
+        ATOM_TYPES.iter().filter(|t| t.name ==string).next().unwrap().clone()
+    }
+
     /// Given a H atom then the optimal atom type should be selected
     #[test]
     fn test_h_atom_ff(){
@@ -299,7 +303,6 @@ mod tests{
         }
 
         // Should have a single bond
-        println!("{:?}", h2.bonds());
         assert_eq!(h2.bonds().iter().count(), 1);
 
         // Energy is non-zero
@@ -379,12 +382,14 @@ mod tests{
         assert!(is_close(min_r, 0.741, 1E-1))
     }
 
+    /// Ensure that the equilibrium angle π/n is undefined for a general bent atom
+    #[test]
+    fn test_bend_n_for_bent_angle_is_undefined(){
+        assert!(is_very_close(atom_type("O_2").bend_n(), 0.));
+    }
+
     #[test]
     fn test_angle_bend_amide(){
-
-        fn atom_type(string: &str) -> UFFAtomType{
-            ATOM_TYPES.iter().filter(|t| t.name ==string).next().unwrap().clone()
-        }
 
         let mut ff = UFF::default();
 
