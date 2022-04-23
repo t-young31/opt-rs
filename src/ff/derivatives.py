@@ -24,7 +24,7 @@ def theta():
     dxk = x_k - x_j
     dyk = y_k - y_j
     dzk = z_k - z_j
-    mod_r_ik = sym.sqrt(dxk*dxk + dyk*dyk + dzi*dzk)
+    mod_r_ik = sym.sqrt(dxk*dxk + dyk*dyk + dzk*dzk)
 
     dot = dxi*dxk + dyi*dyk + dzi*dzk
 
@@ -52,8 +52,10 @@ def angle_type_b(symbol):
     c1 = sym.Symbol('self.c1__')
     c2 = sym.Symbol('self.c2__')
 
-    res = sym.diff(k*(c0 + c1*sym.cos(theta()) + c2*sym.cos(2*theta())), symbol)
-    string = rust_expression(function=sym.refine(res, sym.Q.real(symbol)))
+    theta_ = theta()
+    res = sym.diff(k*(c0 + c1*sym.cos(theta_) + c2*sym.cos(2*theta_)), symbol)
+    string = rust_expression(function=res)
+    # string = rust_expression(function=sym.refine(res, sym.Q.real(symbol)))
     string = string.replace('__', '')
 
     print(f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} +=',
@@ -112,5 +114,5 @@ def rust_expression(function):
 if __name__ == '__main__':
 
     for x in (x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k):
-        # angle_type_a(x)
-        angle_type_b(x)
+        angle_type_a(x)
+        # angle_type_b(x)

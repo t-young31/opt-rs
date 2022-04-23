@@ -100,3 +100,31 @@ impl IndexMut<usize> for Point {
         }
     }
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::*;
+
+    #[test]
+    fn test_point_addition() {
+
+        let vec = &Point{x: 1., y: -2., z: -3.} + &Point{x: -1., y: 2., z: 3.};
+
+        assert!(is_very_close(vec.x, 0.));
+        assert!(is_very_close(vec.y, 0.));
+        assert!(is_very_close(vec.z, 0.));
+    }
+
+    #[test]
+    fn test_point_subtraction() {
+
+        let vec = &Point{x: 1., y: -2., z: -3.} - &Point{x: -1., y: 2., z: 3.};
+
+        assert!(is_very_close(vec.x, 2.));
+        assert!(is_very_close(vec.y, -4.));
+        assert!(is_very_close(vec.z, -6.));
+    }
+}

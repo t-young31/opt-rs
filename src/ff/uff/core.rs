@@ -242,7 +242,7 @@ mod tests{
     }
 
     /// Is a analytical gradient close to a numerical one?
-    fn gradient_is_close(mol: &mut Molecule, ff: &mut UFF) -> bool{
+    fn num_and_anal_gradient_are_close(mol: &mut Molecule, ff: &mut UFF) -> bool{
 
         let grad = mol.gradient(ff);
         let num_grad = mol.numerical_gradient(ff);
@@ -330,7 +330,7 @@ mod tests{
         let mut h2 = h2();
         let mut uff = UFF::new(&h2);
 
-        assert!(gradient_is_close(&mut h2, &mut uff));
+        assert!(num_and_anal_gradient_are_close(&mut h2, &mut uff));
     }
 
     /// Test that numerical gradients doesn't shift atoms
@@ -413,7 +413,6 @@ mod tests{
         assert!(is_close(bend.force_constant(), 105.5, 15.));
     }
 
-
     /// Test numerical vs analytical gradient evaluation for H2O
     #[test]
     fn test_num_vs_anal_grad_h2o(){
@@ -423,7 +422,19 @@ mod tests{
         let mut h2o = Molecule::from_xyz_file(filename);
         let mut uff = UFF::new(&h2o);
 
-        assert!(gradient_is_close(&mut h2o, &mut uff));
+        assert!(num_and_anal_gradient_are_close(&mut h2o, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
+    #[test]
+    fn test_num_vs_anal_grad_linear_metal_complex(){
+
+        let filename = "water_tnvaglmc.xyz";
+        print_aume2_xyz_file(filename);
+        let mut au_me2 = Molecule::from_xyz_file(filename);
+        let mut uff = UFF::new(&au_me2);
+
+        assert!(num_and_anal_gradient_are_close(&mut au_me2, &mut uff));
 
         remove_file_or_panic(filename);
     }

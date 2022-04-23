@@ -753,4 +753,26 @@ mod tests{
 
         remove_file_or_panic(filename);
     }
+
+    /// Inserting two identical angles into a molecule's connectivity should not be possible
+    #[test]
+    fn test_no_identical_angles_present(){
+
+        let mut mol = Molecule::blank();
+        mol.connectivity.angles.insert(Angle{i: 0, j: 1, k:2});
+        mol.connectivity.angles.insert(Angle{i: 2, j: 1, k:0});
+
+        assert_eq!(mol.angles().len(), 1);
+    }
+
+    /// and similarly for two identical dihedrals
+    #[test]
+    fn test_no_identical_dihedrals_present(){
+
+        let mut mol = Molecule::blank();
+        mol.connectivity.dihedrals.insert(Dihedral{i: 0, j: 1, k:2, l:3});
+        mol.connectivity.dihedrals.insert(Dihedral{i: 3, j: 2, k:1, l:0});
+
+        assert_eq!(mol.dihedrals().len(), 1);
+    }
 }

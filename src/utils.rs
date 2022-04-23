@@ -51,7 +51,6 @@ pub(crate) fn print_water_xyz_file(filename: &str){
         .expect(filename)
 }
 
-
 pub(crate) fn print_ethene_xyz_file(filename: &str){
 
     std::fs::write(filename,
@@ -92,5 +91,20 @@ H         -3.85655        0.22609       -0.89684\n\
 H          0.84241        1.09170        0.00023\n\
 H          0.90826       -0.38020       -0.85254\n\
 H          0.90845       -0.38034        0.85272\n")
+        .expect(filename)
+}
+
+pub(crate) fn print_aume2_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "9\n\n
+Au        -0.63866       -1.10981        0.00000\n\
+C         -2.64047       -0.85699       -0.00000\n\
+H         -3.11649       -1.67438        0.57968\n\
+H         -3.01553       -0.87670       -1.04387\n\
+H         -2.88947        0.11933        0.46418\n\
+C          1.36324       -1.36193        0.00000\n\
+H          1.59955       -2.44588        0.00001\n\
+H          1.79519       -0.88910        0.90584\n\
+H          1.79519       -0.88911       -0.90583\n")
         .expect(filename)
 }
