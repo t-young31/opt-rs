@@ -36,13 +36,10 @@ def angle_type_a(symbol):
     k = sym.Symbol('self.k_ijk')
     n = sym.Symbol('self.n')
 
-    res = sym.diff((k/n**2) * (1 - sym.cos(n*theta())), symbol)
-
-    print(f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} +=',
-          rust_expression(function=sym.refine(res, sym.Q.real(symbol))),
-          end=';\n')
-
-    return None
+    string = rust_expression(
+        sym.diff((k/n**2) * (1 - sym.cos(n*theta())), symbol)
+    )
+    return f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} += {string}'
 
 
 def angle_type_b(symbol):
@@ -58,11 +55,7 @@ def angle_type_b(symbol):
     # string = rust_expression(function=sym.refine(res, sym.Q.real(symbol)))
     string = string.replace('__', '')
 
-    print(f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} +=',
-          string,
-          end=';\n')
-
-    return None
+    return f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} += {string}'
 
 
 def convert_to_trait(string, name):
@@ -111,8 +104,87 @@ def rust_expression(function):
     return string
 
 
+def truncated_expression(string):
+    """Truncate a bracketed expression down to something that has
+    matching parentheses e.g.
+
+    (z_i - z_j).powi(2)).p   --->   (z_i - z_j)
+    """
+    if not string.startswith('('):
+        raise ValueError
+
+    count = 0
+    for i, char in enumerate(string):
+        count += 1 if char == '(' else (-1 if char == ')' else 0)
+
+        if count == 0:
+            return string[:i+1]
+
+    raise RuntimeError("Unclosed bracket")
+
+
+def first_avail_variable_name(_lines):
+    """Generate a variable name that has not yet been used"""
+
+    i = 0
+    while any(f'let v{i}' in l for l in _lines):
+        i += 1
+
+    return f'v{i}'
+
+
+def extract_variables(_lines):
+    """Given a set of rust code lines extract the common variables to them"""
+
+    variables = set()
+
+    non_var_lines = [l for l in _lines if 'let' not in l]
+
+    first_line = non_var_lines[0]
+    start_idx = 0 if '=' not in first_line else len(first_line.split('= ')[0])
+    end_idx = min([len(l) for l in non_var_lines])
+
+    for i in range(start_idx, end_idx):
+
+        for j in range(i, end_idx):
+            substring = first_line[i:j]
+
+            if not all(substring in l for l in non_var_lines):
+                break
+
+        if substring.startswith('('):
+            try:
+                variable = truncated_expression(substring)
+
+                if len(variable) > 5:
+                    variables.add(variable)
+            except RuntimeError:
+                continue
+
+    if len(variables) == 0:
+        return _lines
+
+    smallest_var = next(iter(sorted(list(variables), key=lambda x: len(x))))
+
+    var_name = first_avail_variable_name(_lines)
+    n_var_lines = sum('let' in l for l in _lines)
+
+    for i, line in enumerate(_lines[n_var_lines:]):
+        _lines[n_var_lines+i] = line.replace(smallest_var, var_name)
+
+    _lines.insert(n_var_lines, f'let {var_name} = {smallest_var}')
+
+    return None
+
+
 if __name__ == '__main__':
 
+    lines = []
+
     for x in (x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k):
-        angle_type_a(x)
-        # angle_type_b(x)
+        lines.append(angle_type_a(x))
+
+    for _ in range(20):
+        extract_variables(lines)
+
+    print(";\n".join(lines))
