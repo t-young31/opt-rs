@@ -3,7 +3,7 @@ use crate::atoms::Atom;
 use crate::pairs::AtomPair;
 
 
-#[derive(Default, Debug, Hash, Clone)]
+#[derive(Default, Debug, Clone, Hash)]
 pub struct Bond{
     pub(crate) pair:  AtomPair,
     pub(crate) order: BondOrder

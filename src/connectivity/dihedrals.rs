@@ -1,4 +1,6 @@
-#[derive(Default, Hash, Debug)]
+use std::hash::{Hash, Hasher};
+
+#[derive(Default, Debug)]
 pub struct Dihedral{
     pub i: usize,
     pub j: usize,
@@ -14,3 +16,9 @@ impl PartialEq for Dihedral{
 }
 
 impl Eq for Dihedral {}
+
+impl Hash for Dihedral {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Vec::from([self.i, self.j, self.k, self.l]).sort().hash(state);
+    }
+}

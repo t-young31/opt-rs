@@ -1,8 +1,10 @@
 /*
 Notes and warnings:
 
-    - Units are: Å (distance)
-
+    - Units are:
+        -> Å (distance)
+        -> rad (angle)
+        -> kcal mol-1 (energy)
  */
 extern crate core;
 

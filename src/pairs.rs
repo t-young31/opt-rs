@@ -1,14 +1,15 @@
+use std::hash::{Hash, Hasher};
 use crate::atoms::Atom;
-use crate::coordinates::CartesianCoordinate;
+use crate::coordinates::Point;
 
 
 #[inline(always)]
-pub fn distance(i: usize, j: usize, x: &Vec<CartesianCoordinate>) -> f64{
+pub fn distance(i: usize, j: usize, x: &Vec<Point>) -> f64{
     ((x[i].x - x[j].x).powi(2) + (x[i].y - x[j].y).powi(2) + (x[i].z - x[j].z).powi(2)).sqrt()
 }
 
 
-#[derive(Default, Hash, Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub(crate) struct AtomPair{
     pub i: usize,
     pub j: usize
@@ -21,6 +22,12 @@ impl PartialEq for AtomPair {
 }
 
 impl Eq for AtomPair {}
+
+impl Hash for AtomPair {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Vec::from([self.i, self.j]).sort().hash(state);
+    }
+}
 
 
 #[derive(Default, Hash, Debug, Clone)]

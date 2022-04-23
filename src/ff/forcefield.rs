@@ -1,4 +1,4 @@
-use crate::coordinates::CartesianCoordinate;
+use crate::coordinates::Point;
 use crate::Molecule;
 
 pub trait Forcefield {
@@ -7,16 +7,22 @@ pub trait Forcefield {
 
     fn set_atom_types(&mut self, molecule: &Molecule);
 
-    fn energy(&mut self, coordinates: &Vec<CartesianCoordinate>) -> f64;
+    fn energy(&mut self, coordinates: &Vec<Point>) -> f64;
 
-    fn gradient(&mut self, coordinates: &Vec<CartesianCoordinate>) -> &Vec<CartesianCoordinate>;
+    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Point>;
 }
 
 
 pub trait EnergyFunction{
-    fn energy(&self, coordinates: &Vec<CartesianCoordinate>) -> f64;
+
+    fn involves_idxs(&self, idxs: Vec<usize>) -> bool;
+
+    fn force_constant(&self) -> f64;
+
+    fn energy(&self,
+              coordinates: &Vec<Point>) -> f64;
 
     fn add_gradient(&self,
-                    coordinates:      &Vec<CartesianCoordinate>,
-                    current_gradient: &mut Vec<CartesianCoordinate>);
+                    coordinates:      &Vec<Point>,
+                    current_gradient: &mut Vec<Point>);
 }

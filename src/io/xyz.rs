@@ -4,7 +4,7 @@ use std::path::Path;
 use std::io::{self, BufRead, Write};
 use log::{info, warn};
 use crate::atoms::AtomicNumber;
-use crate::coordinates::CartesianCoordinate;
+use crate::coordinates::Point;
 use crate::Molecule;
 
 
@@ -12,7 +12,7 @@ use crate::Molecule;
 pub struct XYZFile{
 
     pub filename:       String,
-    pub coordinates:    Vec<CartesianCoordinate>,
+    pub coordinates:    Vec<Point>,
     pub atomic_numbers: Vec<AtomicNumber>
 }
 
@@ -87,7 +87,7 @@ impl XYZFile {
             Err(..) => return Err("Failed to parse the atomic symbol"),
         }
 
-        let coord = CartesianCoordinate::from_option_strings(
+        let coord = Point::from_option_strings(
             items.next(), items.next(), items.next()
         );
 

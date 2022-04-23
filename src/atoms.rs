@@ -1,8 +1,6 @@
-use std::collections::HashSet;
 use std::ops::Index;
 use log::{info, warn};
-use crate::connectivity::bonds::Bond;
-use crate::coordinates::CartesianCoordinate;
+use crate::coordinates::Point;
 use crate::utils::is_very_close;
 
 
@@ -10,7 +8,7 @@ use crate::utils::is_very_close;
 pub struct Atom{
     pub(crate) idx:               usize,
     pub(crate) atomic_number:     AtomicNumber,
-    pub(crate) coordinate:        CartesianCoordinate,
+    pub(crate) coordinate: Point,
     pub(crate) bonded_neighbours: Vec<usize>,
     pub(crate) formal_charge:     f64
 }
@@ -27,7 +25,7 @@ impl Atom {
 
         Atom{idx,
              atomic_number:     AtomicNumber::from_string(atomic_symbol).unwrap(),
-             coordinate:        CartesianCoordinate::default(),
+             coordinate:        Point::default(),
              bonded_neighbours: Default::default(),
              formal_charge:     0.0}
     }
