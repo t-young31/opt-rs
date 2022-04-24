@@ -49,30 +49,38 @@ impl EnergyFunction for HarmonicAngleTypeA {
         let y_k = coordinates[self.k].y;
         let z_k = coordinates[self.k].z;
 
-        let v0 = (z_i - z_j);
-        let v1 = (x_i - x_j);
-        let v2 = (y_i - y_j);
-        let v3 = (-y_j + y_k);
-        let v4 = (-z_j + z_k);
-        let v5 = (-x_j + x_k);
-        let v6 = (v1*v5 + v2*v3 + v0*v4);
-        let v7 = (v1.powi(2) + v2.powi(2) + v0.powi(2));
-        let v8 = (v5.powi(2) + v3.powi(2) + v4.powi(2));
-        let v9 = (v7*v8);
-        let v10 = (v7.sqrt()*v8.sqrt());
-        let v11 = (v6/v10);
-        let v12 = (self.n*v11.acos());
-        let v13 = (-v6.powi(2)/v9 + 1.);
-
-        gradient[self.i].x += -self.k_ijk*((-x_i + x_j)*v6/(v7.powf(1.5)*v8.sqrt()) + v5/v10)*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.i].y += -self.k_ijk*((-y_i + y_j)*v6/(v7.powf(1.5)*v8.sqrt()) + v3/v10)*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.i].z += -self.k_ijk*((-z_i + z_j)*v6/(v7.powf(1.5)*v8.sqrt()) + v4/v10)*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.j].x += -self.k_ijk*(v1*v6/(v7.powf(1.5)*v8.sqrt()) + v5*v6/(v7.sqrt()*v8.powf(1.5)) + (-x_i + 2.*x_j - x_k)/v10)*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.j].y += -self.k_ijk*(v2*v6/(v7.powf(1.5)*v8.sqrt()) + v3*v6/(v7.sqrt()*v8.powf(1.5)) + (-y_i + 2.*y_j - y_k)/v10)*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.j].z += -self.k_ijk*(v0*v6/(v7.powf(1.5)*v8.sqrt()) + v4*v6/(v7.sqrt()*v8.powf(1.5)) + (-z_i + 2.*z_j - z_k)/v10)*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.k].x += -self.k_ijk*(v1/v10 + (x_j - x_k)*v6/(v7.sqrt()*v8.powf(1.5)))*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.k].y += -self.k_ijk*(v2/v10 + (y_j - y_k)*v6/(v7.sqrt()*v8.powf(1.5)))*v12.sin()/(self.n*v13.sqrt());
-        gradient[self.k].z += -self.k_ijk*(v0/v10 + (z_j - z_k)*v6/(v7.sqrt()*v8.powf(1.5)))*v12.sin()/(self.n*v13.sqrt())
+        let v0 = -x_j + x_k;
+        let v1 = (z_i - z_j).powi(2);
+        let v2 = (y_i - y_j).powi(2);
+        let v3 = (x_i - x_j).powi(2);
+        let v4 = v3 + v2 + v1;
+        let v5 = -z_j + z_k;
+        let v6 = v5.powi(2);
+        let v7 = z_i - z_j;
+        let v8 = -y_j + y_k;
+        let v9 = v8.powi(2);
+        let v10 = v0.powi(2);
+        let v11 = y_i - y_j;
+        let v12 = x_i - x_j;
+        let v13 = v10 + v9 + v6;
+        let v14 = v4*v13;
+        let v15 = v13.sqrt();
+        let v16 = v4.sqrt();
+        let v17 = v16*v15;
+        let v18 = v12*v0 + v11*v8 + v7*v5;
+        let v19 = v18.powi(2);
+        let v20 = (-v19/v14 + 1.).sqrt();
+        let v21 = (v18/v17).acos();
+        let v22 = (self.n*v21).sin();
+        gradient[self.i].x += -self.k_ijk*((-x_i + x_j)*v18/(v4.powf(1.5)*v15) + v0/v17)*v22/(self.n*v20);
+        gradient[self.i].y += -self.k_ijk*((-y_i + y_j)*v18/(v4.powf(1.5)*v15) + v8/v17)*v22/(self.n*v20);
+        gradient[self.i].z += -self.k_ijk*((-z_i + z_j)*v18/(v4.powf(1.5)*v15) + v5/v17)*v22/(self.n*v20);
+        gradient[self.j].x += -self.k_ijk*(v12*v18/(v4.powf(1.5)*v15) + v0*v18/(v16*v13.powf(1.5)) + (-x_i + 2.*x_j - x_k)/v17)*v22/(self.n*v20);
+        gradient[self.j].y += -self.k_ijk*(v11*v18/(v4.powf(1.5)*v15) + v8*v18/(v16*v13.powf(1.5)) + (-y_i + 2.*y_j - y_k)/v17)*v22/(self.n*v20);
+        gradient[self.j].z += -self.k_ijk*(v7*v18/(v4.powf(1.5)*v15) + v5*v18/(v16*v13.powf(1.5)) + (-z_i + 2.*z_j - z_k)/v17)*v22/(self.n*v20);
+        gradient[self.k].x += -self.k_ijk*(v12/v17 + (x_j - x_k)*v18/(v16*v13.powf(1.5)))*v22/(self.n*v20);
+        gradient[self.k].y += -self.k_ijk*(v11/v17 + (y_j - y_k)*v18/(v16*v13.powf(1.5)))*v22/(self.n*v20);
+        gradient[self.k].z += -self.k_ijk*(v7/v17 + (z_j - z_k)*v18/(v16*v13.powf(1.5)))*v22/(self.n*v20);
     }
 }
 impl HarmonicAngle for HarmonicAngleTypeA {
@@ -122,30 +130,38 @@ impl EnergyFunction for HarmonicAngleTypeB {
         let y_k = coordinates[self.k].y;
         let z_k = coordinates[self.k].z;
 
-        let v0 = (x_i - x_j);
-        let v1 = (y_i - y_j);
-        let v2 = (z_i - z_j);
-        let v3 = (-z_j + z_k);
-        let v4 = (-x_j + x_k);
-        let v5 = (-y_j + y_k);
-        let v6 = (v0*v4 + v1*v5 + v2*v3);
-        let v7 = (v0.powi(2) + v1.powi(2) + v2.powi(2));
-        let v8 = (v4.powi(2) + v5.powi(2) + v3.powi(2));
-        let v9 = (v7*v8);
-        let v10 = (-v6.powi(2)/v9 + 1.);
-        let v11 = (v7.sqrt()*v8.sqrt());
-        let v12 = (v6/v11);
-        let v13 = (2.*v12.acos());
-
-        gradient[self.i].x += self.k_ijk*(self.c1*(-x_i + x_j)*v6/(v7.powf(1.5)*v8.sqrt()) + self.c1*v4/v11 + 2.*self.c2*((-x_i + x_j)*v6/(v7.powf(1.5)*v8.sqrt()) + v4/v11)*v13.sin()/v10.sqrt());
-        gradient[self.i].y += self.k_ijk*(self.c1*(-y_i + y_j)*v6/(v7.powf(1.5)*v8.sqrt()) + self.c1*v5/v11 + 2.*self.c2*((-y_i + y_j)*v6/(v7.powf(1.5)*v8.sqrt()) + v5/v11)*v13.sin()/v10.sqrt());
-        gradient[self.i].z += self.k_ijk*(self.c1*(-z_i + z_j)*v6/(v7.powf(1.5)*v8.sqrt()) + self.c1*v3/v11 + 2.*self.c2*((-z_i + z_j)*v6/(v7.powf(1.5)*v8.sqrt()) + v3/v11)*v13.sin()/v10.sqrt());
-        gradient[self.j].x += self.k_ijk*(self.c1*v0*v6/(v7.powf(1.5)*v8.sqrt()) + self.c1*v4*v6/(v7.sqrt()*v8.powf(1.5)) + self.c1*(-x_i + 2.*x_j - x_k)/v11 + 2.*self.c2*(v0*v6/(v7.powf(1.5)*v8.sqrt()) + v4*v6/(v7.sqrt()*v8.powf(1.5)) + (-x_i + 2.*x_j - x_k)/v11)*v13.sin()/v10.sqrt());
-        gradient[self.j].y += self.k_ijk*(self.c1*v1*v6/(v7.powf(1.5)*v8.sqrt()) + self.c1*v5*v6/(v7.sqrt()*v8.powf(1.5)) + self.c1*(-y_i + 2.*y_j - y_k)/v11 + 2.*self.c2*(v1*v6/(v7.powf(1.5)*v8.sqrt()) + v5*v6/(v7.sqrt()*v8.powf(1.5)) + (-y_i + 2.*y_j - y_k)/v11)*v13.sin()/v10.sqrt());
-        gradient[self.j].z += self.k_ijk*(self.c1*v2*v6/(v7.powf(1.5)*v8.sqrt()) + self.c1*v3*v6/(v7.sqrt()*v8.powf(1.5)) + self.c1*(-z_i + 2.*z_j - z_k)/v11 + 2.*self.c2*(v2*v6/(v7.powf(1.5)*v8.sqrt()) + v3*v6/(v7.sqrt()*v8.powf(1.5)) + (-z_i + 2.*z_j - z_k)/v11)*v13.sin()/v10.sqrt());
-        gradient[self.k].x += self.k_ijk*(self.c1*v0/v11 + self.c1*(x_j - x_k)*v6/(v7.sqrt()*v8.powf(1.5)) + 2.*self.c2*(v0/v11 + (x_j - x_k)*v6/(v7.sqrt()*v8.powf(1.5)))*v13.sin()/v10.sqrt());
-        gradient[self.k].y += self.k_ijk*(self.c1*v1/v11 + self.c1*(y_j - y_k)*v6/(v7.sqrt()*v8.powf(1.5)) + 2.*self.c2*(v1/v11 + (y_j - y_k)*v6/(v7.sqrt()*v8.powf(1.5)))*v13.sin()/v10.sqrt());
-        gradient[self.k].z += self.k_ijk*(self.c1*v2/v11 + self.c1*(z_j - z_k)*v6/(v7.sqrt()*v8.powf(1.5)) + 2.*self.c2*(v2/v11 + (z_j - z_k)*v6/(v7.sqrt()*v8.powf(1.5)))*v13.sin()/v10.sqrt())
+        let v0 = -x_j + x_k;
+        let v1 = (z_i - z_j).powi(2);
+        let v2 = (y_i - y_j).powi(2);
+        let v3 = (x_i - x_j).powi(2);
+        let v4 = v3 + v2 + v1;
+        let v5 = -z_j + z_k;
+        let v6 = v5.powi(2);
+        let v7 = z_i - z_j;
+        let v8 = -y_j + y_k;
+        let v9 = v8.powi(2);
+        let v10 = v0.powi(2);
+        let v11 = y_i - y_j;
+        let v12 = x_i - x_j;
+        let v13 = v10 + v9 + v6;
+        let v14 = v4*v13;
+        let v15 = v13.sqrt();
+        let v16 = v4.sqrt();
+        let v17 = v16*v15;
+        let v18 = v12*v0 + v11*v8 + v7*v5;
+        let v19 = v18.powi(2);
+        let v20 = (v18/v17).acos();
+        let v21 = (-v19/v14 + 1.).sqrt();
+        let v22 = (2.*v20).sin();
+        gradient[self.i].x += self.k_ijk*(self.c1*(-x_i + x_j)*v18/(v4.powf(1.5)*v15) + self.c1*v0/v17 + 2.*self.c2*((-x_i + x_j)*v18/(v4.powf(1.5)*v15) + v0/v17)*v22/v21);
+        gradient[self.i].y += self.k_ijk*(self.c1*(-y_i + y_j)*v18/(v4.powf(1.5)*v15) + self.c1*v8/v17 + 2.*self.c2*((-y_i + y_j)*v18/(v4.powf(1.5)*v15) + v8/v17)*v22/v21);
+        gradient[self.i].z += self.k_ijk*(self.c1*(-z_i + z_j)*v18/(v4.powf(1.5)*v15) + self.c1*v5/v17 + 2.*self.c2*((-z_i + z_j)*v18/(v4.powf(1.5)*v15) + v5/v17)*v22/v21);
+        gradient[self.j].x += self.k_ijk*(self.c1*v12*v18/(v4.powf(1.5)*v15) + self.c1*v0*v18/(v16*v13.powf(1.5)) + self.c1*(-x_i + 2.*x_j - x_k)/v17 + 2.*self.c2*(v12*v18/(v4.powf(1.5)*v15) + v0*v18/(v16*v13.powf(1.5)) + (-x_i + 2.*x_j - x_k)/v17)*v22/v21);
+        gradient[self.j].y += self.k_ijk*(self.c1*v11*v18/(v4.powf(1.5)*v15) + self.c1*v8*v18/(v16*v13.powf(1.5)) + self.c1*(-y_i + 2.*y_j - y_k)/v17 + 2.*self.c2*(v11*v18/(v4.powf(1.5)*v15) + v8*v18/(v16*v13.powf(1.5)) + (-y_i + 2.*y_j - y_k)/v17)*v22/v21);
+        gradient[self.j].z += self.k_ijk*(self.c1*v7*v18/(v4.powf(1.5)*v15) + self.c1*v5*v18/(v16*v13.powf(1.5)) + self.c1*(-z_i + 2.*z_j - z_k)/v17 + 2.*self.c2*(v7*v18/(v4.powf(1.5)*v15) + v5*v18/(v16*v13.powf(1.5)) + (-z_i + 2.*z_j - z_k)/v17)*v22/v21);
+        gradient[self.k].x += self.k_ijk*(self.c1*v12/v17 + self.c1*(x_j - x_k)*v18/(v16*v13.powf(1.5)) + 2.*self.c2*(v12/v17 + (x_j - x_k)*v18/(v16*v13.powf(1.5)))*v22/v21);
+        gradient[self.k].y += self.k_ijk*(self.c1*v11/v17 + self.c1*(y_j - y_k)*v18/(v16*v13.powf(1.5)) + 2.*self.c2*(v11/v17 + (y_j - y_k)*v18/(v16*v13.powf(1.5)))*v22/v21);
+        gradient[self.k].z += self.k_ijk*(self.c1*v7/v17 + self.c1*(z_j - z_k)*v18/(v16*v13.powf(1.5)) + 2.*self.c2*(v7/v17 + (z_j - z_k)*v18/(v16*v13.powf(1.5)))*v22/v21);
 
     }
 }

@@ -110,17 +110,20 @@ def truncated_expression(string):
 
     (z_i - z_j).powi(2)).p   --->   (z_i - z_j)
     """
-    if not string.startswith('('):
-        raise ValueError
 
     count = 0
+    final_idx = 0
+
     for i, char in enumerate(string):
         count += 1 if char == '(' else (-1 if char == ')' else 0)
 
-        if count == 0:
-            return string[:i+1]
+        if count == 0 and char == ')':
+            final_idx = i+1
 
-    raise RuntimeError("Unclosed bracket")
+    if final_idx == 0:
+        raise RuntimeError("Unclosed bracket")
+
+    return string[:final_idx]
 
 
 def first_avail_variable_name(_lines):
@@ -152,7 +155,7 @@ def extract_variables(_lines):
             if not all(substring in l for l in non_var_lines):
                 break
 
-        if substring.startswith('('):
+        if substring.startswith('(') or substring.startswith('v'):
             try:
                 variable = truncated_expression(substring)
 
@@ -172,19 +175,29 @@ def extract_variables(_lines):
     for i, line in enumerate(_lines[n_var_lines:]):
         _lines[n_var_lines+i] = line.replace(smallest_var, var_name)
 
+    if '.' not in smallest_var:
+        # Remove unnesacerray parentheses
+        smallest_var = smallest_var[1:-1]
+
     _lines.insert(n_var_lines, f'let {var_name} = {smallest_var}')
 
     return None
 
 
-if __name__ == '__main__':
+def print_angle_gradient(angle_type):
 
     lines = []
 
     for x in (x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k):
-        lines.append(angle_type_a(x))
+        lines.append(angle_type(x))
 
-    for _ in range(20):
+    for _ in range(40):
         extract_variables(lines)
 
-    print(";\n".join(lines))
+    return print(";\n".join(lines))
+
+
+if __name__ == '__main__':
+
+    print_angle_gradient(angle_type=angle_type_a)
+    # print_angle_gradient(angle_type=angle_type_b)
