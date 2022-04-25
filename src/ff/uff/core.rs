@@ -142,6 +142,26 @@ impl UFF {
                 - r0_ik.powi(2) * theta0.cos()
                )
     }
+
+    /// Add dihedra; terms between quadruples bonded atoms in a sequence
+    fn add_dihedral_torsions(&mut self, molecule: &Molecule){
+
+        for dihedral in molecule.dihedrals().iter(){
+
+            let i = dihedral.i;
+            let j = dihedral.j;
+            let k = dihedral.k;
+            let l = dihedral.l;
+
+            if !(self.atom_types[j].is_main_group() && self.atom_types[k].is_main_group()){
+                // Only main group atoms have non-zero torsional potentials
+                continue;
+            }
+
+
+        }
+
+    }
 }
 
 
@@ -227,6 +247,7 @@ impl Forcefield for UFF {
 mod tests{
 
     use crate::connectivity::bonds::{Bond, BondOrder};
+    use crate::ff::uff::atom_typing::Hybridisation;
     use crate::pairs::distance;
     use super::*;
     use crate::utils::*;
@@ -440,6 +461,26 @@ mod tests{
         let mut uff = UFF::new(&au_me2);
 
         assert!(num_and_anal_gradient_are_close(&mut au_me2, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
+
+    #[test]
+    fn test_valency_assigned_for_carbon_in_methane(){
+
+        let filename = "methane_tvafcim.xyz";
+        print_methane_xyz_file(filename);
+
+        let mut mol = Molecule::from_xyz_file(filename);
+        let ff = UFF::new(&mol);
+
+        assert_eq!(ff.atom_types[0].atomic_symbol, "C");
+        assert_eq!(ff.atom_types[0].hybridisation(), Hybridisation::SP3);
+
+        // Hydrogen don't have any hybridisation
+        for i in 1..mol.num_atoms(){
+            assert_eq!(ff.atom_types[i].hybridisation(), Hybridisation::None);
+        }
 
         remove_file_or_panic(filename);
     }

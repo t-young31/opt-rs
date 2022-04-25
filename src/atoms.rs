@@ -8,7 +8,7 @@ use crate::utils::is_very_close;
 pub struct Atom{
     pub(crate) idx:               usize,
     pub(crate) atomic_number:     AtomicNumber,
-    pub(crate) coordinate: Point,
+    pub(crate) coordinate:        Point,
     pub(crate) bonded_neighbours: Vec<usize>,
     pub(crate) formal_charge:     f64
 }
@@ -91,6 +91,11 @@ impl Atom {
     /// This this atom a metal?
     pub fn is_metal(&self) -> bool{
         METALLIC_ELEMENTS.contains(&self.atomic_symbol())
+    }
+
+    /// Is this atom a from the main group block in the periodic table?
+    pub fn is_main_group(&self) -> bool{
+        return MAIN_GROUP_ELEMENTS.contains(&self.atomic_number.to_atomic_symbol())
     }
 
     /// Number of valance electrons that could participate in bonding
@@ -244,6 +249,10 @@ impl AtomicNumber {
         x % 18 + 1
     }
 
+    /// Is this atomic number from the main group?
+    pub fn is_main_group(&self) -> bool{
+        return MAIN_GROUP_ELEMENTS.contains(&self.to_atomic_symbol())
+    }
 }
 
 impl PartialEq for AtomicNumber {
@@ -267,13 +276,19 @@ static ELEMENTS: [&'static str; 118] = [
     "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
 ];
 
-static METALLIC_ELEMENTS: [&'static str; 92] =  [
+static METALLIC_ELEMENTS: [&'static str; 92] = [
     "Li", "Be", "Na", "Mg", "Al", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu",
     "Zn", "Ga", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn",
     "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
     "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "Fr", "Ra",
     "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf",
     "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv"
+];
+
+static MAIN_GROUP_ELEMENTS: [&'static str; 36] = [
+    "B",  "C", "N", "O", "F", "Ne", "Al", "Si", "P", "S", "Cl", "Ar",
+    "Ga", "Ge", "As", "Se", "Br", "Kr", "In", "Sn", "Sb", "Te", "I", "Xe",
+    "Tl", "Pb", "Bi", "Po", "At", "Rn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
 ];
 
 static PICOMETERS_TO_ANGSTROMS: f64 = 0.01;

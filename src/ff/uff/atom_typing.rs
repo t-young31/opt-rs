@@ -1,4 +1,5 @@
 use crate::atoms::{Atom, AtomicNumber};
+use crate::ff::uff::atom_typing::Hybridisation::SP;
 use crate::Molecule;
 
 /// See Table 1 in J. Am. Chem. Soc. 1992, 114, 25, 10024–10035
@@ -42,6 +43,16 @@ pub enum CoordinationEnvironment{
 impl Default for CoordinationEnvironment {
     fn default() -> Self { CoordinationEnvironment::None }
 }
+
+/// sp 'hybridisation' of a particular element
+#[derive(Debug, Hash, PartialEq, Clone)]
+pub enum Hybridisation{
+    SP3,
+    SP2,
+    SP,
+    None
+}
+
 
 impl UFFAtomType {
 
@@ -138,6 +149,42 @@ impl UFFAtomType {
             _ =>                                       0.
         }
     }
+
+    /// Is this atom type from the main group block of the periodic table?
+    pub fn is_main_group(&self) -> bool{
+        return Atom::from_atomic_symbol(self.atomic_symbol).is_main_group()
+    }
+
+    /// Hybridisation of this atom type
+    pub fn hybridisation(&self) -> Hybridisation{
+
+        let atom = Atom::from_atomic_symbol(self.atomic_symbol);
+
+        match atom.group(){
+            14  => {
+                match self.valency {
+                    4 => Hybridisation::SP3,
+                    3 => Hybridisation::SP2,
+                    2 => Hybridisation::SP,
+                    _ => Hybridisation::None
+                }
+            }
+            15 => {
+                match self.valency {
+                    3 | 4 => Hybridisation::SP3,
+                    2 => Hybridisation::SP2,
+                    1 => Hybridisation::SP,
+                    _ => Hybridisation::None
+                }
+            }
+            16 => {
+                match self.valency {
+                    2 | 3 => Hybridisation::SP3,
+                    1 => Hybridisation::SP2,
+                    _ => Hybridisation::None
+                }
+            }
+            _ => Hybridisation::None
+        }
+    }
 }
-
-

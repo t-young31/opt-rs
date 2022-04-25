@@ -1,6 +1,30 @@
 
 DEG_TO_RAD = 0.017453292519943295
 
+n_to_desc = {
+    '1': 'linear',
+    '2': 'trigonal',
+    'R': 'resonant',
+    '3': 'tetrahedral',
+    '4': 'square planar',
+    '5': 'trigonal bipyramidal',
+    '6': 'octahedral'
+}
+
+n_to_valency = {
+    '1': 2,
+    '2': 3,
+    'R': 3,
+    '3': None,  # Depends on group
+    '4': 4,
+    '5': 5,
+    '6': 6
+}
+
+group14_elements = ['C', 'Si', 'Ge', 'Sn', 'Pb', 'Fl']
+group15_elements = ['N', 'P', 'As', 'Sb', 'Bi', 'Mc']
+group16_elements = ['O', 'S', 'Se', 'Te', 'Po', 'Lv']
+
 
 class AtomType:
 
@@ -19,27 +43,40 @@ class AtomType:
         self.aromatic = self.name.endswith('_R')
         self.atomic_symbol = self.name[0] if '_' in self.name else self.name[:2]
 
-        self.valency = 0
-        self._set_valency()
+        self.valency = self._valency()
 
         self.oxidation_state = 0
         self._set_oxidation_state()
 
-    def _set_valency(self) -> None:
-
-        try:
-            self.valency = int(next(char.isdigit() for char
-                                    in self.name.split('_')[0]))
-        except StopIteration:
-            pass
+    def _valency(self) -> int:
 
         if self.name.endswith('_'):
-            self.valency = 1
+            return 1
 
         if self.bridging:
-            self.valency = 2
+            return 2
 
-        return None
+        if len(self.name) <= 2:
+            return 0
+
+        val = n_to_valency[self.name[2]]
+
+        if isinstance(val, int):
+            return val
+
+        if self.name[2] != '3':
+            raise RuntimeError
+
+        if self.atomic_symbol in group14_elements:
+            return 4
+
+        elif self.atomic_symbol in group15_elements:
+            return 3
+
+        elif self.atomic_symbol in group16_elements:
+            return 2
+
+        return 4
 
     def _set_oxidation_state(self) -> None:
 
