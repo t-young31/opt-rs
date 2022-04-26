@@ -1,5 +1,6 @@
 use std::str::FromStr;
-use std::ops::{Add, Sub, Index, IndexMut};
+use std::ops::{Add, Sub, Index, IndexMut, Neg};
+use std::process::Output;
 
 
 /// Point in 3D space
@@ -51,11 +52,27 @@ impl Vector3D {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
     }
 
+    /// Dot (scalar) product
     #[inline(always)]
     pub fn dot(&self, other: &Vector3D) -> f64{
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
+    /// Cross product
+    #[inline(always)]
+    pub fn cross(&self, other: &Vector3D) -> Self{
+        Vector3D{x: self.y*other.z - self.z*other.y,
+                 y: self.z*other.x - self.z*other.z,
+                 z: self.x*other.y - self.y*other.x}
+    }
+}
+
+impl Neg for Vector3D {
+    type Output = Vector3D;
+
+    fn neg(self) -> Self::Output {
+        Vector3D{x: -self.x, y: -self.y, z: -self.z}
+    }
 }
 
 impl<'a, 'b> Add<&'b Point> for &'a Point {        // +  operator
@@ -126,5 +143,14 @@ mod tests {
         assert!(is_very_close(vec.x, 2.));
         assert!(is_very_close(vec.y, -4.));
         assert!(is_very_close(vec.z, -6.));
+    }
+
+    #[test]
+    fn test_vector_dot(){
+
+        let v0 = Vector3D{x: 1., y: 1., z: 1.};
+        let v1 = Vector3D{x: -1., y: 2., z: -1.};
+
+        assert!(is_very_close(v0.dot(&v1), 0.))
     }
 }

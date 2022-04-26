@@ -182,10 +182,10 @@ fn involves_idxs(angle: &dyn HarmonicAngle, idxs: Vec<usize>) -> bool {
 fn theta(angle:       &dyn HarmonicAngle,
          coordinates: &Vec<Point>) -> f64{
 
-    let r1: Vector3D = &coordinates[angle.i()] - &coordinates[angle.j()];
-    let r2: Vector3D = &coordinates[angle.k()] - &coordinates[angle.j()];
+    let r_ij: Vector3D = &coordinates[angle.i()] - &coordinates[angle.j()];
+    let r_kj: Vector3D = &coordinates[angle.k()] - &coordinates[angle.j()];
 
-    (r1.dot(&r2) / (r1.length() * r2.length())).acos()
+    (r_ij.dot(&r_kj) / (r_ij.length() * r_kj.length())).acos()
 }
 
 
