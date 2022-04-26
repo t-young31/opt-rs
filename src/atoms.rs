@@ -249,6 +249,21 @@ impl AtomicNumber {
         x % 18 + 1
     }
 
+    /// Period of this atomic number
+    pub fn period(&self) -> usize{
+
+        if self.value > 0  && self.value < 3  { return 1; }
+        if self.value > 2  && self.value < 11 { return 2; }
+        if self.value > 10 && self.value < 19 { return 3; }
+        if self.value > 18 && self.value < 37 { return 4; }
+        if self.value > 36 && self.value < 55 { return 5; }
+        if self.value > 54 && self.value < 87 { return 6; }
+        if self.value > 86 && self.value < 119{ return 7; }
+
+        warn!("Unknown period - retuning 0");
+        0
+    }
+
     /// Is this atomic number from the main group?
     pub fn is_main_group(&self) -> bool{
         return MAIN_GROUP_ELEMENTS.contains(&self.to_atomic_symbol())
@@ -368,4 +383,25 @@ mod tests{
         assert!(Atom::from_atomic_symbol("Pt").is_metal());
         assert!(Atom::from_atomic_symbol("Pt").is_a_transition_metal());
     }
+
+    /// Test that the period is correct for some random elements
+    #[test]
+    fn test_atom_period(){
+
+        fn period(symbol: &str) -> usize{
+            AtomicNumber::from_string(symbol).unwrap().period()
+        }
+
+        assert_eq!(period("H"), 1);
+        assert_eq!(period("He"), 1);
+        assert_eq!(period("Be"), 2);
+        assert_eq!(period("C"), 2);
+        assert_eq!(period("P"), 3);
+        assert_eq!(period("Mo"), 5);
+        assert_eq!(period("Po"), 6);
+        assert_eq!(period("Ds"), 7);
+        assert_eq!(period("Cd"), 5);
+        assert_eq!(period("Yb"), 6);
+    }
+
 }

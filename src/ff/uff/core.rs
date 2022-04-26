@@ -145,7 +145,7 @@ impl UFF {
                )
     }
 
-    /// Add dihedra; terms between quadruples bonded atoms in a sequence
+    /// Add dihedral terms between quadruples bonded atoms in a sequence
     fn add_dihedral_torsions(&mut self, molecule: &Molecule){
 
         for dihedral in molecule.dihedrals().iter(){

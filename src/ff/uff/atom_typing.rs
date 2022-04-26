@@ -188,4 +188,19 @@ impl UFFAtomType {
             _ => Hybridisation::None
         }
     }
+
+    /// Torsional U potential defined for sp2-sp2 central bonds within a dihedral
+    pub fn u_phi(&self) -> f64{
+
+        let period = AtomicNumber::from_string(self.atomic_symbol).unwrap().period();
+
+        match period {
+            2 => 2.,
+            3 => 1.25,
+            4 => 0.7,
+            5 => 0.2,
+            6 => 0.1,
+            _ => 0.
+        }
+    }
 }
