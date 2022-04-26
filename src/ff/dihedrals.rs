@@ -30,40 +30,10 @@ impl EnergyFunction for TorsionalDihedral {
         self.v_phi
     }
 
-/*
-w -> i
-x -> j
-y -> k
-z -> l
-
-vec_xw = self.atoms[w].coord - self.atoms[x].coord
-vec_yz = self.atoms[z].coord - self.atoms[y].coord
-vec_xy = self.atoms[y].coord - self.atoms[x].coord
-
-vec1, vec2 = np.cross(vec_xw, vec_xy), np.cross(-vec_xy, vec_yz)
-
-for vec in (vec1, vec2, vec_xy):
-    vec /= np.linalg.norm(vec)
-
-
-value = -np.arctan2(np.dot(np.cross(vec1, vec_xy), vec2),
-                    np.dot(vec1, vec2))
-
- */
-
-
+    /// E = V/2 (1 - cos(n φ_0)cos(n φ))
     fn energy(&self, coordinates: &Vec<Point>) -> f64 {
 
-        todo!();
-        let phi = 0.;
-
-        let r_ij = &coordinates[self.i] - &coordinates[self.j];
-        let r_lk = &coordinates[self.l] - &coordinates[self.k];
-        let r_kj = &coordinates[self.k] - &coordinates[self.j];
-
-        let v0 = r_ij.cross(&r_kj);
-        let v1 = -r_kj.cross(&r_lk);
-
+        let phi = phi(self, coordinates);
         0.5 * self.v_phi * (1. - (self.n_phi * self.phi0).cos()*(self.n_phi * phi).cos())
     }
 
@@ -75,6 +45,58 @@ value = -np.arctan2(np.dot(np.cross(vec1, vec_xy), vec2),
 }
 
 
+/// Value of the dihedral
+fn phi(dihedral: &TorsionalDihedral, coordinates: &Vec<Point>) -> f64{
+
+    let r_ij = &coordinates[dihedral.i] - &coordinates[dihedral.j];
+    let r_lk = &coordinates[dihedral.l] - &coordinates[dihedral.k];
+    let mut r_kj = &coordinates[dihedral.k] - &coordinates[dihedral.j];
+
+    let mut v0 = r_ij.cross(&r_kj);
+    v0.divide_by(v0.length());
+
+    let mut v1 = (-r_kj.clone()).cross(&r_lk);
+
+    v1.divide_by(v1.length());
+    r_kj.divide_by(r_kj.length());
+
+    -(v0.cross(&r_kj).dot(&v1)).atan2(v0.dot(&v1))
+}
 
 
+/*
+   /$$                           /$$
+  | $$                          | $$
+ /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
+|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
+  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
+  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
+  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
+   \___/   \_______/|_______/    \___/ |_______/
+ */
 
+#[cfg(test)]
+mod tests{
+
+    use super::*;
+    use crate::utils::*;
+
+    /// Ensure a torsion can be calculated correctly. Compared to an Avogadro reference
+    #[test]
+    fn test_torsional_dihedral_calculation(){
+
+        // Coordinates for a H2O2 molecule
+        let x: Vec<Point> = Vec::from([
+            Point{x: -3.80272, y: 0.11331, z: -0.29090},
+            Point{x: -3.75673, y: 1.06948, z: -0.03303},
+            Point{x: -2.46930, y: 1.33955, z:  0.03004},
+            Point{x: -2.25240, y: 1.31540, z:  0.99712}
+        ]);
+        let dihedral = TorsionalDihedral{i: 0, j: 1, k: 2, l: 3, n_phi: 0., phi0: 0., v_phi: 0.};
+
+        let expected_phi = -1.7593;  // -100.8 degrees
+
+        assert!(is_close(phi(&dihedral, &x), expected_phi, 1E-3));
+    }
+
+}

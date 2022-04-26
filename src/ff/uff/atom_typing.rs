@@ -1,5 +1,4 @@
 use crate::atoms::{Atom, AtomicNumber};
-use crate::ff::uff::atom_typing::Hybridisation::SP;
 use crate::Molecule;
 
 /// See Table 1 in J. Am. Chem. Soc. 1992, 114, 25, 10024–10035

@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use std::ops::{Add, Sub, Index, IndexMut, Neg};
+use std::ops::{Add, Sub, Index, IndexMut, Neg, DivAssign};
 use std::process::Output;
 
 
@@ -38,6 +38,8 @@ impl Point {
     }
 }
 
+
+#[derive(Debug, Clone)]
 pub struct Vector3D {
     pub x: f64,
     pub y: f64,
@@ -62,8 +64,15 @@ impl Vector3D {
     #[inline(always)]
     pub fn cross(&self, other: &Vector3D) -> Self{
         Vector3D{x: self.y*other.z - self.z*other.y,
-                 y: self.z*other.x - self.z*other.z,
+                 y: self.z*other.x - self.x*other.z,
                  z: self.x*other.y - self.y*other.x}
+    }
+
+    /// Divide this vector by a scalar
+    pub fn divide_by(&mut self, value: f64){
+        self.x /= value;
+        self.y /= value;
+        self.z /= value;
     }
 }
 
@@ -74,6 +83,7 @@ impl Neg for Vector3D {
         Vector3D{x: -self.x, y: -self.y, z: -self.z}
     }
 }
+
 
 impl<'a, 'b> Add<&'b Point> for &'a Point {        // +  operator
 type Output = Vector3D;
@@ -151,6 +161,18 @@ mod tests {
         let v0 = Vector3D{x: 1., y: 1., z: 1.};
         let v1 = Vector3D{x: -1., y: 2., z: -1.};
 
-        assert!(is_very_close(v0.dot(&v1), 0.))
+        assert!(is_very_close(v0.dot(&v1), 0.));
+    }
+
+    #[test]
+    fn test_cross_product(){
+
+        let v0 = Vector3D{x: 1., y: 1., z: 1.};
+        let v1 = Vector3D{x: -1., y: 2., z: -1.};
+        let v2 = v0.cross(&v1);
+
+        assert!(is_very_close(v0.dot(&v2), 0.));
+        assert!(is_very_close(v1.cross(&v1).length(), 0.));
+
     }
 }

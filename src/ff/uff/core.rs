@@ -481,7 +481,7 @@ mod tests{
         let filename = "methane_tvafcim.xyz";
         print_methane_xyz_file(filename);
 
-        let mut mol = Molecule::from_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
         let ff = UFF::new(&mol);
 
         assert_eq!(ff.atom_types[0].atomic_symbol, "C");

@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::f64::consts::PI;
 use crate::atoms::Atom;
 use crate::ff::uff::atom_typing::{UFFAtomType, Hybridisation};
@@ -87,9 +86,9 @@ impl DihedralBond{
 
     /// Torsional force constant for a sp2-sp2 bond [eqn. 17]
     fn v_sp2(&self) -> f64{
-        (5.
-         *(self.type_j.u_phi()*self.type_k.u_phi()).sqrt()
-         *(1. + 4.18 * self.n_bo().ln()))
+        5.
+        * (self.type_j.u_phi()*self.type_k.u_phi()).sqrt()
+        * (1. + 4.18 * self.n_bo().ln())
     }
 
     /// Value of the bond order
