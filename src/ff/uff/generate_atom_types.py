@@ -25,6 +25,24 @@ group14_elements = ['C', 'Si', 'Ge', 'Sn', 'Pb', 'Fl']
 group15_elements = ['N', 'P', 'As', 'Sb', 'Bi', 'Mc']
 group16_elements = ['O', 'S', 'Se', 'Te', 'Po', 'Lv']
 
+sp3_torsional_barriers = {
+    'C_3': 2.119,
+    'N_3': 0.450,
+    '0_3': 0.018,
+    'Si3': 1.225,
+    'P_3': 2.400,
+    'S_3': 0.484,
+    'Ge3': 0.701,
+    'As3': 1.5,
+    'Se3': 0.335,
+    'Sn3': 0.199,
+    'Sb3': 1.1,
+    'Te3': 0.3,
+    'Pb3': 0.1,
+    'Bi3': 1.0,
+    'Po3': 0.3
+}
+
 
 class AtomType:
 
@@ -47,6 +65,8 @@ class AtomType:
 
         self.oxidation_state = 0
         self._set_oxidation_state()
+
+        self.v_torsion = sp3_torsional_barriers.get(self.name, 0.0)
 
     def _valency(self) -> int:
 
@@ -103,7 +123,8 @@ class AtomType:
                 f'x: {self.x}, '
                 f'd: {self.d}, '
                 f'zeta: {self.zeta}, '
-                f'z_eff: {self.z}'
+                f'z_eff: {self.z}, '
+                f'v_phi: {self.v_torsion}'
                 + '}')
 
 

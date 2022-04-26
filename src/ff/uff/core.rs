@@ -1,10 +1,12 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::f64::consts::PI;
 use crate::{Forcefield, Molecule};
 use crate::coordinates::Point;
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::forcefield::EnergyFunction;
+use crate::ff::uff::dihedral_bond::{DihedralBond, JointHybridisation};
 use crate::ff::uff::atom_typing::UFFAtomType;
 use crate::ff::uff::atom_types::ATOM_TYPES;
 use crate::pairs::AtomPair;
@@ -153,10 +155,18 @@ impl UFF {
             let k = dihedral.k;
             let l = dihedral.l;
 
-            if !(self.atom_types[j].is_main_group() && self.atom_types[k].is_main_group()){
+            let central_bond = DihedralBond::from_atom_types(
+                &self.atom_types[j], &self.atom_types[k]
+            );
+
+            if !central_bond.contains_only_main_group_elements(){
                 // Only main group atoms have non-zero torsional potentials
                 continue;
             }
+
+
+
+
 
 
         }

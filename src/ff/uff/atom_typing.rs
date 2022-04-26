@@ -17,12 +17,13 @@ pub(crate) struct UFFAtomType{
     pub oxidation_state: usize,         // Formal charge
     pub environment:     CoordinationEnvironment,
 
-    pub r:     f64,                     // Bonded distance (Å)
-    pub theta: f64,                     // Angle (radians)
-    pub x:     f64,                     // Non-bonded distance (Å)
-    pub d:     f64,                     // Non-bonded energy (kcal mol-1)
-    pub zeta:  f64,                     // Non-bonded scale
-    pub z_eff: f64                      // Effective charge (e)
+    pub r:         f64,                 // Bonded distance (Å)
+    pub theta:     f64,                 // Angle (radians)
+    pub x:         f64,                 // Non-bonded distance (Å)
+    pub d:         f64,                 // Non-bonded energy (kcal mol-1)
+    pub zeta:      f64,                 // Non-bonded scale
+    pub z_eff:     f64,                 // Effective charge (e)
+    pub v_phi: f64                  // Torsional potential for an sp3-bonded pair
 }
 
 
@@ -179,8 +180,8 @@ impl UFFAtomType {
             }
             16 => {
                 match self.valency {
-                    2 | 3 => Hybridisation::SP3,
-                    1 => Hybridisation::SP2,
+                    2  => Hybridisation::SP3,
+                    1 | 3 => Hybridisation::SP2,
                     _ => Hybridisation::None
                 }
             }
