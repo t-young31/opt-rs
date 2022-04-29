@@ -8,7 +8,7 @@ use crate::utils::is_very_close;
 pub struct Atom{
     pub(crate) idx:               usize,
     pub(crate) atomic_number:     AtomicNumber,
-    pub(crate) coordinate: Point,
+    pub(crate) coordinate:        Point,
     pub(crate) bonded_neighbours: Vec<usize>,
     pub(crate) formal_charge:     f64
 }
@@ -93,6 +93,11 @@ impl Atom {
         METALLIC_ELEMENTS.contains(&self.atomic_symbol())
     }
 
+    /// Is this atom a from the main group block in the periodic table?
+    pub fn is_main_group(&self) -> bool{
+        return MAIN_GROUP_ELEMENTS.contains(&self.atomic_number.to_atomic_symbol())
+    }
+
     /// Number of valance electrons that could participate in bonding
     pub fn num_valance_electrons(&self) -> i32{
 
@@ -116,7 +121,17 @@ impl Atom {
             return 0;
         }
 
-        self.num_valance_electrons() - self.bonded_neighbours.len() as i32
+        let mut num_lone_pair_electrons: i32 = 0;
+        match self.group() {
+            15 => {num_lone_pair_electrons = 2;}
+            16 => {num_lone_pair_electrons = 4;}
+            17 => {num_lone_pair_electrons = 6;}
+            _ => {}
+        }
+
+        self.num_valance_electrons()
+            - self.bonded_neighbours.len() as i32
+            - num_lone_pair_electrons
     }
 
     /// Can this atom form multiple bonds with others?
@@ -244,6 +259,24 @@ impl AtomicNumber {
         x % 18 + 1
     }
 
+    /// Period of this atomic number
+    pub fn period(&self) -> usize{
+
+        if self.value > 0  && self.value < 3  { return 1; }
+        if self.value > 2  && self.value < 11 { return 2; }
+        if self.value > 10 && self.value < 19 { return 3; }
+        if self.value > 18 && self.value < 37 { return 4; }
+        if self.value > 36 && self.value < 55 { return 5; }
+        if self.value > 54 && self.value < 87 { return 6; }
+        if self.value > 86 && self.value < 119{ return 7; }
+
+        panic!("Unknown period - retuning 0");
+    }
+
+    /// Is this atomic number from the main group?
+    pub fn is_main_group(&self) -> bool{
+        return MAIN_GROUP_ELEMENTS.contains(&self.to_atomic_symbol())
+    }
 }
 
 impl PartialEq for AtomicNumber {
@@ -267,13 +300,19 @@ static ELEMENTS: [&'static str; 118] = [
     "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
 ];
 
-static METALLIC_ELEMENTS: [&'static str; 92] =  [
+static METALLIC_ELEMENTS: [&'static str; 92] = [
     "Li", "Be", "Na", "Mg", "Al", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu",
     "Zn", "Ga", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn",
     "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
     "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "Fr", "Ra",
     "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf",
     "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv"
+];
+
+static MAIN_GROUP_ELEMENTS: [&'static str; 36] = [
+    "B",  "C", "N", "O", "F", "Ne", "Al", "Si", "P", "S", "Cl", "Ar",
+    "Ga", "Ge", "As", "Se", "Br", "Kr", "In", "Sn", "Sb", "Te", "I", "Xe",
+    "Tl", "Pb", "Bi", "Po", "At", "Rn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og"
 ];
 
 static PICOMETERS_TO_ANGSTROMS: f64 = 0.01;
@@ -353,4 +392,48 @@ mod tests{
         assert!(Atom::from_atomic_symbol("Pt").is_metal());
         assert!(Atom::from_atomic_symbol("Pt").is_a_transition_metal());
     }
+
+    /// Test main group atoms
+    #[test]
+    fn test_main_group_atoms(){
+
+        assert!(Atom::from_atomic_symbol("P").is_main_group());
+        assert!(AtomicNumber::from_string("P").unwrap().is_main_group());
+
+        assert!(Atom::from_atomic_symbol("C").is_main_group());
+        assert!(!Atom::from_atomic_symbol("Pt").is_main_group());
+    }
+
+    /// Test that the period is correct for some random elements
+    #[test]
+    fn test_atom_period(){
+
+        fn period(symbol: &str) -> usize{
+            AtomicNumber::from_string(symbol).unwrap().period()
+        }
+
+        assert_eq!(period("H"), 1);
+        assert_eq!(period("He"), 1);
+        assert_eq!(period("Be"), 2);
+        assert_eq!(period("C"), 2);
+        assert_eq!(period("P"), 3);
+        assert_eq!(period("Mo"), 5);
+        assert_eq!(period("Po"), 6);
+        assert_eq!(period("Ds"), 7);
+        assert_eq!(period("Cd"), 5);
+        assert_eq!(period("Yb"), 6);
+
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_impossible_period(){
+        let _ = AtomicNumber{value: 200}.period();
+    }
+
+    #[test]
+    fn test_num_possible_unpaired_electrons(){
+        assert_eq!(Atom::from_atomic_symbol("Cl").num_possible_unpaired_electrons(),  1);
+    }
+
 }

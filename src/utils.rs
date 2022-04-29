@@ -108,3 +108,13 @@ H          1.79519       -0.88910        0.90584\n\
 H          1.79519       -0.88911       -0.90583\n")
         .expect(filename)
 }
+
+pub(crate) fn print_h2o2_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "4\n\n\
+H         -3.80272        0.11331       -0.29090\n\
+O         -3.75673        1.06948       -0.03303\n\
+O         -2.46930        1.33955        0.03004\n\
+H         -2.46930        1.31540        0.99712\n")
+        .expect(filename)
+}

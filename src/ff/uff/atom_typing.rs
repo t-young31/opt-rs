@@ -1,4 +1,6 @@
+use std::f64::consts::PI;
 use crate::atoms::{Atom, AtomicNumber};
+use crate::ff::angles::angle_value;
 use crate::Molecule;
 
 /// See Table 1 in J. Am. Chem. Soc. 1992, 114, 25, 10024–10035
@@ -16,12 +18,13 @@ pub(crate) struct UFFAtomType{
     pub oxidation_state: usize,         // Formal charge
     pub environment:     CoordinationEnvironment,
 
-    pub r:     f64,                     // Bonded distance (Å)
-    pub theta: f64,                     // Angle (radians)
-    pub x:     f64,                     // Non-bonded distance (Å)
-    pub d:     f64,                     // Non-bonded energy (kcal mol-1)
-    pub zeta:  f64,                     // Non-bonded scale
-    pub z_eff: f64                      // Effective charge (e)
+    pub r:         f64,                 // Bonded distance (Å)
+    pub theta:     f64,                 // Angle (radians)
+    pub x:         f64,                 // Non-bonded distance (Å)
+    pub d:         f64,                 // Non-bonded energy (kcal mol-1)
+    pub zeta:      f64,                 // Non-bonded scale
+    pub z_eff:     f64,                 // Effective charge (e)
+    pub v_phi: f64                  // Torsional potential for an sp3-bonded pair
 }
 
 
@@ -43,28 +46,48 @@ impl Default for CoordinationEnvironment {
     fn default() -> Self { CoordinationEnvironment::None }
 }
 
+/// sp 'hybridisation' of a particular element
+#[derive(Debug, Hash, PartialEq, Clone)]
+pub enum Hybridisation{
+    SP3,
+    SP2,
+    SP,
+    None
+}
+
+
 impl UFFAtomType {
 
     /// How well does an atom within a molecule match this atom type. Larger value <=> better match
     pub(crate) fn match_quality(&self,
                                 atom:     &Atom,
-                                molecule: &Molecule) -> i64{
+                                molecule: &Molecule) -> f64{
+        let mut value: f64 = 0.;
 
-        let mut value: i64 = 0;
+        match atom.atomic_symbol() == self.atomic_symbol{
+            true => {value += 10.},
+            false => {}
+        }
 
-        value += self.match_quality_atomic_symbol(atom);
-        value -= (atom.bonded_neighbours.len() as i64 - self.valency as i64).abs();
+        let num_neighbours = atom.bonded_neighbours.len();
+        value -= (num_neighbours as f64 - self.valency as f64).abs();
+
+        if num_neighbours > 1{
+            let angle = angle_value(atom.bonded_neighbours[0],
+                                       atom.idx,
+                                      atom.bonded_neighbours[1],
+                                         &molecule.coordinates);
+
+            // Subtract at most one for the angle not matching
+            value -= (angle - self.theta).abs() / PI;
+        }
+
+
 
         // TODO: Match on more things
+        // Match on current angle
 
         value
-    }
-
-    /// How well does the atomic symbol match?
-    fn match_quality_atomic_symbol(&self, atom: &Atom) -> i64{
-
-        if atom.atomic_symbol() == self.atomic_symbol{ 2 }
-        else { 0 }
     }
 
     /// GMP (generalized Mulliken-Pauling) electronegativity
@@ -138,6 +161,57 @@ impl UFFAtomType {
             _ =>                                       0.
         }
     }
+
+    /// Is this atom type from the main group block of the periodic table?
+    pub fn is_main_group(&self) -> bool{
+        return Atom::from_atomic_symbol(self.atomic_symbol).is_main_group()
+    }
+
+    /// Hybridisation of this atom type
+    pub fn hybridisation(&self) -> Hybridisation{
+
+        let atom = Atom::from_atomic_symbol(self.atomic_symbol);
+
+        match atom.group(){
+            14  => {
+                match self.valency {
+                    4 => Hybridisation::SP3,
+                    3 => Hybridisation::SP2,
+                    2 => Hybridisation::SP,
+                    _ => Hybridisation::None
+                }
+            }
+            15 => {
+                match self.valency {
+                    3 | 4 => Hybridisation::SP3,
+                    2 => Hybridisation::SP2,
+                    1 => Hybridisation::SP,
+                    _ => Hybridisation::None
+                }
+            }
+            16 => {
+                match self.valency {
+                    2  => Hybridisation::SP3,
+                    1 | 3 => Hybridisation::SP2,
+                    _ => Hybridisation::None
+                }
+            }
+            _ => Hybridisation::None
+        }
+    }
+
+    /// Torsional U potential defined for sp2-sp2 central bonds within a dihedral
+    pub fn u_phi(&self) -> f64{
+
+        let period = AtomicNumber::from_string(self.atomic_symbol).unwrap().period();
+
+        match period {
+            2 => 2.,
+            3 => 1.25,
+            4 => 0.7,
+            5 => 0.2,
+            6 => 0.1,
+            _ => 0.
+        }
+    }
 }
-
-
