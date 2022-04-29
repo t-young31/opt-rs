@@ -270,8 +270,7 @@ impl AtomicNumber {
         if self.value > 54 && self.value < 87 { return 6; }
         if self.value > 86 && self.value < 119{ return 7; }
 
-        warn!("Unknown period - retuning 0");
-        0
+        panic!("Unknown period - retuning 0");
     }
 
     /// Is this atomic number from the main group?
@@ -399,6 +398,8 @@ mod tests{
     fn test_main_group_atoms(){
 
         assert!(Atom::from_atomic_symbol("P").is_main_group());
+        assert!(AtomicNumber::from_string("P").unwrap().is_main_group());
+
         assert!(Atom::from_atomic_symbol("C").is_main_group());
         assert!(!Atom::from_atomic_symbol("Pt").is_main_group());
     }
@@ -421,6 +422,18 @@ mod tests{
         assert_eq!(period("Ds"), 7);
         assert_eq!(period("Cd"), 5);
         assert_eq!(period("Yb"), 6);
+
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_impossible_period(){
+        let _ = AtomicNumber{value: 200}.period();
+    }
+
+    #[test]
+    fn test_num_possible_unpaired_electrons(){
+        assert_eq!(Atom::from_atomic_symbol("Cl").num_possible_unpaired_electrons(),  1);
     }
 
 }

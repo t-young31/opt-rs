@@ -9,8 +9,6 @@ use crate::ff::forcefield::EnergyFunction;
 ///                  \
 ///                   E_k ---- E_l
 ///
-#[derive(Debug)]
-
 pub struct TorsionalDihedral{
 
     pub(crate) i:  usize,
@@ -166,6 +164,7 @@ mod tests{
             Point{x: -2.25240, y: 1.31540, z:  0.99712}
         ]);
         let dihedral = TorsionalDihedral{i: 0, j: 1, k: 2, l: 3, n_phi: 0., phi0: 0., v_phi: 0.};
+        assert!(is_very_close(dihedral.force_constant(), 0.0));
 
         let expected_phi = -1.7593;  // -100.8 degrees
 

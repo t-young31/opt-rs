@@ -505,6 +505,18 @@ mod tests{
 
         remove_file_or_panic(filename);
     }
+    #[test]
+    fn test_num_vs_anal_grad_ethene(){
+
+        let filename = "ethene_tnvage.xyz";
+        print_ethene_xyz_file(filename);
+        let mut ethene = Molecule::from_xyz_file(filename);
+        let mut uff = UFF::new(&ethene);
+
+        assert!(num_and_anal_gradient_are_close(&mut ethene, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
 
     #[test]
     fn test_valency_assigned_for_carbon_in_methane(){
