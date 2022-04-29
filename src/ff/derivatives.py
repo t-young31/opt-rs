@@ -249,7 +249,7 @@ def extract_variables(_lines):
 
     first_line = non_var_lines[0]
     start_idx = 0 if '=' not in first_line else len(first_line.split('= ')[0])
-    end_idx = min([len(l) for l in non_var_lines])//2
+    end_idx = min(min([len(l) for l in non_var_lines]), start_idx+100)
 
     for i in range(start_idx, end_idx):
 
@@ -295,7 +295,7 @@ def print_angle_gradient(angle_type):
     for x in (x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k):
         lines.append(angle_type(x))
 
-    for _ in range(40):
+    for _ in range(30):
         extract_variables(lines)
 
     return print(";\n".join(lines))
@@ -308,7 +308,7 @@ def print_dihedral_gradient():
     for x in (x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k, x_l, y_l, z_l):
         lines.append(dihedral(x))
 
-    for _ in range(1):
+    for _ in range(100):
         extract_variables(lines)
 
     return print(";\n".join(lines))
