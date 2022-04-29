@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::f64::consts::PI;
 use crate::{Forcefield, Molecule};
 use crate::coordinates::Point;
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
+use crate::ff::dihedrals::TorsionalDihedral;
 use crate::ff::forcefield::EnergyFunction;
-use crate::ff::uff::dihedral_bond::{DihedralBond, JointHybridisation};
+use crate::ff::uff::dihedral_bond::DihedralBond;
 use crate::ff::uff::atom_typing::UFFAtomType;
 use crate::ff::uff::atom_types::ATOM_TYPES;
 use crate::pairs::AtomPair;
@@ -164,13 +164,18 @@ impl UFF {
                 continue;
             }
 
+            println!("{:?}-{:?}-{:?}-{:?}", i, j, k, l);
+            println!("{:?}", self.atom_types[j]);
+            println!("{:?}  {:?}  {:?} ", central_bond.phi0, central_bond.n, central_bond.v);
 
-
-
-
-
+            self.energy_functions.push(
+                Box::new(TorsionalDihedral{
+                    i, j, k, l,
+                    phi0: central_bond.phi0,
+                    n_phi: central_bond.n,
+                    v_phi: central_bond.v})
+            );
         }
-
     }
 }
 
@@ -183,8 +188,9 @@ impl Forcefield for UFF {
         let mut ff = UFF::default();
         ff.set_atom_types(molecule);
         ff.set_zero_gradient(molecule);
-        ff.add_bond_stretches(molecule);     // E_R
+        ff.add_bond_stretches(molecule);
         ff.add_angle_bends(molecule);
+        ff.add_dihedral_torsions(molecule);
 
         ff
     }
@@ -194,7 +200,7 @@ impl Forcefield for UFF {
     /// to each atom
     fn set_atom_types(&mut self, molecule: &Molecule) {
 
-        let mut match_qualities: [i64; ATOM_TYPES.len()] = [0; ATOM_TYPES.len()];
+        let mut match_qualities: [f64; ATOM_TYPES.len()] = [0.; ATOM_TYPES.len()];
 
         for atom in molecule.atoms().iter(){
 
@@ -280,7 +286,7 @@ mod tests{
 
         for i in 0..grad.len(){
             for k in 0..3{
-                if !is_close(grad[i][k], num_grad[i][k], 1E-6){
+                if !is_close(grad[i][k], num_grad[i][k], 1E-5){
                     println!("{} not close to {}", grad[i][k], num_grad[i][k]);
                     return false;
                 };
@@ -290,6 +296,7 @@ mod tests{
         true
     }
 
+    /// Find a UFFAtomType from a string label of it
     fn atom_type(string: &str) -> UFFAtomType{
         ATOM_TYPES.iter().filter(|t| t.name ==string).next().unwrap().clone()
     }
@@ -449,7 +456,7 @@ mod tests{
         assert!(is_close(bend.force_constant(), 105.5, 15.));
     }
 
-    /// Test numerical vs analytical gradient evaluation for H2O
+    /// Test numerical vs analytical gradient evaluation
     #[test]
     fn test_num_vs_anal_grad_h2o(){
 
@@ -471,6 +478,30 @@ mod tests{
         let mut uff = UFF::new(&au_me2);
 
         assert!(num_and_anal_gradient_are_close(&mut au_me2, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
+    #[test]
+    fn test_num_vs_anal_grad_h2o2(){
+
+        let filename = "h2o2_tnvagh.xyz";
+        print_h2o2_xyz_file(filename);
+        let mut h2o2 = Molecule::from_xyz_file(filename);
+
+        let o_o_bond = Bond{ pair: AtomPair{i: 1, j: 2}, order: BondOrder::Single};
+        assert!(h2o2.bonds().contains(&o_o_bond));
+        assert_eq!(h2o2.bonds().len(), 3);
+
+        assert_eq!(h2o2.dihedrals().len(), 1);  // Should have a single dihedral
+
+        let mut uff = UFF::new(&h2o2);
+
+        let n_dihedral_terms = uff.energy_functions.iter()
+                                    .filter(|f| f.involves_idxs(Vec::from([0, 1, 2, 3])))
+                                    .count();
+
+        assert_eq!(n_dihedral_terms, 1);
+        assert!(num_and_anal_gradient_are_close(&mut h2o2, &mut uff));
 
         remove_file_or_panic(filename);
     }

@@ -1,6 +1,5 @@
 use std::str::FromStr;
-use std::ops::{Add, Sub, Index, IndexMut, Neg, DivAssign};
-use std::process::Output;
+use std::ops::{Add, Sub, Index, IndexMut, Neg};
 
 
 /// Point in 3D space

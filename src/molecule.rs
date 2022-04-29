@@ -244,21 +244,17 @@ impl Molecule{
                 continue;
             }
 
-            let mut n = atom_i.num_possible_unpaired_electrons();
-            let mut m = atom_j.num_possible_unpaired_electrons();
+            let n = atom_i.num_possible_unpaired_electrons();
+            let m = atom_j.num_possible_unpaired_electrons();
 
             if n.min(m) == 0{
                 continue; // One of the atoms doesn't have enough electrons to form a multiple bond
             }
 
-            // Assume a single lone pair of electrons
-            if n > 3 {n -= 2;}
-            if m > 3 {m -= 2;}
-
-
-            match n.min(m) {
-                1 => {bond.order = BondOrder::Double;}
-                2 => {bond.order = BondOrder::Triple;}
+            // TODO: check this
+            match n+m {
+                2 => {bond.order = BondOrder::Double;}
+                4 => {bond.order = BondOrder::Triple;}
                 _ => {bond.order = BondOrder::Single;}
             }
         }
@@ -370,6 +366,7 @@ impl Molecule{
         }
 
     }
+
 }
 
 #[derive(Default, Debug)]

@@ -1,4 +1,6 @@
+use std::f64::consts::PI;
 use crate::atoms::{Atom, AtomicNumber};
+use crate::ff::angles::angle_value;
 use crate::Molecule;
 
 /// See Table 1 in J. Am. Chem. Soc. 1992, 114, 25, 10024–10035
@@ -59,23 +61,33 @@ impl UFFAtomType {
     /// How well does an atom within a molecule match this atom type. Larger value <=> better match
     pub(crate) fn match_quality(&self,
                                 atom:     &Atom,
-                                molecule: &Molecule) -> i64{
+                                molecule: &Molecule) -> f64{
+        let mut value: f64 = 0.;
 
-        let mut value: i64 = 0;
+        match atom.atomic_symbol() == self.atomic_symbol{
+            true => {value += 10.},
+            false => {}
+        }
 
-        value += self.match_quality_atomic_symbol(atom);
-        value -= (atom.bonded_neighbours.len() as i64 - self.valency as i64).abs();
+        let num_neighbours = atom.bonded_neighbours.len();
+        value -= (num_neighbours as f64 - self.valency as f64).abs();
+
+        if num_neighbours > 1{
+            let angle = angle_value(atom.bonded_neighbours[0],
+                                       atom.idx,
+                                      atom.bonded_neighbours[1],
+                                         &molecule.coordinates);
+
+            // Subtract at most one for the angle not matching
+            value -= (angle - self.theta).abs() / PI;
+        }
+
+
 
         // TODO: Match on more things
+        // Match on current angle
 
         value
-    }
-
-    /// How well does the atomic symbol match?
-    fn match_quality_atomic_symbol(&self, atom: &Atom) -> i64{
-
-        if atom.atomic_symbol() == self.atomic_symbol{ 2 }
-        else { 0 }
     }
 
     /// GMP (generalized Mulliken-Pauling) electronegativity

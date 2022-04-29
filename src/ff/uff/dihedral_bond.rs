@@ -14,9 +14,9 @@ pub struct DihedralBond{
     type_j: UFFAtomType,
     type_k: UFFAtomType,
 
-    n:    f64,    // n_ϕ
-    phi0: f64,    // ϕ_0
-    v:    f64     // V_ϕ
+    pub(crate) n:    f64,    // n_ϕ
+    pub(crate) phi0: f64,    // ϕ_0
+    pub(crate) v:    f64     // V_ϕ
 }
 
 
@@ -101,7 +101,7 @@ impl DihedralBond{
 }
 
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum JointHybridisation{
     SP3SP3,
     SP2SP3,

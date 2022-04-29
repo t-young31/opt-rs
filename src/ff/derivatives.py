@@ -130,7 +130,7 @@ def dihedral(symbol):
     res = (0.5 * sym.Symbol("self.v_phi")
            * (1 - sym.cos(n*phi0)*sym.cos(n*phi)))
 
-    string = rust_expression(function=res)
+    string = rust_expression(function=sym.diff(res, symbol))
     # string = rust_expression(function=sym.refine(res, sym.Q.real(symbol)))
     string = string.replace('__', '')
 
@@ -168,6 +168,29 @@ def convert_to_trait(string, name):
     return string
 
 
+def convert_to_trait_with_arg(string, name):
+    """Convert a dyadic function to a trait with a single argument"""
+    terms = string.split(f'{name}')
+
+    for i, term in enumerate(terms[1:]):
+        count = 0
+
+        for j, char in enumerate(term):
+            if char == '(':
+                count += 1
+
+            if char == ')':
+                count -= 1
+
+            if count == 1 and char == ',':
+                term = term[:j] + f').{name}(' + term[j+1:]
+                break
+
+        terms[i+1] = term
+
+    return ''.join(terms)
+
+
 def rust_expression(function):
     """Print a valid rust expression from a sympy function"""
 
@@ -177,8 +200,10 @@ def rust_expression(function):
     string = string.replace('/2', '/2.')
     string = string.replace('2*', '2.*')
 
-    for fn in ('sqrt', 'atan2',  'acos', 'cos', 'asin', 'sin'):
+    for fn in ('sqrt', 'acos', 'cos', 'asin', 'sin'):
         string = convert_to_trait(string, fn)
+
+    string = convert_to_trait_with_arg(string, 'atan2')
 
     return string
 
@@ -283,7 +308,7 @@ def print_dihedral_gradient():
     for x in (x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k, x_l, y_l, z_l):
         lines.append(dihedral(x))
 
-    for _ in range(20):
+    for _ in range(1):
         extract_variables(lines)
 
     return print(";\n".join(lines))

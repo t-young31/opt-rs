@@ -177,13 +177,19 @@ fn involves_idxs(angle: &dyn HarmonicAngle, idxs: Vec<usize>) -> bool {
 
 
 
-/// Value of the angle between three atoms (i, j, k)
 #[inline(always)]
 fn theta(angle:       &dyn HarmonicAngle,
          coordinates: &Vec<Point>) -> f64{
 
-    let r_ij: Vector3D = &coordinates[angle.i()] - &coordinates[angle.j()];
-    let r_kj: Vector3D = &coordinates[angle.k()] - &coordinates[angle.j()];
+    angle_value(angle.i(), angle.j(), angle.k(), coordinates)
+}
+
+/// Value of the angle between three atoms (i, j, k)
+#[inline(always)]
+pub fn angle_value(i: usize, j: usize, k: usize, coordinates: &Vec<Point>) -> f64{
+
+    let r_ij: Vector3D = &coordinates[i] - &coordinates[j];
+    let r_kj: Vector3D = &coordinates[k] - &coordinates[j];
 
     (r_ij.dot(&r_kj) / (r_ij.length() * r_kj.length())).acos()
 }
