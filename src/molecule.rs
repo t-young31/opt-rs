@@ -247,14 +247,9 @@ impl Molecule{
             let n = atom_i.num_possible_unpaired_electrons();
             let m = atom_j.num_possible_unpaired_electrons();
 
-            if n.min(m) == 0{
-                continue; // One of the atoms doesn't have enough electrons to form a multiple bond
-            }
-
-            // TODO: check this
-            match n+m {
-                2 => {bond.order = BondOrder::Double;}
-                4 => {bond.order = BondOrder::Triple;}
+            match n.max(m) {
+                1 => {bond.order = BondOrder::Double;}
+                2 => {bond.order = BondOrder::Triple;}
                 _ => {bond.order = BondOrder::Single;}
             }
         }

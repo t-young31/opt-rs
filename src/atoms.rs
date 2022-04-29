@@ -121,7 +121,17 @@ impl Atom {
             return 0;
         }
 
-        self.num_valance_electrons() - self.bonded_neighbours.len() as i32
+        let mut num_lone_pair_electrons: i32 = 0;
+        match self.group() {
+            15 => {num_lone_pair_electrons = 2;}
+            16 => {num_lone_pair_electrons = 4;}
+            17 => {num_lone_pair_electrons = 6;}
+            _ => {}
+        }
+
+        self.num_valance_electrons()
+            - self.bonded_neighbours.len() as i32
+            - num_lone_pair_electrons
     }
 
     /// Can this atom form multiple bonds with others?
@@ -382,6 +392,15 @@ mod tests{
         assert!(!Atom::from_atomic_symbol("C").is_metal());
         assert!(Atom::from_atomic_symbol("Pt").is_metal());
         assert!(Atom::from_atomic_symbol("Pt").is_a_transition_metal());
+    }
+
+    /// Test main group atoms
+    #[test]
+    fn test_main_group_atoms(){
+
+        assert!(Atom::from_atomic_symbol("P").is_main_group());
+        assert!(Atom::from_atomic_symbol("C").is_main_group());
+        assert!(!Atom::from_atomic_symbol("Pt").is_main_group());
     }
 
     /// Test that the period is correct for some random elements
