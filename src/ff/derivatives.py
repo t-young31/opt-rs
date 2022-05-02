@@ -3,18 +3,27 @@ import sympy as sym
 x_i = sym.Symbol('x_i')
 y_i = sym.Symbol('y_i')
 z_i = sym.Symbol('z_i')
+r_i = (x_i, y_i, z_i)
 
 x_j = sym.Symbol('x_j')
 y_j = sym.Symbol('y_j')
 z_j = sym.Symbol('z_j')
+r_j = (x_j, y_j, z_j)
 
 x_k = sym.Symbol('x_k')
 y_k = sym.Symbol('y_k')
 z_k = sym.Symbol('z_k')
+r_k = (x_k, y_k, z_k)
 
 x_l = sym.Symbol('x_l')
 y_l = sym.Symbol('y_l')
 z_l = sym.Symbol('z_l')
+r_l = (x_l, y_l, z_l)
+
+x_c = sym.Symbol('x_c')
+y_c = sym.Symbol('y_c')
+z_c = sym.Symbol('z_c')
+r_c = (x_c, y_c, z_c)
 
 
 def theta():
@@ -62,7 +71,27 @@ def angle_type_b(symbol):
     return f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} += {string}'
 
 
-def dihedral(symbol):
+def cross_x(u_x, u_y, u_z, v_x, v_y, v_z):
+    return u_y*v_z - u_z*v_y
+
+
+def cross_y(u_x, u_y, u_z, v_x, v_y, v_z):
+    return u_z*v_x - u_x*v_z
+
+
+def cross_z(u_x, u_y, u_z, v_x, v_y, v_z):
+    return u_x*v_y - u_y*v_x
+
+
+def mod(u_x, u_y, u_z):
+    return sym.sqrt(u_x**2 + u_y**2 + u_z**2)
+
+
+def dot(u_x, u_y, u_z, v_x, v_y, v_z):
+    return u_x*v_x + u_y*v_y + u_z*v_z
+
+
+def torsion_dihedral(symbol):
 
     r_ij_x = x_i - x_j
     r_ij_y = y_i - y_j
@@ -75,21 +104,6 @@ def dihedral(symbol):
     r_kj_x = x_k - x_j
     r_kj_y = y_k - y_j
     r_kj_z = z_k - z_j
-
-    def cross_x(u_x, u_y, u_z, v_x, v_y, v_z):
-        return u_y*v_z - u_z*v_y
-
-    def cross_y(u_x, u_y, u_z, v_x, v_y, v_z):
-        return u_z*v_x - u_x*v_z
-
-    def cross_z(u_x, u_y, u_z, v_x, v_y, v_z):
-        return u_x*v_y - u_y*v_x
-
-    def mod(u_x, u_y, u_z):
-        return sym.sqrt(u_x**2 + u_y**2 + u_z**2)
-
-    def dot(u_x, u_y, u_z, v_x, v_y, v_z):
-        return u_x*v_x + u_y*v_y + u_z*v_z
 
     v0_x = cross_x(r_ij_x, r_ij_y, r_ij_z, r_kj_x, r_kj_y, r_kj_z)
     v0_y = cross_y(r_ij_x, r_ij_y, r_ij_z, r_kj_x, r_kj_y, r_kj_z)
@@ -131,7 +145,50 @@ def dihedral(symbol):
            * (1 - sym.cos(n*phi0)*sym.cos(n*phi)))
 
     string = rust_expression(function=sym.diff(res, symbol))
-    # string = rust_expression(function=sym.refine(res, sym.Q.real(symbol)))
+
+    return f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} += {string}'
+
+
+def inversion_dihedral(symbol):
+
+    res = 0
+
+    k = sym.Symbol("self.k_cijk")
+    c0 = sym.Symbol("self.c0__")
+    c1 = sym.Symbol("self.c1__")
+    c2 = sym.Symbol("self.c2__")
+
+    def _mod(v):
+        return mod(v[0], v[1], v[2])
+
+    def _dot(x, y):
+        return dot(x[0], x[1], x[2], y[0], y[1], y[2])
+
+    for _r_i, _r_j, _r_k in ((r_i, r_j, r_k), (r_k, r_i, r_j), (r_j, r_k, r_i)):
+
+        v0 = (_r_i[0] - r_c[0], _r_i[1] - r_c[1], _r_i[2] - r_c[2])
+        v1 = (_r_j[0] - r_c[0], _r_j[1] - r_c[1], _r_j[2] - r_c[2])
+
+        v2 = (cross_x(v0[0], v0[1], v0[2], v1[0], v1[1], v1[2]),
+              cross_y(v0[0], v0[1], v0[2], v1[0], v1[1], v1[2]),
+              cross_z(v0[0], v0[1], v0[2], v1[0], v1[1], v1[2]))
+
+        v3 = (_r_k[0] - r_c[0], _r_k[1] - r_c[1], _r_k[2] - r_c[2])
+
+        y = sym.acos(_dot(v2, v3) / (_mod(v2) * _mod(v3)))
+        res += k * (c0 + c1 * sym.sin(y) + c2 * sym.cos(2*y)) / 3
+
+    """
+    v0 = _molecule.atoms.nvector(0, 1)
+    v1 = _molecule.atoms.nvector(0, 2)
+
+    v2 = np.cross(v0, v1)
+    v2 /= np.linalg.norm(v2)
+
+    return np.arccos(np.dot(v2, _molecule.atoms.nvector(0, 3)))
+    """
+
+    string = rust_expression(function=sym.diff(res, symbol))
     string = string.replace('__', '')
 
     return f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} += {string}'
@@ -199,6 +256,7 @@ def rust_expression(function):
     string = string.replace('**(3/2)', '.powf(1.5)')
     string = string.replace('/2', '/2.')
     string = string.replace('2*', '2.*')
+    string = string.replace('/3', '/3.')
 
     for fn in ('sqrt', 'acos', 'cos', 'asin', 'sin'):
         string = convert_to_trait(string, fn)
@@ -249,7 +307,7 @@ def extract_variables(_lines):
 
     first_line = non_var_lines[0]
     start_idx = 0 if '=' not in first_line else len(first_line.split('= ')[0])
-    end_idx = min(min([len(l) for l in non_var_lines]), start_idx+100)
+    end_idx = min(min([len(l) for l in non_var_lines]), start_idx+300)
 
     for i in range(start_idx, end_idx):
 
@@ -301,12 +359,25 @@ def print_angle_gradient(angle_type):
     return print(";\n".join(lines))
 
 
-def print_dihedral_gradient():
+def print_torsion_dihedral_gradient():
 
     lines = []
 
     for x in (x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k, x_l, y_l, z_l):
-        lines.append(dihedral(x))
+        lines.append(torsion_dihedral(x))
+
+    for _ in range(100):
+        extract_variables(lines)
+
+    return print(";\n".join(lines))
+
+
+def print_inversion_gradient():
+
+    lines = []
+
+    for x in (x_c, y_c, z_c, x_i, y_i, z_i, x_j, y_j, z_j, x_k, y_k, z_k):
+        lines.append(inversion_dihedral(x))
 
     for _ in range(100):
         extract_variables(lines)
@@ -318,4 +389,5 @@ if __name__ == '__main__':
 
     # print_angle_gradient(angle_type=angle_type_a)
     # print_angle_gradient(angle_type=angle_type_b)
-    print_dihedral_gradient()
+    # print_torsion_dihedral_gradient()
+    print_inversion_gradient()

@@ -7,7 +7,7 @@ use crate::ff::bonds::HarmonicBond;
 use crate::ff::dihedrals::{InversionDihedral, TorsionalDihedral};
 use crate::ff::forcefield::EnergyFunction;
 use crate::ff::uff::dihedral_bond::DihedralBond;
-use crate::ff::uff::inversion_centers::{InversionCentre, INVERSION_CENTERS};
+use crate::ff::uff::inversion_centers::INVERSION_CENTERS;
 use crate::ff::uff::atom_typing::UFFAtomType;
 use crate::ff::uff::atom_types::ATOM_TYPES;
 use crate::pairs::AtomPair;

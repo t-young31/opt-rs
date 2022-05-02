@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
+
 
 #[derive(Debug)]
 pub struct ProperDihedral{
@@ -36,8 +36,8 @@ pub struct ImproperDihedral {
 
 impl PartialEq for ImproperDihedral {
     fn eq(&self, other: &Self) -> bool {
-        (self.i == other.c
-            && Vec::from([self.i, self.j, self.k]).sort() == Vec::from([other.i, other.j, other.k]).sort())
+        self.i == other.c
+        && Vec::from([self.i, self.j, self.k]).sort() == Vec::from([other.i, other.j, other.k]).sort()
     }
 }
 
@@ -45,7 +45,8 @@ impl Eq for ImproperDihedral {}
 
 impl Hash for ImproperDihedral {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        Vec::from([self.c, self.i, self.j, self.k]).sort().hash(state);
+        self.c.hash(state);
+        Vec::from([self.i, self.j, self.k]).sort().hash(state);
     }
 }
 

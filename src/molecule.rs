@@ -364,8 +364,6 @@ impl Molecule{
 
         for c in 0..self.num_atoms(){
 
-            println!("{} \n {:?}", c, all_neighbours[c]);
-
             if all_neighbours[c].len() != 3{
                 continue; // Impropers are defined for a central atom bonded to exactly 3 others
             }
@@ -608,7 +606,6 @@ mod tests{
         assert!(!mol.has_bonds());
 
         mol.add_angles();
-        println!("{:?}", mol.connectivity.angles);
         assert!(mol.connectivity.angles.is_empty());
 
         remove_file_or_panic("tmp_water_0.xyz");
@@ -826,6 +823,8 @@ mod tests{
 
         let mol = Molecule::from_xyz_file(filename);
         remove_file_or_panic(filename);
+
+        println!("{:?}", mol.connectivity.improper_dihedrals);
 
         assert_eq!(mol.improper_dihedrals().len(), 2);
     }
