@@ -148,7 +148,7 @@ impl UFF {
     /// Add dihedral terms between quadruples bonded atoms in a sequence
     fn add_dihedral_torsions(&mut self, molecule: &Molecule){
 
-        for dihedral in molecule.dihedrals().iter(){
+        for dihedral in molecule.proper_dihedrals().iter(){
 
             let i = dihedral.i;
             let j = dihedral.j;
@@ -164,10 +164,6 @@ impl UFF {
                 continue;
             }
 
-            println!("{:?}-{:?}-{:?}-{:?}", i, j, k, l);
-            println!("{:?}", self.atom_types[j]);
-            println!("{:?}  {:?}  {:?} ", central_bond.phi0, central_bond.n, central_bond.v);
-
             self.energy_functions.push(
                 Box::new(TorsionalDihedral{
                     i, j, k, l,
@@ -176,6 +172,11 @@ impl UFF {
                     v_phi: central_bond.v})
             );
         }
+    }
+
+    fn add_dihedral_inversions(&self, molecule: &Molecule){
+        // TODO
+
     }
 }
 
@@ -191,6 +192,7 @@ impl Forcefield for UFF {
         ff.add_bond_stretches(molecule);
         ff.add_angle_bends(molecule);
         ff.add_dihedral_torsions(molecule);
+        ff.add_dihedral_inversions(molecule);
 
         ff
     }
@@ -492,7 +494,7 @@ mod tests{
         assert!(h2o2.bonds().contains(&o_o_bond));
         assert_eq!(h2o2.bonds().len(), 3);
 
-        assert_eq!(h2o2.dihedrals().len(), 1);  // Should have a single dihedral
+        assert_eq!(h2o2.proper_dihedrals().len(), 1);  // Should have a single dihedral
 
         let mut uff = UFF::new(&h2o2);
 

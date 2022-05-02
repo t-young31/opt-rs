@@ -4,7 +4,7 @@ use log::info;
 use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
-use crate::connectivity::dihedrals::Dihedral;
+use crate::connectivity::dihedrals::{ProperDihedral, ImproperDihedral};
 use crate::coordinates::Point;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
@@ -192,7 +192,12 @@ impl Molecule{
     pub(crate) fn angles(&self) -> &HashSet<Angle>{ return &self.connectivity.angles; }
 
     /// Dihedrals within this molecule
-    pub(crate) fn dihedrals(&self) -> &HashSet<Dihedral>{ return &self.connectivity.dihedrals; }
+    pub(crate) fn proper_dihedrals(&self) -> &HashSet<ProperDihedral>{
+        &self.connectivity.proper_dihedrals
+    }
+    pub(crate) fn improper_dihedrals(&self) -> &HashSet<ImproperDihedral>{
+        &self.connectivity.improper_dihedrals
+    }
 
     /// Does this molecule have any associated bonds?
     fn has_bonds(&self) -> bool{ return !self.connectivity.bonds.is_empty() }
@@ -206,7 +211,9 @@ impl Molecule{
         i != j && self.contains_bond(&Bond::from_atom_indices(i, j))
     }
 
-    fn has_dihedrals(&self) -> bool{ !self.connectivity.dihedrals.is_empty()}
+    fn has_dihedrals(&self) -> bool{
+        self.connectivity.improper_dihedrals.len() + self.connectivity.proper_dihedrals.len() > 0
+    }
 
     /// Add bonds between atoms based on their interatomic distance. For example H-H is consdiered
     /// bonded if the r(HH) < 0.8 Å, or so. Note that this is not particularly well defined, but
@@ -307,8 +314,7 @@ impl Molecule{
         }
     }
 
-    /// Add all the proper dihedrals between quadruples pf bonded atoms
-    // TODO: Improper dihedrals
+    /// Add all the dihedrals between quadruples pf bonded atoms
     pub(crate) fn add_dihedrals(&mut self){
 
         if self.num_atoms() < 4{
@@ -320,24 +326,61 @@ impl Molecule{
                 .map(|a| a.bonded_neighbours.clone())
                 .collect();
 
-        for bond in self.connectivity.bonds.iter(){
-            // Add bonded quadruples
+        self.add_proper_dihedrals(&all_neighbours);
+        self.add_improper_dihedrals(&all_neighbours);
 
-            for neighbour_i in all_neighbours.get(bond.pair.i).unwrap(){
+    }
+
+    /// Add proper dihedrals between sequentially bonded dihedrals: i -- j -- k -- l
+    fn add_proper_dihedrals(&mut self, all_neighbours: &Vec<Vec<usize>>){
+
+        for bond in self.connectivity.bonds.iter(){
+
+            for neighbour_i in all_neighbours[bond.pair.i].iter(){
                 if neighbour_i == &bond.pair.j{ continue; }
 
-                for neighbour_j in all_neighbours.get(bond.pair.j).unwrap(){
+                for neighbour_j in all_neighbours[bond.pair.j].iter(){
                     if neighbour_j == &bond.pair.i{ continue; }
 
-                    self.connectivity.dihedrals.insert(
-                        Dihedral{i: neighbour_i.clone(),
-                            j: bond.pair.i,
-                            k: bond.pair.j,
-                            l: neighbour_j.clone()}
-                    );
-                } // neighbour_j
-            }  // neighbour_i
-        } // bond
+                    let dihedral = ProperDihedral{
+                        i:     neighbour_i.clone(),
+                        j:     bond.pair.i,
+                        k:     bond.pair.j,
+                        l:     neighbour_j.clone()
+                    };
+
+                    self.connectivity.proper_dihedrals.insert(dihedral);
+                }
+            }
+        }
+    }
+
+    /// Add improper dihedrals between a central atom and three others e.g.
+    ///           j
+    ///          /
+    ///     i --c-- k
+    ///
+    fn add_improper_dihedrals(&mut self, all_neighbours: &Vec<Vec<usize>>){
+
+        for c in 0..self.num_atoms(){
+
+            println!("{} \n {:?}", c, all_neighbours[c]);
+
+            if all_neighbours[c].len() != 3{
+                continue; // Impropers are defined for a central atom bonded to exactly 3 others
+            }
+
+            let neighbours = &all_neighbours[c];
+            let dihedral = ImproperDihedral {
+                c,
+                i: neighbours[0],
+                j: neighbours[1],
+                k: neighbours[2]
+            };
+
+            self.connectivity.improper_dihedrals.insert(dihedral);
+        }
+
     }
 
     /// Add all pairs (i, j) of atoms which are non-bonded thus are subject to Lennard Jones
@@ -421,7 +464,8 @@ struct Connectivity{
     */
     pub bonds:     HashSet<Bond>,
     pub angles:    HashSet<Angle>,
-    pub dihedrals: HashSet<Dihedral>
+    pub proper_dihedrals: HashSet<ProperDihedral>,
+    pub improper_dihedrals: HashSet<ImproperDihedral>
 }
 
 impl Connectivity {
@@ -430,7 +474,8 @@ impl Connectivity {
     pub fn clear(&mut self){
         self.bonds.clear();
         self.angles.clear();
-        self.dihedrals.clear();
+        self.proper_dihedrals.clear();
+        self.improper_dihedrals.clear();
     }
 
     /// Given a vector of bonds set the connectivity
@@ -467,6 +512,10 @@ mod tests{
     use crate::pairs::{AtomPair, distance};
     use super::*;
     use crate::utils::*;
+
+    fn proper_dihedral(i: usize, j: usize, k: usize, l: usize) -> ProperDihedral{
+        ProperDihedral{i, j, k, l}
+    }
 
     /// Given a valid simple xyz file, when a Molecule is created, then the connectivity is correct
     #[test]
@@ -616,9 +665,9 @@ mod tests{
     #[test]
     fn test_dihedral_equality(){
 
-        assert_eq!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 0, j: 1, k: 2, l: 3});
-        assert_eq!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 3, j: 2, k: 1, l: 0});
-        assert_ne!(&Dihedral{i: 0, j: 1, k: 2, l: 3}, &Dihedral{i: 5, j: 1, k: 2, l: 3});
+        assert_eq!(&proper_dihedral(0, 1, 2, 3), &proper_dihedral(0, 1, 2, 3));
+        assert_eq!(&proper_dihedral(0, 1, 2, 3), &proper_dihedral(3, 2, 1, 0));
+        assert_ne!(&proper_dihedral(0, 1, 2, 3), &proper_dihedral(5, 1, 2, 3));
     }
 
     /// Given a collection of atoms that are not bonded, then no connectivity dihedrals exist
@@ -631,7 +680,7 @@ mod tests{
         mol.coordinates[3] = Point {x: 0.,   y: 0.,   z: 999.};
 
         assert!(!mol.has_bonds());
-        assert_eq!(mol.connectivity.dihedrals.len(), 0);
+        assert_eq!(mol.connectivity.proper_dihedrals.len(), 0);
     }
 
     /// Given a non-bonded H2 pair or atoms then there should be a single NB pair present
@@ -762,9 +811,22 @@ mod tests{
     fn test_no_identical_dihedrals_present(){
 
         let mut mol = Molecule::blank();
-        mol.connectivity.dihedrals.insert(Dihedral{i: 0, j: 1, k:2, l:3});
-        mol.connectivity.dihedrals.insert(Dihedral{i: 3, j: 2, k:1, l:0});
+        mol.connectivity.proper_dihedrals.insert(proper_dihedral(0, 1, 2, 3));
+        mol.connectivity.proper_dihedrals.insert(proper_dihedral(3, 2, 1, 0));
 
-        assert_eq!(mol.dihedrals().len(), 1);
+        assert_eq!(mol.proper_dihedrals().len(), 1);
+    }
+
+    /// Ensure that a trigonal atom has an improper dihedral forcing the current angle
+    #[test]
+    fn test_ethene_has_two_improper_dihedrals(){
+
+        let filename = "ethene_htid.xyz";
+        print_ethene_xyz_file(filename);
+
+        let mol = Molecule::from_xyz_file(filename);
+        remove_file_or_panic(filename);
+
+        assert_eq!(mol.improper_dihedrals().len(), 2);
     }
 }

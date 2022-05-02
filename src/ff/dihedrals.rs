@@ -4,10 +4,10 @@ use crate::ff::forcefield::EnergyFunction;
 
 /// Dihedral angle
 ///
-///     E_i  --- E_j
+///       i  ---  j
 ///                 \  φ
 ///                  \
-///                   E_k ---- E_l
+///                    k ---- l
 ///
 pub struct TorsionalDihedral{
 
@@ -116,7 +116,7 @@ impl EnergyFunction for TorsionalDihedral {
 }
 
 
-/// Value of the dihedral
+/// Value of the torsional dihedral
 fn phi(dihedral: &TorsionalDihedral, coordinates: &Vec<Point>) -> f64{
 
     let r_ij = &coordinates[dihedral.i] - &coordinates[dihedral.j];
@@ -133,6 +133,47 @@ fn phi(dihedral: &TorsionalDihedral, coordinates: &Vec<Point>) -> f64{
 
     -(v0.cross(&r_kj).dot(&v1)).atan2(v0.dot(&v1))
 }
+
+
+/// Improper dihedral defining inversion about a centre
+///
+///                    j
+///                  /
+///        i  ---  c    ω
+///                 \
+///                  \
+///                    k
+///
+/// where the angle is between the c-k axis and the plane
+/// formed by atoms c,i,j. It may also be defined by the
+/// c,i,j normal and the axis: ω = γ - π
+pub struct InversionDihedral{
+
+    pub(crate) c:  usize,
+    pub(crate) i:  usize,
+    pub(crate) j:  usize,
+    pub(crate) k:  usize,
+
+    pub(crate) gamma:  f64,
+    pub(crate) k_cijk: f64,
+}
+
+impl EnergyFunction for InversionDihedral {
+    fn involves_idxs(&self, idxs: Vec<usize>) -> bool {
+        idxs.clone().sort() == Vec::from([self.c, self.i, self.j, self.k]).sort()
+    }
+
+    fn force_constant(&self) -> f64 { self.k_cijk }
+
+    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+        todo!()
+    }
+
+    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Point>) {
+        todo!()
+    }
+}
+
 
 
 /*
