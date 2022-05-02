@@ -4,9 +4,10 @@ use crate::{Forcefield, Molecule};
 use crate::coordinates::Point;
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
-use crate::ff::dihedrals::TorsionalDihedral;
+use crate::ff::dihedrals::{InversionDihedral, TorsionalDihedral};
 use crate::ff::forcefield::EnergyFunction;
 use crate::ff::uff::dihedral_bond::DihedralBond;
+use crate::ff::uff::inversion_centers::{InversionCentre, INVERSION_CENTERS};
 use crate::ff::uff::atom_typing::UFFAtomType;
 use crate::ff::uff::atom_types::ATOM_TYPES;
 use crate::pairs::AtomPair;
@@ -174,11 +175,68 @@ impl UFF {
         }
     }
 
-    fn add_dihedral_inversions(&self, molecule: &Molecule){
-        // TODO
+    /// Add terms for distortions from (trigonal) pyramidal geometries
+    fn add_dihedral_inversions(&mut self, molecule: &Molecule){
 
+        for improper in molecule.improper_dihedrals().iter(){
+
+            let c = improper.c;
+            let mut c0 = 0.;
+            let mut c1 = 0.;
+            let mut c2 = 0.;
+            let mut k_cijk = 0.;
+
+            match self.atom_types[c].name{
+                "C_2" | "C_R" => {
+                    c0 = 1.;
+                    c1 = -1.;
+                    c2 = 0.;
+
+                    match self.is_bonded_to_o_2(c, molecule) {
+                        true => {k_cijk = 50.;}
+                        false => {k_cijk = 6.;}
+                    }
+                }
+
+                "O_2" | "S_2" => { todo!(); }
+
+                x => {
+                    let centre = INVERSION_CENTERS.iter().find(|y| y.name == x);
+                    match centre {
+                        Some(y) => {
+                            c0 = y.c0;
+                            c1 = y.c1;
+                            c2 = y.c2;
+                            k_cijk = y.k;
+                        }
+                        None => {continue;}
+                    }
+                }
+            }
+
+            self.energy_functions.push(
+                Box::new(InversionDihedral{
+                    c,
+                    i: improper.i,
+                    j: improper.j,
+                    k: improper.k,
+                    c0, c1, c2, k_cijk,
+                })
+            );
+        }
+    }
+
+    /// Is an atom bonded to an O_2 atom type?
+    fn is_bonded_to_o_2(&self, atom_idx: usize, molecule: &Molecule) -> bool{
+
+        let neighbours = &molecule.atoms()[atom_idx].bonded_neighbours;
+        neighbours.iter()
+            .any(|i| self.atom_types[*i].name == "O_2" && i != &atom_idx)
     }
 }
+
+
+
 
 
 impl Forcefield for UFF {

@@ -154,7 +154,9 @@ pub struct InversionDihedral{
     pub(crate) j:  usize,
     pub(crate) k:  usize,
 
-    pub(crate) gamma:  f64,
+    pub(crate) c0:     f64,
+    pub(crate) c1:     f64,
+    pub(crate) c2:     f64,
     pub(crate) k_cijk: f64,
 }
 
@@ -173,8 +175,6 @@ impl EnergyFunction for InversionDihedral {
         todo!()
     }
 }
-
-
 
 /*
    /$$                           /$$

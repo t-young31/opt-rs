@@ -821,7 +821,7 @@ mod tests{
     #[test]
     fn test_ethene_has_two_improper_dihedrals(){
 
-        let filename = "ethene_htid.xyz";
+        let filename = "ethene_m_htid.xyz";
         print_ethene_xyz_file(filename);
 
         let mol = Molecule::from_xyz_file(filename);

@@ -92,7 +92,7 @@ class AtomType:
         return ('InversionCentre{' +
                 f'name: {self.name}, '
                 f'k: {self.k:.5f}, '
-                f'c0: {self.c0:.5f}. c1: {self.c1:.5f}, c2: {self.c2:.5f}'
+                f'c0: {self.c0:.5f}, c1: {self.c1:.5f}, c2: {self.c2:.5f}'
                 + '}')
 
 
