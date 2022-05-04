@@ -148,7 +148,20 @@ If either of the bond angles approaches $180^\circ$ then the potential is set to
 
 
 
+\subsection{Inversion}
 
+Trigonal(-pyramidal) geometeries are enforced using a cosine expansion in the angle ($\gamma$)
+made the axis $c\text{-}k$ with the normal to the plane made by the atoms $c, i, j$ where $c$ is
+the central atom and $i,j,k$ are bonded neighbours.
+
+\begin{equation}
+    E_\gamma = k_{cijk} (C_0 + C_1 \sin(\gamma) + C_2 \cos(2\gamma))
+\end{equation}
+
+where $k_{cijk}$ is a force constant and $C_n$ are constants defined by fitting the 
+function to a minimum at $\gamma_0$ and a maximum at the inversion point (for group 15 central atoms). 
+
+As there are three potential axes ($c\text{-}m$) an average is taken over all three.
 
 
 

@@ -61,17 +61,17 @@ impl UFFAtomType {
     /// How well does an atom within a molecule match this atom type. Larger value <=> better match
     pub(crate) fn match_quality(&self,
                                 atom:     &Atom,
-                                molecule: &Molecule) -> f64{
+                                molecule: &Molecule) -> f64 {
         let mut value: f64 = 0.;
 
-        match atom.atomic_symbol() == self.atomic_symbol{
-            true => {value += 10.},
-            false => {}
+        if atom.atomic_symbol() == self.atomic_symbol{
+            value += 10.;
         }
 
         let num_neighbours = atom.bonded_neighbours.len();
         value -= (num_neighbours as f64 - self.valency as f64).abs();
 
+        // Match on current angle
         if num_neighbours > 1{
             let angle = angle_value(atom.bonded_neighbours[0],
                                        atom.idx,
@@ -83,9 +83,7 @@ impl UFFAtomType {
         }
 
 
-
         // TODO: Match on more things
-        // Match on current angle
 
         value
     }

@@ -4,9 +4,10 @@ use crate::{Forcefield, Molecule};
 use crate::coordinates::Point;
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
-use crate::ff::dihedrals::TorsionalDihedral;
+use crate::ff::dihedrals::{InversionDihedral, TorsionalDihedral};
 use crate::ff::forcefield::EnergyFunction;
 use crate::ff::uff::dihedral_bond::DihedralBond;
+use crate::ff::uff::inversion_centers::INVERSION_CENTERS;
 use crate::ff::uff::atom_typing::UFFAtomType;
 use crate::ff::uff::atom_types::ATOM_TYPES;
 use crate::pairs::AtomPair;
@@ -148,7 +149,7 @@ impl UFF {
     /// Add dihedral terms between quadruples bonded atoms in a sequence
     fn add_dihedral_torsions(&mut self, molecule: &Molecule){
 
-        for dihedral in molecule.dihedrals().iter(){
+        for dihedral in molecule.proper_dihedrals().iter(){
 
             let i = dihedral.i;
             let j = dihedral.j;
@@ -164,10 +165,6 @@ impl UFF {
                 continue;
             }
 
-            println!("{:?}-{:?}-{:?}-{:?}", i, j, k, l);
-            println!("{:?}", self.atom_types[j]);
-            println!("{:?}  {:?}  {:?} ", central_bond.phi0, central_bond.n, central_bond.v);
-
             self.energy_functions.push(
                 Box::new(TorsionalDihedral{
                     i, j, k, l,
@@ -177,8 +174,64 @@ impl UFF {
             );
         }
     }
-}
 
+    /// Add terms for distortions from (trigonal) pyramidal geometries
+    fn add_dihedral_inversions(&mut self, molecule: &Molecule){
+
+        for improper in molecule.improper_dihedrals().iter(){
+
+            let mut dihedral = InversionDihedral{
+                c: improper.c,
+                i: improper.i,
+                j: improper.j,
+                k: improper.k,
+                c0: 0.,
+                c1: 0.,
+                c2: 0.,
+                k_cijk: 0.,
+            };
+
+            match self.atom_types[improper.c].name{
+                "C_2" | "C_R" => {
+                    dihedral.c0 = 1.;
+                    dihedral.c1 = -1.;
+                    dihedral.c2 = 0.;
+
+                    match self.is_bonded_to_o_2(improper.c, molecule) {
+                        true =>  {dihedral.k_cijk = 50.;}
+                        false => {dihedral.k_cijk = 6.;}
+                    }
+                }
+
+                "O_2" | "S_2" => { todo!(); }
+
+                x => {
+                    let centre = INVERSION_CENTERS.iter().find(|y| x.contains(y.name));
+                    match centre {
+                        Some(y) => {
+                            dihedral.c0 = y.c0;
+                            dihedral.c1 = y.c1;
+                            dihedral.c2 = y.c2;
+                            dihedral.k_cijk = y.k;
+                        }
+                        None => {continue;}
+                    }
+                }
+            }
+
+
+            self.energy_functions.push(Box::new(dihedral));
+        }
+    }
+
+    /// Is an atom bonded to an O_2 atom type?
+    fn is_bonded_to_o_2(&self, atom_idx: usize, molecule: &Molecule) -> bool{
+
+        let neighbours = &molecule.atoms()[atom_idx].bonded_neighbours;
+        neighbours.iter()
+            .any(|i| self.atom_types[*i].name == "O_2" && i != &atom_idx)
+    }
+}
 
 impl Forcefield for UFF {
 
@@ -191,6 +244,7 @@ impl Forcefield for UFF {
         ff.add_bond_stretches(molecule);
         ff.add_angle_bends(molecule);
         ff.add_dihedral_torsions(molecule);
+        ff.add_dihedral_inversions(molecule);
 
         ff
     }
@@ -492,7 +546,7 @@ mod tests{
         assert!(h2o2.bonds().contains(&o_o_bond));
         assert_eq!(h2o2.bonds().len(), 3);
 
-        assert_eq!(h2o2.dihedrals().len(), 1);  // Should have a single dihedral
+        assert_eq!(h2o2.proper_dihedrals().len(), 1);  // Should have a single dihedral
 
         let mut uff = UFF::new(&h2o2);
 
@@ -514,6 +568,47 @@ mod tests{
         let mut uff = UFF::new(&ethene);
 
         assert!(num_and_anal_gradient_are_close(&mut ethene, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
+    #[test]
+    fn test_num_vs_anal_grad_ph3(){
+
+        let filename = "ph3_tnvagp.xyz";
+        print_ph3_xyz_file(filename);
+        let mut mol = Molecule::from_xyz_file(filename);
+        assert_eq!(mol.improper_dihedrals().len(), 1);
+
+        let mut uff = UFF::new(&mol);
+        assert_eq!(uff.atom_types[0].name, "P_3+3");
+
+        assert_eq!(uff.energy_functions
+                   .iter()
+                   .filter(|f| f.involves_idxs(Vec::from([0, 1, 2, 3])))
+                   .count(),
+                   1);
+
+        assert!(num_and_anal_gradient_are_close(&mut mol, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
+
+    /// Ensure that two inversion centers with non-zero force constants have been added
+    /// to hinder pyramidalisation of the carbon atoms
+    #[test]
+    fn test_two_inversion_centres_added_for_ethene(){
+
+        let filename = "ethene_tticafe.xyz";
+        print_ethene_xyz_file(filename);
+        let uff = UFF::new(&Molecule::from_xyz_file(filename));
+
+        let functions: Vec<&Box<dyn EnergyFunction>> = uff.energy_functions
+            .iter()
+            .filter(|f| f.involves_idxs(Vec::from([0, 1, 2, 3])))
+            .collect();
+
+        assert_eq!(functions.len(), 1);
+        assert!(is_very_close(functions[0].force_constant(), 6.));
 
         remove_file_or_panic(filename);
     }

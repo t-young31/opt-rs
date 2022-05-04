@@ -118,3 +118,13 @@ O         -2.46930        1.33955        0.03004\n\
 H         -2.46930        1.31540        0.99712\n")
         .expect(filename)
 }
+
+pub(crate) fn print_ph3_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "4\n\n\
+  P    0.0056  -0.0028   0.5805\n\
+  H    1.0584  -0.5395  -0.2058\n\
+  H   -0.9999  -0.6465  -0.1872\n\
+  H   -0.0642   1.1889  -0.1874\n")
+        .expect(filename)
+}
