@@ -170,7 +170,9 @@ impl InversionDihedral {
 
 impl EnergyFunction for InversionDihedral {
     fn involves_idxs(&self, idxs: Vec<usize>) -> bool {
-        idxs.clone().sort() == Vec::from([self.c, self.i, self.j, self.k]).sort()
+        idxs.len() == 4
+        && idxs[0] == self.c
+        && idxs[1..].to_vec().sort() == [self.i, self.j, self.k].to_vec().sort()
     }
 
     fn force_constant(&self) -> f64 { self.k_cijk }

@@ -180,21 +180,26 @@ impl UFF {
 
         for improper in molecule.improper_dihedrals().iter(){
 
-            let c = improper.c;
-            let mut c0 = 0.;
-            let mut c1 = 0.;
-            let mut c2 = 0.;
-            let mut k_cijk = 0.;
+            let mut dihedral = InversionDihedral{
+                c: improper.c,
+                i: improper.i,
+                j: improper.j,
+                k: improper.k,
+                c0: 0.,
+                c1: 0.,
+                c2: 0.,
+                k_cijk: 0.,
+            };
 
-            match self.atom_types[c].name{
+            match self.atom_types[improper.c].name{
                 "C_2" | "C_R" => {
-                    c0 = 1.;
-                    c1 = -1.;
-                    c2 = 0.;
+                    dihedral.c0 = 1.;
+                    dihedral.c1 = -1.;
+                    dihedral.c2 = 0.;
 
-                    match self.is_bonded_to_o_2(c, molecule) {
-                        true => {k_cijk = 50.;}
-                        false => {k_cijk = 6.;}
+                    match self.is_bonded_to_o_2(improper.c, molecule) {
+                        true =>  {dihedral.k_cijk = 50.;}
+                        false => {dihedral.k_cijk = 6.;}
                     }
                 }
 
@@ -204,25 +209,18 @@ impl UFF {
                     let centre = INVERSION_CENTERS.iter().find(|y| y.name == x);
                     match centre {
                         Some(y) => {
-                            c0 = y.c0;
-                            c1 = y.c1;
-                            c2 = y.c2;
-                            k_cijk = y.k;
+                            dihedral.c0 = y.c0;
+                            dihedral.c1 = y.c1;
+                            dihedral.c2 = y.c2;
+                            dihedral.k_cijk = y.k;
                         }
                         None => {continue;}
                     }
                 }
             }
 
-            self.energy_functions.push(
-                Box::new(InversionDihedral{
-                    c,
-                    i: improper.i,
-                    j: improper.j,
-                    k: improper.k,
-                    c0, c1, c2, k_cijk,
-                })
-            );
+
+            self.energy_functions.push(Box::new(dihedral));
         }
     }
 
@@ -234,10 +232,6 @@ impl UFF {
             .any(|i| self.atom_types[*i].name == "O_2" && i != &atom_idx)
     }
 }
-
-
-
-
 
 impl Forcefield for UFF {
 
@@ -574,6 +568,26 @@ mod tests{
         let mut uff = UFF::new(&ethene);
 
         assert!(num_and_anal_gradient_are_close(&mut ethene, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
+
+    /// Ensure that two inversion centers with non-zero force constants have been added
+    /// to hinder pyramidalisation of the carbon atoms
+    #[test]
+    fn test_two_inversion_centres_added_for_ethene(){
+
+        let filename = "ethene_tticafe.xyz";
+        print_ethene_xyz_file(filename);
+        let uff = UFF::new(&Molecule::from_xyz_file(filename));
+
+        let functions: Vec<&Box<dyn EnergyFunction>> = uff.energy_functions
+            .iter()
+            .filter(|f| f.involves_idxs(Vec::from([0, 1, 2, 3])))
+            .collect();
+
+        assert_eq!(functions.len(), 1);
+        assert!(is_very_close(functions[0].force_constant(), 6.));
 
         remove_file_or_panic(filename);
     }
