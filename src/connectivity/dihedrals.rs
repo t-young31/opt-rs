@@ -36,8 +36,8 @@ pub struct ImproperDihedral {
 
 impl PartialEq for ImproperDihedral {
     fn eq(&self, other: &Self) -> bool {
-        self.i == other.c
-        && Vec::from([self.i, self.j, self.k]).sort() == Vec::from([other.i, other.j, other.k]).sort()
+        self.c == other.c
+        && [self.i, self.j, self.k].to_vec().sort() == [other.i, other.j, other.k].to_vec().sort()
     }
 }
 

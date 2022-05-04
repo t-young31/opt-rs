@@ -583,7 +583,7 @@ mod tests{
 
         remove_file_or_panic(filename);
     }
-    
+
     /// Ensure that two inversion centers with non-zero force constants have been added
     /// to hinder pyramidalisation of the carbon atoms
     #[test]
