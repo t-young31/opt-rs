@@ -121,7 +121,7 @@ H         -2.46930        1.31540        0.99712\n")
 
 pub(crate) fn print_ph3_xyz_file(filename: &str){
     std::fs::write(filename,
-                   "4
+                   "4\n\n\
   P    0.0056  -0.0028   0.5805\n\
   H    1.0584  -0.5395  -0.2058\n\
   H   -0.9999  -0.6465  -0.1872\n\

@@ -206,7 +206,7 @@ impl UFF {
                 "O_2" | "S_2" => { todo!(); }
 
                 x => {
-                    let centre = INVERSION_CENTERS.iter().find(|y| y.name == x);
+                    let centre = INVERSION_CENTERS.iter().find(|y| x.contains(y.name));
                     match centre {
                         Some(y) => {
                             dihedral.c0 = y.c0;
@@ -577,7 +577,16 @@ mod tests{
         let filename = "ph3_tnvagp.xyz";
         print_ph3_xyz_file(filename);
         let mut mol = Molecule::from_xyz_file(filename);
+        assert_eq!(mol.improper_dihedrals().len(), 1);
+
         let mut uff = UFF::new(&mol);
+        assert_eq!(uff.atom_types[0].name, "P_3+3");
+
+        assert_eq!(uff.energy_functions
+                   .iter()
+                   .filter(|f| f.involves_idxs(Vec::from([0, 1, 2, 3])))
+                   .count(),
+                   1);
 
         assert!(num_and_anal_gradient_are_close(&mut mol, &mut uff));
 
