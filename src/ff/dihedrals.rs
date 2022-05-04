@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use crate::connectivity::dihedrals::ImproperDihedral;
 use crate::coordinates::Point;
 use crate::ff::forcefield::EnergyFunction;
 
@@ -171,8 +172,8 @@ impl InversionDihedral {
 impl EnergyFunction for InversionDihedral {
     fn involves_idxs(&self, idxs: Vec<usize>) -> bool {
         idxs.len() == 4
-        && idxs[0] == self.c
-        && idxs[1..].to_vec().sort() == [self.i, self.j, self.k].to_vec().sort()
+        && (ImproperDihedral{c: self.c, i: self.i, j: self.j, k: self.k} ==
+            ImproperDihedral{c: idxs[0], i: idxs[1], j: idxs[2], k: idxs[3]})
     }
 
     fn force_constant(&self) -> f64 { self.k_cijk }

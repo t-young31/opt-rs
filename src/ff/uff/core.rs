@@ -571,7 +571,19 @@ mod tests{
 
         remove_file_or_panic(filename);
     }
+    #[test]
+    fn test_num_vs_anal_grad_ph3(){
 
+        let filename = "ph3_tnvagp.xyz";
+        print_ph3_xyz_file(filename);
+        let mut mol = Molecule::from_xyz_file(filename);
+        let mut uff = UFF::new(&mol);
+
+        assert!(num_and_anal_gradient_are_close(&mut mol, &mut uff));
+
+        remove_file_or_panic(filename);
+    }
+    
     /// Ensure that two inversion centers with non-zero force constants have been added
     /// to hinder pyramidalisation of the carbon atoms
     #[test]
