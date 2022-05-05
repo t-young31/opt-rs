@@ -1,4 +1,4 @@
-use crate::coordinates::Point;
+use crate::coordinates::{Point, Vector3D};
 use crate::ff::forcefield::EnergyFunction;
 use crate::pairs::{AtomPair, distance};
 
@@ -29,7 +29,7 @@ impl EnergyFunction for LennardJones12x6 {
     /// Add the gradient for this term
     fn add_gradient(&self,
                     coordinates: &Vec<Point>,
-                    gradient:    &mut Vec<Point>){
+                    gradient:    &mut Vec<Vector3D>){
 
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
@@ -45,15 +45,14 @@ impl EnergyFunction for LennardJones12x6 {
         let v3 = v2 + v1 + v0;
         let v4 = v3.powi(7);
         let v5 = self.sigma.powi(12);
-        let v6 = self.sigma.powi(6);
+        let v6 = 2. * self.sigma.powi(6);
         let v7 = v3.powi(4);
 
-        gradient[self.i].x += self.d*(v5*(-12.*x_i + 12.*x_j)/v4 - 2.*v6*(-6.*x_i + 6.*x_j)/v7);
-        gradient[self.i].y += self.d*(v5*(-12.*y_i + 12.*y_j)/v4 - 2.*v6*(-6.*y_i + 6.*y_j)/v7);
-        gradient[self.i].z += self.d*(v5*(-12.*z_i + 12.*z_j)/v4 - 2.*v6*(-6.*z_i + 6.*z_j)/v7);
-        gradient[self.j].x += self.d*(v5*(12.*x_i  - 12.*x_j)/v4 - 2.*v6*(6.*x_i  - 6.*x_j)/v7);
-        gradient[self.j].y += self.d*(v5*(12.*y_i  - 12.*y_j)/v4 - 2.*v6*(6.*y_i  - 6.*y_j)/v7);
-        gradient[self.j].z += self.d*(v5*(12.*z_i  - 12.*z_j)/v4 - 2.*v6*(6.*z_i  - 6.*z_j)/v7);
+        gradient[self.i].x += self.d*(v5*(-12.*x_i + 12.*x_j)/v4 - v6*(-6.*x_i + 6.*x_j)/v7);
+        gradient[self.i].y += self.d*(v5*(-12.*y_i + 12.*y_j)/v4 - v6*(-6.*y_i + 6.*y_j)/v7);
+        gradient[self.i].z += self.d*(v5*(-12.*z_i + 12.*z_j)/v4 - v6*(-6.*z_i + 6.*z_j)/v7);
+        gradient[self.j].x += self.d*(v5*(12.*x_i  - 12.*x_j)/v4 - v6*(6.*x_i  - 6.*x_j)/v7);
+        gradient[self.j].y += self.d*(v5*(12.*y_i  - 12.*y_j)/v4 - v6*(6.*y_i  - 6.*y_j)/v7);
+        gradient[self.j].z += self.d*(v5*(12.*z_i  - 12.*z_j)/v4 - v6*(6.*z_i  - 6.*z_j)/v7);
     }
 }
-

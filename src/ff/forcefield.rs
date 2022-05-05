@@ -1,4 +1,4 @@
-use crate::coordinates::Point;
+use crate::coordinates::{Point, Vector3D};
 use crate::Molecule;
 
 pub trait Forcefield {
@@ -9,7 +9,7 @@ pub trait Forcefield {
 
     fn energy(&mut self, coordinates: &Vec<Point>) -> f64;
 
-    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Point>;
+    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D>;
 }
 
 
@@ -23,5 +23,5 @@ pub trait EnergyFunction{
 
     fn add_gradient(&self,
                     coordinates: &Vec<Point>,
-                    gradient:    &mut Vec<Point>);
+                    gradient:    &mut Vec<Vector3D>);
 }

@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use std::ops::{Add, Sub, Index, IndexMut, Neg};
+use crate::utils::is_close;
 
 
 /// Point in 3D space
@@ -38,7 +39,7 @@ impl Point {
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Vector3D {
     pub x: f64,
     pub y: f64,
@@ -73,6 +74,18 @@ impl Vector3D {
         self.y /= value;
         self.z /= value;
     }
+
+    /// Construct a 3D vector from a vector of at least 3 components. Unsafe
+    pub fn from_vector(vector: &Vec<f64>) -> Self{
+        Vector3D{x: vector[0], y: vector[1], z: vector[2]}
+    }
+
+    /// Is this vector close to another? Checked component wise on the absolute difference
+    pub fn is_close_to(&self, other: &Vector3D, tol: f64) -> bool{
+        is_close(self.x, other.x, tol)
+        && is_close(self.y, other.y, tol)
+        && is_close(self.z, other.z, tol)
+    }
 }
 
 impl Neg for Vector3D {
@@ -103,6 +116,7 @@ impl<'a, 'b> Sub<&'b Point> for &'a Point {        // -  operator
     }
 }
 
+
 impl Index<usize> for Point {
     type Output = f64;
 
@@ -126,7 +140,6 @@ impl IndexMut<usize> for Point {
         }
     }
 }
-
 
 
 #[cfg(test)]

@@ -5,7 +5,7 @@ use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::{ProperDihedral, ImproperDihedral};
-use crate::coordinates::Point;
+use crate::coordinates::{Point, Vector3D};
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
@@ -81,18 +81,20 @@ impl Molecule{
 
     /// Gradient of the energy with respect to the positions
     pub fn gradient(&mut self,
-                    forcefield: &mut dyn Forcefield) -> Vec<Point>{
+                    forcefield: &mut dyn Forcefield) -> Vec<Vector3D>{
         forcefield.gradient(&self.coordinates).clone()
     }
 
     /// Numerical gradient evaluated using central differences
     pub fn numerical_gradient(&mut self,
-                              forcefield: &mut dyn Forcefield) -> Vec<Point>{
+                              forcefield: &mut dyn Forcefield) -> Vec<Vector3D>{
 
         let h: f64 = 1E-6;
-        let mut grad = self.coordinates.clone();
+        let mut grad: Vec<Vector3D> = Default::default();
 
         for i in 0..self.num_atoms(){
+
+            let mut vec = Vec::default();
             for (k, _) in ['x', 'y', 'z'].iter().enumerate(){
 
                 let mut coords = self.coordinates.clone();
@@ -103,8 +105,9 @@ impl Molecule{
                 coords[i][k] += 2.0 * h;                                        //  -> +h
                 let e_plus = forcefield.energy(&coords);
 
-                grad[i][k] = (e_plus - e_minus) / (2.0 * h);
+                vec.push((e_plus - e_minus) / (2.0 * h));
             }
+            grad.push(Vector3D::from_vector(&vec));
         }
 
         grad

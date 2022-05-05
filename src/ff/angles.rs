@@ -35,7 +35,7 @@ impl EnergyFunction for HarmonicAngleTypeA {
     /// Add the gradient for this term
     fn add_gradient(&self,
                     coordinates: &Vec<Point>,
-                    gradient:    &mut Vec<Point>){
+                    gradient:    &mut Vec<Vector3D>){
 
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
@@ -116,7 +116,7 @@ impl EnergyFunction for HarmonicAngleTypeB {
     /// Add the gradient for this term
     fn add_gradient(&self,
                     coordinates: &Vec<Point>,
-                    gradient:    &mut Vec<Point>){
+                    gradient:    &mut Vec<Vector3D>){
 
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;

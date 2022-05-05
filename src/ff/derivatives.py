@@ -413,10 +413,36 @@ def print_vdw_gradient():
     return print(";\n".join(lines))
 
 
+def bond(symbol):
+
+    k = sym.Symbol("self.k_ij")
+    r0 = sym.Symbol("self.r0")
+
+    r = mod(x_i - x_j, y_i - y_j, z_i - z_j)
+
+    string = rust_expression(function=sym.diff(k/2 * (r - r0)**2, symbol))
+
+    return f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} += {string}'
+
+
+def print_bond_gradient():
+
+    lines = []
+
+    for x in (x_i, y_i, z_i, x_j, y_j, z_j):
+        lines.append(bond(x))
+
+    for _ in range(10):
+        extract_variables(lines)
+
+    return print(";\n".join(lines))
+
+
 if __name__ == '__main__':
 
     # print_angle_gradient(angle_type=angle_type_a)
     # print_angle_gradient(angle_type=angle_type_b)
     # print_torsion_dihedral_gradient()
     # print_inversion_gradient()
-    print_vdw_gradient()
+    #print_vdw_gradient()
+    print_bond_gradient()
