@@ -6,6 +6,7 @@ use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::dihedrals::{InversionDihedral, TorsionalDihedral};
 use crate::ff::forcefield::EnergyFunction;
+use crate::ff::nonbonded::LennardJones12x6;
 use crate::ff::uff::dihedral_bond::DihedralBond;
 use crate::ff::uff::inversion_centers::INVERSION_CENTERS;
 use crate::ff::uff::atom_typing::UFFAtomType;
@@ -19,9 +20,7 @@ pub(crate) struct UFF{
     atom_types:       Vec<UFFAtomType>,
     energy_functions: Vec<Box<dyn EnergyFunction>>,
 
-    // Cache of equilibrium bond distances (r0)
-    r0_cache:         HashMap<AtomPair, f64>,
-
+    r0_cache:         HashMap<AtomPair, f64>,  // Cache of equilibrium bond distances (r0)
     energy:           f64,
     gradient:         Vec<Point>,
 }
@@ -231,6 +230,29 @@ impl UFF {
         neighbours.iter()
             .any(|i| self.atom_types[*i].name == "O_2" && i != &atom_idx)
     }
+
+    /// Add van der Waals terms for repulsion and dispersive attraction
+    fn add_vdw(&mut self, molecule: &Molecule){
+
+        // TODO: Should 1-3 exclusions be included? Not included in the original paper
+        // but are included in: https://doi.org/10.1016/j.fluid.2006.07.014
+
+        for nb_pair in molecule.non_bonded_pairs.iter(){
+
+            let type_i = &self.atom_types[nb_pair.pair.i];
+            let type_j = &self.atom_types[nb_pair.pair.j];
+
+            self.energy_functions.push(Box::new(
+                LennardJones12x6{
+                    i: nb_pair.pair.i,
+                    j: nb_pair.pair.j,
+                    d: (type_i.d * type_j.d).sqrt(),
+                    sigma: (type_i.r * type_j.r).sqrt()
+                }
+            ));
+        }
+
+    }
 }
 
 impl Forcefield for UFF {
@@ -245,6 +267,7 @@ impl Forcefield for UFF {
         ff.add_angle_bends(molecule);
         ff.add_dihedral_torsions(molecule);
         ff.add_dihedral_inversions(molecule);
+        ff.add_vdw(molecule);
 
         ff
     }

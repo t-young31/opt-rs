@@ -251,19 +251,21 @@ def convert_to_trait_with_arg(string, name):
 def rust_expression(function):
     """Print a valid rust expression from a sympy function"""
 
-    string = str(function).replace('**2', '.powi(2)')
-    string = string.replace('+ 1', '+ 1.')
-    string = string.replace('**(3/2)', '.powf(1.5)')
-    string = string.replace('/2', '/2.')
-    string = string.replace('2*', '2.*')
-    string = string.replace('/3', '/3.')
+    for n in (12, 7, 4, 2):
+        function = str(function).replace(f'**{n}', f'.powi({n})')
+
+    function = function.replace('+ 1', '+ 1.')
+    function = function.replace('**(3/2)', '.powf(1.5)')
+    function = function.replace('/2', '/2.')
+    function = function.replace('2*', '2.*')
+    function = function.replace('/3', '/3.')
 
     for fn in ('sqrt', 'acos', 'cos', 'asin', 'sin'):
-        string = convert_to_trait(string, fn)
+        function = convert_to_trait(function, fn)
 
-    string = convert_to_trait_with_arg(string, 'atan2')
+    function = convert_to_trait_with_arg(function, 'atan2')
 
-    return string
+    return function
 
 
 def truncated_expression(string):
@@ -385,9 +387,36 @@ def print_inversion_gradient():
     return print(";\n".join(lines))
 
 
+def vdw(symbol):
+
+    d = sym.Symbol("self.d")
+    sigma = sym.Symbol("self.sigma")
+
+    r = mod(x_i - x_j, y_i - y_j, z_i - z_j)
+    res = d * ((sigma/r)**12 - 2*(sigma/r)**6)
+
+    string = rust_expression(function=sym.diff(res, symbol))
+
+    return f'gradient[self.{str(symbol)[-1]}].{str(symbol)[0]} += {string}'
+
+
+def print_vdw_gradient():
+
+    lines = []
+
+    for x in (x_i, y_i, z_i, x_j, y_j, z_j):
+        lines.append(vdw(x))
+
+    for _ in range(5):
+        extract_variables(lines)
+
+    return print(";\n".join(lines))
+
+
 if __name__ == '__main__':
 
     # print_angle_gradient(angle_type=angle_type_a)
     # print_angle_gradient(angle_type=angle_type_b)
     # print_torsion_dihedral_gradient()
-    print_inversion_gradient()
+    # print_inversion_gradient()
+    print_vdw_gradient()

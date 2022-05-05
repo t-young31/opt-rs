@@ -17,7 +17,7 @@ pub struct Molecule{
     pub coordinates:  Vec<Point>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
-    non_bonded_pairs: HashSet<NBPair>,
+    pub(crate) non_bonded_pairs: HashSet<NBPair>,
 }
 
 impl Molecule{
