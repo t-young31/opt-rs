@@ -21,7 +21,9 @@ Equlibrium pairwise distances are given by
     r_0 = r_i + r_j + r_\text{BO} + r_\text{EN}
 \end{equation}
 
-where $r_k$ is the covalant radius of atom $k$, $r_{BO}$ a correction based on the bond order between the two atoms and $r_{EN}$ a correction for the electronegativity.
+where $r_k$ is the covalant radius of atom $k$, $r_{BO}$ a correction based on
+the bond order between the two atoms and $r_{EN}$ a correction for the
+electronegativity.
 
 \begin{equation}
     r_\text{BO} = -\lambda (r_i + r_j) \ln(n)
@@ -138,36 +140,46 @@ where $V_m$ are tabulated values, while bonds containing for sp$^{2}$ centres
 where $U_m$ are values based on the period of the atom (indexed by $m$) and
 $n_{BO, jk}$ is the value of the bond order between atoms $j$ and $k$.
 
-Torsional potentials are only considered where the central bonds are main group and
-the atoms non sp hybridised.
+Torsional potentials are only considered where the central bonds are main group
+and the atoms non sp hybridised.
 
 If either of the bond angles approaches $180^\circ$ then the potential is set to zero.
 
 % Does it matter if it is non-smooth? Could be smoothed with e.g.
 % w(x) = 1-0.5*((tanh(10*(x-3))+1) + (1-tanh(10*(x+3))))
 
-
-
 \subsection{Inversion}
 
-Trigonal(-pyramidal) geometeries are enforced using a cosine expansion in the angle ($\gamma$)
-made the axis $c\text{-}k$ with the normal to the plane made by the atoms $c, i, j$ where $c$ is
-the central atom and $i,j,k$ are bonded neighbours.
+Trigonal(-pyramidal) geometeries are enforced using a cosine expansion in the
+angle ($\gamma$) made the axis $c\text{-}k$ with the normal to the plane made by the
+atoms $c, i, j$ where $c$ is the central atom and $i,j,k$ are bonded neighbours.
 
 \begin{equation}
     E_\gamma = k_{cijk} (C_0 + C_1 \sin(\gamma) + C_2 \cos(2\gamma))
 \end{equation}
 
-where $k_{cijk}$ is a force constant and $C_n$ are constants defined by fitting the 
-function to a minimum at $\gamma_0$ and a maximum at the inversion point (for group 15 central atoms). 
+where $k_{cijk}$ is a force constant and $C_n$ are constants defined by fitting
+the function to a minimum at $\gamma_0$ and a maximum at the inversion point (for
+group 15 central atoms).
 
 As there are three potential axes ($c\text{-}m$) an average is taken over all three.
 
+    
+\subsection{Non-bonded: van der waals}
 
+Dispersion + repulsive terms to the energy are given by a standard Lennard-Jones
+12-6 potential
 
+\begin{equation}
+    E_\text{vdw} = D_{ij} \left[\left( \frac{\sigma_{ij}}{r_{ij}} \right)^{12}
+                                -2 \left( \frac{\sigma_{ij}}{r_{ij}} \right)^6
+                            \right]
+\end{equation}
 
-
-
+where $r_{ij}$ are the distance between atoms $i$ and $j$ and the distance
+terms $\sigma_{ij}$ are generated using geometric mixing
+$\sigma_{ij} = \sqrt{r_i r_j}$ and likewise for the well depth
+$D_{ij} = \sqrt{D_i D_j}$ where $r_k, D_k$ are tabulated parameters.
 
 
 \end{document}
