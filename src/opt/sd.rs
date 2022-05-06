@@ -1,6 +1,6 @@
 // Steepest decent optimisation
 use log::info;
-use crate::coordinates::{Point, Vector3D};
+use crate::coordinates::Vector3D;
 use crate::{Forcefield, Molecule};
 
 
@@ -40,7 +40,7 @@ impl SteepestDecentOptimiser {
                 break;
             }
 
-            println!("E = {}", molecule.energy(forcefield));
+            // println!("E = {}", molecule.energy(forcefield));
 
             for (i, v) in self.gradient.iter().enumerate(){
                 molecule.coordinates[i].x -= self.alpha * v.x;

@@ -513,6 +513,7 @@ struct NBonds {
 #[cfg(test)]
 mod tests{
     use crate::pairs::{AtomPair, distance};
+    use crate::UFF;
     use super::*;
     use crate::utils::*;
 
@@ -832,5 +833,41 @@ mod tests{
         println!("{:?}", mol.connectivity.improper_dihedrals);
 
         assert_eq!(mol.improper_dihedrals().len(), 2);
+    }
+
+    /// Ensure that molecules can be optimised
+    #[test]
+    fn test_h2_optimisation(){
+
+        let filename = "th2o.xyz";
+        print_dihydrogen_xyz_file(filename);
+
+        let mut h2 = Molecule::from_xyz_file(filename);
+        remove_file_or_panic(filename);
+
+        let mut ff = UFF::new(&h2);
+        h2.optimise(&mut ff);
+
+        let r = (&h2.coordinates[0] - &h2.coordinates[1]).length();
+        assert!(is_close(r, 0.7, 1E-1));
+
+        assert!(is_close(h2.energy(&mut ff), 0.0, 1E-4));
+
+    }
+    #[test]
+    fn test_methane_optimisation(){
+
+        let filename = "tmo.xyz";
+        print_methane_xyz_file(filename);
+
+        let mut ch4 = Molecule::from_xyz_file(filename);
+        remove_file_or_panic(filename);
+
+        let mut ff = UFF::new(&ch4);
+        let init_energy = ch4.energy(&mut ff);
+
+        ch4.optimise(&mut ff);
+
+        assert!(init_energy > ch4.energy(&mut ff));
     }
 }
