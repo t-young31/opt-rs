@@ -6,6 +6,7 @@ use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::{ProperDihedral, ImproperDihedral};
 use crate::coordinates::{Point, Vector3D};
+use crate::opt::sd::SteepestDecentOptimiser;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
@@ -114,8 +115,9 @@ impl Molecule{
     }
 
     /// Optimise the positions of the atoms given a forcefield
-    pub fn optimise(&mut self, forcefield: &dyn Forcefield){
-        // TODO
+    pub fn optimise(&mut self, forcefield: &mut dyn Forcefield){
+        let mut optimiser = SteepestDecentOptimiser::default();
+        optimiser.optimise(self, forcefield);
     }
 
     /// Write a .xyz file for this molecule

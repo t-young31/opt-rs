@@ -43,7 +43,7 @@ fn main() {
     let mut mol = Molecule::from_xyz_file(&args.xyz_filename);
 
     match args.forcefield_name.as_str() {
-        "UFF" => mol.optimise(&UFF::new(&mol)),
+        "UFF" => mol.optimise(&mut UFF::new(&mol)),
         _ => panic!("Cannot set a forcefield. Unknown type")
     }
 
