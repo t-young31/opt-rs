@@ -566,6 +566,15 @@ mod tests{
         assert!(!mol.has_bonds());
     }
 
+    /// Test that a bond cannot be constructed between two identical atoms
+    /// if one exists then there's the chance to get infinities in the FF energy
+    #[test]
+    #[should_panic]
+    fn test_cannot_create_a_bond_between_identical_atoms(){
+
+        let _ = Bond::from_atom_indices(0, 0);
+    }
+
     /// Given hydrogen trimer with close distance, then only a single bond exists
     #[test]
     fn test_hypervalent_hydrogen(){
@@ -622,9 +631,13 @@ mod tests{
     #[test]
     fn test_angle_equality(){
 
-        assert_eq!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 0, j: 1, k: 2 });
-        assert_eq!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 2, j: 1, k: 0 });
-        assert_ne!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 0, j: 3, k: 2 });
+        let angle = Angle { i: 0, j: 1, k: 2 };
+        assert_eq!(&angle, &Angle{ i: 0, j: 1, k: 2 });
+        assert_eq!(angle.j, 1 as usize);
+        assert_eq!(angle.k, 2 as usize);
+        
+        assert_eq!(&angle, &Angle{ i: 2, j: 1, k: 0 });
+        assert_ne!(&angle, &Angle{ i: 0, j: 3, k: 2 });
     }
 
     /// A bond of two atoms should contain both atoms and be able to return the other atom index

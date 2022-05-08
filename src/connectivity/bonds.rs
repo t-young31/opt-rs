@@ -61,7 +61,7 @@ impl Index<usize> for Bond {
         match index {
             0 => &self.pair.i,
             1 => &self.pair.j,
-            n => panic!("Invalid Vector3d index: {}", n)
+            n => panic!("Invalid index for bond: {}. Must be [0, 1]", n)
         }
     }
 }
@@ -114,6 +114,21 @@ impl BondOrder {
 #[cfg(test)]
 mod tests{
     use super::*;
+
+    /// Check that bonds are index-able
+    #[test]
+    fn test_bond_indexing(){
+        let bond = Bond::from_atom_indices(3, 5);
+        assert_eq!(bond[0], 3);
+        assert_eq!(bond[1], 5);
+    }
+
+    /// Check that bond orders default to single bonds
+    #[test]
+    fn test_default_bond_order(){
+
+        assert_eq!(BondOrder::default(), BondOrder::Single);
+    }
 
     /// Given bond with indices in either order then they should be the same
     #[test]
