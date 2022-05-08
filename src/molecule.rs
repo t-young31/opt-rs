@@ -866,6 +866,11 @@ mod tests{
 
         assert!(is_close(h2.energy(&mut ff), 0.0, 1E-4));
 
+        // Also ensure the gradient is close to zero
+        for v in h2.gradient(&mut ff).iter(){
+            assert!(is_close(v.length(), 0.0, 1E-4));
+        }
+
     }
     #[test]
     fn test_methane_optimisation(){

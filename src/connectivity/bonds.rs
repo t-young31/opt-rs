@@ -117,10 +117,17 @@ mod tests{
 
     /// Check that bonds are index-able
     #[test]
-    fn test_bond_indexing(){
+    fn test_valid_bond_indexing(){
         let bond = Bond::from_atom_indices(3, 5);
         assert_eq!(bond[0], 3);
         assert_eq!(bond[1], 5);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_invalid_bond_indexing(){
+        let bond = Bond::from_atom_indices(3, 5);
+        let _ = bond[2]; // No 3rd index in a bond
     }
 
     /// Check that bond orders default to single bonds
