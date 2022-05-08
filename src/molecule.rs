@@ -5,7 +5,8 @@ use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::{ProperDihedral, ImproperDihedral};
-use crate::coordinates::Point;
+use crate::coordinates::{Point, Vector3D};
+use crate::opt::sd::SteepestDecentOptimiser;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
@@ -81,18 +82,20 @@ impl Molecule{
 
     /// Gradient of the energy with respect to the positions
     pub fn gradient(&mut self,
-                    forcefield: &mut dyn Forcefield) -> Vec<Point>{
+                    forcefield: &mut dyn Forcefield) -> Vec<Vector3D>{
         forcefield.gradient(&self.coordinates).clone()
     }
 
     /// Numerical gradient evaluated using central differences
     pub fn numerical_gradient(&mut self,
-                              forcefield: &mut dyn Forcefield) -> Vec<Point>{
+                              forcefield: &mut dyn Forcefield) -> Vec<Vector3D>{
 
         let h: f64 = 1E-6;
-        let mut grad = self.coordinates.clone();
+        let mut grad: Vec<Vector3D> = Default::default();
 
         for i in 0..self.num_atoms(){
+
+            let mut vec = Vec::default();
             for (k, _) in ['x', 'y', 'z'].iter().enumerate(){
 
                 let mut coords = self.coordinates.clone();
@@ -103,16 +106,18 @@ impl Molecule{
                 coords[i][k] += 2.0 * h;                                        //  -> +h
                 let e_plus = forcefield.energy(&coords);
 
-                grad[i][k] = (e_plus - e_minus) / (2.0 * h);
+                vec.push((e_plus - e_minus) / (2.0 * h));
             }
+            grad.push(Vector3D::from_vector(&vec));
         }
 
         grad
     }
 
     /// Optimise the positions of the atoms given a forcefield
-    pub fn optimise(&mut self, forcefield: &dyn Forcefield){
-        // TODO
+    pub fn optimise(&mut self, forcefield: &mut dyn Forcefield){
+        let mut optimiser = SteepestDecentOptimiser::default();
+        optimiser.optimise(self, forcefield);
     }
 
     /// Write a .xyz file for this molecule
@@ -508,6 +513,7 @@ struct NBonds {
 #[cfg(test)]
 mod tests{
     use crate::pairs::{AtomPair, distance};
+    use crate::UFF;
     use super::*;
     use crate::utils::*;
 
@@ -558,6 +564,15 @@ mod tests{
         mol.add_bonds();
 
         assert!(!mol.has_bonds());
+    }
+
+    /// Test that a bond cannot be constructed between two identical atoms
+    /// if one exists then there's the chance to get infinities in the FF energy
+    #[test]
+    #[should_panic]
+    fn test_cannot_create_a_bond_between_identical_atoms(){
+
+        let _ = Bond::from_atom_indices(0, 0);
     }
 
     /// Given hydrogen trimer with close distance, then only a single bond exists
@@ -616,9 +631,13 @@ mod tests{
     #[test]
     fn test_angle_equality(){
 
-        assert_eq!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 0, j: 1, k: 2 });
-        assert_eq!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 2, j: 1, k: 0 });
-        assert_ne!(&Angle { i: 0, j: 1, k: 2 }, &Angle { i: 0, j: 3, k: 2 });
+        let angle = Angle { i: 0, j: 1, k: 2 };
+        assert_eq!(&angle, &Angle{ i: 0, j: 1, k: 2 });
+        assert_eq!(angle.j, 1 as usize);
+        assert_eq!(angle.k, 2 as usize);
+        
+        assert_eq!(&angle, &Angle{ i: 2, j: 1, k: 0 });
+        assert_ne!(&angle, &Angle{ i: 0, j: 3, k: 2 });
     }
 
     /// A bond of two atoms should contain both atoms and be able to return the other atom index
@@ -827,5 +846,46 @@ mod tests{
         println!("{:?}", mol.connectivity.improper_dihedrals);
 
         assert_eq!(mol.improper_dihedrals().len(), 2);
+    }
+
+    /// Ensure that molecules can be optimised
+    #[test]
+    fn test_h2_optimisation(){
+
+        let filename = "th2o.xyz";
+        print_dihydrogen_xyz_file(filename);
+
+        let mut h2 = Molecule::from_xyz_file(filename);
+        remove_file_or_panic(filename);
+
+        let mut ff = UFF::new(&h2);
+        h2.optimise(&mut ff);
+
+        let r = (&h2.coordinates[0] - &h2.coordinates[1]).length();
+        assert!(is_close(r, 0.7, 1E-1));
+
+        assert!(is_close(h2.energy(&mut ff), 0.0, 1E-4));
+
+        // Also ensure the gradient is close to zero
+        for v in h2.gradient(&mut ff).iter(){
+            assert!(is_close(v.length(), 0.0, 1E-4));
+        }
+
+    }
+    #[test]
+    fn test_methane_optimisation(){
+
+        let filename = "tmo.xyz";
+        print_methane_xyz_file(filename);
+
+        let mut ch4 = Molecule::from_xyz_file(filename);
+        remove_file_or_panic(filename);
+
+        let mut ff = UFF::new(&ch4);
+        let init_energy = ch4.energy(&mut ff);
+
+        ch4.optimise(&mut ff);
+
+        assert!(init_energy > ch4.energy(&mut ff));
     }
 }

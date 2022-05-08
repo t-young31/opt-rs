@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use crate::coordinates::Point;
+use crate::coordinates::{Point, Vector3D};
 use crate::ff::forcefield::EnergyFunction;
 use crate::pairs::distance;
 
@@ -27,16 +27,31 @@ impl EnergyFunction for HarmonicBond {
 
     /// Add the gradient for this term
     fn add_gradient(&self,
-                    x:        &Vec<Point>,
-                    gradient: &mut Vec<Point>){
+                    coordinates: &Vec<Point>,
+                    gradient:    &mut Vec<Vector3D>){
 
-        let r = distance(self.i, self.j, x);
+        let x_i = coordinates[self.i].x;
+        let y_i = coordinates[self.i].y;
+        let z_i = coordinates[self.i].z;
 
-        for k in 0..3{
-            let val = self.k_ij * (1.0 - self.r0 / r) * (x[self.i][k] - x[self.j][k]);
+        let x_j = coordinates[self.j].x;
+        let y_j = coordinates[self.j].y;
+        let z_j = coordinates[self.j].z;
 
-            gradient[self.i][k] += val;
-            gradient[self.j][k] -= val;
-        }
+
+        let v0 = x_i - x_j;
+        let v1 = (z_i - z_j).powi(2);
+        let v2 = (y_i - y_j).powi(2);
+        let v3 = v0.powi(2);
+        let v4 = v3 + v2 + v1;
+        let v5 = v4.sqrt();
+        let v6 = self.k_ij*(-self.r0 + v5);
+
+        gradient[self.i].x += v6*v0/v5;
+        gradient[self.i].y += v6*(y_i - y_j)/v5;
+        gradient[self.i].z += v6*(z_i - z_j)/v5;
+        gradient[self.j].x += v6*(-x_i + x_j)/v5;
+        gradient[self.j].y += v6*(-y_i + y_j)/v5;
+        gradient[self.j].z += v6*(-z_i + z_j)/v5
     }
 }

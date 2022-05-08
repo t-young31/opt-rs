@@ -36,27 +36,52 @@ struct CommandLineArguments {
 }
 
 
-fn main() {
-
-    let args = CommandLineArguments::parse();
+fn run(args: CommandLineArguments) {
 
     let mut mol = Molecule::from_xyz_file(&args.xyz_filename);
 
     match args.forcefield_name.as_str() {
-        "UFF" => mol.optimise(&UFF::new(&mol)),
+        "UFF" => mol.optimise(&mut UFF::new(&mol)),
         _ => panic!("Cannot set a forcefield. Unknown type")
     }
 
     mol.write_xyz_file("opt.xyz");
+}
 
 
-    // 0. Setup
-    // 	1. Read in .xyz
-    // 	2. Atom type
-    // 	3. Set lists of bonded pairs, triples, dihedral-s
-    // 	4. Add pairs for non-bonded (with exclusions)
-    // 	5. Calculate force constants
-    // 1. Optimise
-    //  1. Calculate gradient
-    //  2. SD step (updating positions)
+fn main(){ run(CommandLineArguments::parse()) }
+
+
+
+/*
+   /$$                           /$$
+  | $$                          | $$
+ /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
+|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
+  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
+  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
+  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
+   \___/   \_______/|_______/    \___/ |_______/
+ */
+
+#[cfg(test)]
+mod tests{
+
+    use super::*;
+    use crate::utils::*;
+
+    #[test]
+    fn test_simple_cli(){
+
+        let filename = "h2_tscli.xyz";
+        print_dihydrogen_xyz_file(filename);
+
+        let args = CommandLineArguments{xyz_filename: filename.to_string(),
+                                        forcefield_name: "UFF".to_string()};
+        run(args);
+
+        remove_file_or_panic(filename);
+        remove_file_or_panic("opt.xyz")
+    }
+
 }

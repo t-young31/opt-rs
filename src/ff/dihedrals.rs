@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use crate::connectivity::dihedrals::ImproperDihedral;
-use crate::coordinates::Point;
+use crate::coordinates::{Point, Vector3D};
 use crate::ff::forcefield::EnergyFunction;
 
 /// Dihedral angle
@@ -46,8 +46,8 @@ impl EnergyFunction for TorsionalDihedral {
     }
 
     fn add_gradient(&self,
-                    coordinates:      &Vec<Point>,
-                    gradient: &mut Vec<Point>) {
+                    coordinates: &Vec<Point>,
+                    gradient:    &mut Vec<Vector3D>) {
 
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
@@ -186,7 +186,9 @@ impl EnergyFunction for InversionDihedral {
         ) / 3.
     }
 
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Point>) {
+    fn add_gradient(&self,
+                    coordinates: &Vec<Point>,
+                    gradient:    &mut Vec<Vector3D>) {
 
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;

@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use crate::{Forcefield, Molecule};
-use crate::coordinates::Point;
+use crate::coordinates::{Point, Vector3D};
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::dihedrals::{InversionDihedral, TorsionalDihedral};
@@ -22,7 +22,7 @@ pub(crate) struct UFF{
 
     r0_cache:         HashMap<AtomPair, f64>,  // Cache of equilibrium bond distances (r0)
     energy:           f64,
-    gradient:         Vec<Point>,
+    gradient:         Vec<Vector3D>,
 }
 
 impl UFF {
@@ -31,7 +31,7 @@ impl UFF {
     fn set_zero_gradient(&mut self, molecule: &Molecule){
 
         for _ in 0..molecule.num_atoms(){
-            self.gradient.push(Point::default());
+            self.gradient.push(Vector3D::default());
         }
     }
 
@@ -312,7 +312,7 @@ impl Forcefield for UFF {
     }
 
     /// Evaluate the gradient {dE/dX_ik, ...} for atom i and Cartesian component k
-    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Point>{
+    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D>{
 
         self.zero_gradient();
 
@@ -362,14 +362,11 @@ mod tests{
         let num_grad = mol.numerical_gradient(ff);
 
         for i in 0..grad.len(){
-            for k in 0..3{
-                if !is_close(grad[i][k], num_grad[i][k], 1E-5){
-                    println!("{} not close to {}", grad[i][k], num_grad[i][k]);
-                    return false;
-                };
+            if !grad[i].is_close_to(&num_grad[i], 1E-6){
+                println!("{:?} not close to {:?}", grad[i], num_grad[i]);
+                return false;
             }
         }
-
         true
     }
 
