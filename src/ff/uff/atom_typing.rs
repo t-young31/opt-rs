@@ -1,5 +1,6 @@
 use std::f64::consts::PI;
 use crate::atoms::{Atom, AtomicNumber};
+use crate::connectivity::bonds::BondOrder;
 use crate::ff::angles::angle_value;
 use crate::Molecule;
 
@@ -82,6 +83,10 @@ impl UFFAtomType {
             value -= (angle - self.theta).abs() / PI;
         }
 
+        if molecule.bonds().iter().filter(|b| b.order == BondOrder::Aromatic).count() == 2
+        && self.aromatic{
+            value += 5.;
+        };
 
         // TODO: Match on more things
 

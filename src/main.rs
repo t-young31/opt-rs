@@ -49,7 +49,9 @@ fn run(args: CommandLineArguments) {
 }
 
 
-fn main(){ run(CommandLineArguments::parse()) }
+fn main(){
+    run(CommandLineArguments::parse())
+}
 
 
 
