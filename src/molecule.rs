@@ -380,7 +380,8 @@ impl Molecule{
     /// Add all pairs (i, j) of atoms which are non-bonded thus are subject to Lennard Jones
     /// interactions, in a classical MM forcefield
     pub(crate) fn add_non_bonded_pairs(&mut self){
-        self.non_bonded_pairs.clear();
+
+        self.non_bonded_pairs = HashSet::with_capacity(self.num_atoms().pow(2));
 
         for atom_i in self.atoms().iter(){
             for atom_j in self.atoms().iter(){
@@ -859,6 +860,25 @@ mod tests{
         }
 
         remove_file_or_panic(filename);
+    }
+
+    /// Test that triple bonds are defined
+    #[test]
+    fn test_a_triple_bond_is_present_in_c2h2(){
+
+        let filename = "ch2h_tatbinc.xyz";
+        print_c2h2_xyz_file(filename);
+
+        let c2h2 = Molecule::from_xyz_file(filename);
+        let cc_bond = c2h2.bonds()
+            .iter()
+            .filter(|b| b.contains_index(0) && b.contains_index(1))
+            .next()
+            .unwrap();
+
+        assert_eq!(cc_bond.order, BondOrder::Triple);
+
+        remove_file_or_panic(filename)
     }
 
     /// Ensure that molecules can be optimised

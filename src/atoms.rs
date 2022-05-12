@@ -472,4 +472,22 @@ mod tests{
         assert_eq!(Atom::from_atomic_symbol("Cl").num_possible_unpaired_electrons(),  1);
     }
 
+    /// Test that a carbon with 5 bonds is hypervalent
+    #[test]
+    fn test_hypervalency_carbon(){
+
+        let atom = Atom::from_atomic_symbol("C");
+        let mut bonds: Vec<Bond> = Default::default();
+        for i in 1..=5{
+            bonds.push(Bond::from_atom_indices(0, i))
+        }
+
+        assert!(atom.is_hypervalent(&bonds));
+
+        // 4 bonds where one is a double bond is also hypervalent
+        bonds.remove(4);
+        bonds[3].order = BondOrder::Double;
+
+        assert!(atom.is_hypervalent(&bonds));
+    }
 }

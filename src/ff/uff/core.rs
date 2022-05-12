@@ -652,4 +652,21 @@ mod tests{
 
         remove_file_or_panic(filename);
     }
+
+    #[test]
+    fn test_benzene_has_aromatic_carbons(){
+
+        let filename = "benzene_tbhac.xyz";
+        print_benzene_xyz_file(filename);
+
+        let ff = UFF::new(&Molecule::from_xyz_file(filename));
+
+        for atom_type in ff.atom_types.iter(){
+            if atom_type.atomic_symbol == "C"{
+                assert_eq!(atom_type.name, "C_R");
+            }
+        }
+
+        remove_file_or_panic(filename);
+    }
 }

@@ -146,3 +146,13 @@ H          2.86816        1.90649       -0.00000\n\
 H          2.85791       -0.54513       -0.00000\n")
         .expect(filename)
 }
+
+pub(crate) fn print_c2h2_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "4\n\n
+C         -3.99338        0.82887        0.00000\n\
+C         -2.79056        0.90688        0.00000\n\
+H         -5.04954        0.76038       -0.00000\n\
+H         -1.73439        0.97537        0.00000\n")
+        .expect(filename)
+}
