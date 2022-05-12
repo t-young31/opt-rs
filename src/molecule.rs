@@ -881,6 +881,27 @@ mod tests{
         remove_file_or_panic(filename)
     }
 
+    #[test]
+    fn test_reducing_bond_orders_does_nothing_in_ethene(){
+
+        let filename = "ethene_trbodnie.xyz";
+        print_ethene_xyz_file(filename);
+
+        let mol = Molecule::from_xyz_file(filename);
+        let mut bonds: Vec<Bond> = mol.bonds().clone().into_iter().collect();
+
+        for atom in mol.atoms().iter(){
+            atom.reduce_bond_orders_to_aromatic(&mut bonds);
+        }
+
+        for bond in bonds.iter(){
+
+            assert!(bond.order == BondOrder::Double || bond.order == BondOrder::Single);
+        }
+
+        remove_file_or_panic(filename);
+    }
+
     /// Ensure that molecules can be optimised
     #[test]
     fn test_h2_optimisation(){
