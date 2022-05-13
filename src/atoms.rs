@@ -1,5 +1,6 @@
 use std::ops::Index;
 use log::{info, warn};
+use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::coordinates::Point;
 use crate::utils::is_very_close;
 
@@ -65,7 +66,10 @@ impl Atom {
     fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 
     /// Group that this atom is in within the periodic table
-    pub fn group(&self) -> usize{self.atomic_number.group()}
+    pub fn group(&self) -> usize{ self.atomic_number.group() }
+
+    /// Period that this atom is in within the periodic table
+    pub fn period(&self) -> usize{ self.atomic_number.period() }
 
     /// Is this atom a d8 transition metal, defined by
     pub fn is_d8(&self) -> bool {
@@ -139,6 +143,38 @@ impl Atom {
         static GROUPS: [usize; 3] = [14, 15, 16];
 
         GROUPS.contains(&self.group())
+    }
+
+    /// Is this atom hypervalent given the surrounding bonds. Only useful for main group elements
+    pub fn is_hypervalent(&self, bonds: &Vec<Bond>) -> bool{
+
+        let mut n = self.group() as f64 - 10.;
+
+        for bond in bonds.iter(){
+            if bond.contains(self){
+                n += bond.order.value();
+            }
+        }
+
+         self.is_main_group() && n > 8.0
+    }
+
+    /// Attempt to reduce any double bonds to aromatic
+    pub fn reduce_bond_orders_to_aromatic(&self, bonds: &mut Vec<Bond>){
+
+        let n_double_bonds: usize = bonds.iter()
+            .filter(|b| b.contains(self) && b.order == BondOrder::Double)
+            .count();
+
+        if n_double_bonds < 2{
+            return; // Cannot reduce double bonds to aromatic
+        }
+
+        for bond in bonds.iter_mut(){
+            if bond.contains(self) && bond.order == BondOrder::Double{
+                bond.order = BondOrder::Aromatic;
+            }
+        }
     }
 }
 
@@ -436,4 +472,22 @@ mod tests{
         assert_eq!(Atom::from_atomic_symbol("Cl").num_possible_unpaired_electrons(),  1);
     }
 
+    /// Test that a carbon with 5 bonds is hypervalent
+    #[test]
+    fn test_hypervalency_carbon(){
+
+        let atom = Atom::from_atomic_symbol("C");
+        let mut bonds: Vec<Bond> = Default::default();
+        for i in 1..=5{
+            bonds.push(Bond::from_atom_indices(0, i))
+        }
+
+        assert!(atom.is_hypervalent(&bonds));
+
+        // 4 bonds where one is a double bond is also hypervalent
+        bonds.remove(4);
+        bonds[3].order = BondOrder::Double;
+
+        assert!(atom.is_hypervalent(&bonds));
+    }
 }

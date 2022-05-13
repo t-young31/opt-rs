@@ -45,6 +45,27 @@ impl Bond {
         else if idx == self.pair.j { Some(self.pair.i) }
         else{                       None     }
     }
+
+    /// Set a best guess of a bond order given the connectivity
+    pub fn set_possible_bond_order(&mut self, atoms: &Vec<Atom>){
+        self.order = BondOrder::Single;   // Default to a single bond
+
+        let atom_i = &atoms[self.pair.i];
+        let atom_j = &atoms[self.pair.j];
+
+        if !(atom_i.can_form_multiple_bonds() && atom_j.can_form_multiple_bonds()) {
+            return;
+        }
+
+        let n = atom_i.num_possible_unpaired_electrons();
+        let m = atom_j.num_possible_unpaired_electrons();
+
+        match n.max(m) {
+            1 => {self.order = BondOrder::Double;}
+            2 => {self.order = BondOrder::Triple;}
+            _ => {self.order = BondOrder::Single;}
+        }
+    }
 }
 
 impl PartialEq for Bond {

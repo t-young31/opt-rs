@@ -128,3 +128,31 @@ pub(crate) fn print_ph3_xyz_file(filename: &str){
   H   -0.0642   1.1889  -0.1874\n")
         .expect(filename)
 }
+
+pub(crate) fn print_benzene_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "12\n\n
+C         -0.50959        1.40925        0.00000\n\
+C         -0.50172       -0.01013        0.00000\n\
+C          0.71485        2.13236        0.00000\n\
+C          1.91595        1.39203       -0.00000\n\
+C          1.91230       -0.00722       -0.00000\n\
+C          0.71648       -0.73162        0.00000\n\
+H          0.75399       -1.83203        0.00000\n\
+H         -1.42864       -0.58129        0.00000\n\
+H         -1.47287        1.94140        0.00000\n\
+H          0.78724        3.23589        0.00000\n\
+H          2.86816        1.90649       -0.00000\n\
+H          2.85791       -0.54513       -0.00000\n")
+        .expect(filename)
+}
+
+pub(crate) fn print_c2h2_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "4\n\n
+C         -3.99338        0.82887        0.00000\n\
+C         -2.79056        0.90688        0.00000\n\
+H         -5.04954        0.76038       -0.00000\n\
+H         -1.73439        0.97537        0.00000\n")
+        .expect(filename)
+}
