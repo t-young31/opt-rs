@@ -65,6 +65,8 @@ impl Bond {
             2 => {self.order = BondOrder::Triple;}
             _ => {self.order = BondOrder::Single;}
         }
+
+        println!("{:?} nmax=2: {}", self, n.max(m) == 2);
     }
 }
 

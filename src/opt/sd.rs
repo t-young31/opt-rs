@@ -35,13 +35,15 @@ impl SteepestDecentOptimiser {
                 break;
             }
 
-            // println!("E = {},  RMS(grad){}", molecule.energy(forcefield), self.grad_rms());
 
             for (i, v) in gradient.iter().enumerate(){
                 molecule.coordinates[i].x -= self.alpha * v.x;
                 molecule.coordinates[i].y -= self.alpha * v.y;
                 molecule.coordinates[i].z -= self.alpha * v.z;
             }
+
+            println!("E = {}", forcefield.energy(&molecule.coordinates));
+
 
         }
     }

@@ -4,6 +4,7 @@ pub fn is_very_close(x: f64, y: f64) -> bool{
 }
 
 
+#[inline(always)]
 pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
     // Are two numbers close to within an absolute tolerance?
 
@@ -11,7 +12,7 @@ pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
         return true
     }
 
-    println!("\nleft = {}\nright = {}", x, y);
+    // println!("\nleft = {}\nright = {}", x, y);
     return false
 }
 

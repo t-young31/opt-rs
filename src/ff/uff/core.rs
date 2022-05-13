@@ -50,6 +50,8 @@ impl UFF {
 
         for bond in molecule.bonds(){
 
+            println!("{:?}", bond);
+
             let i = bond.pair.i;
             let j = bond.pair.j;
             let r0 = self.r0(i, j, bond.order.value());
@@ -159,8 +161,15 @@ impl UFF {
                 &self.atom_types[j], &self.atom_types[k]
             );
 
+
             if !central_bond.contains_only_main_group_elements(){
                 // Only main group atoms have non-zero torsional potentials
+                continue;
+            }
+
+            if molecule.angle_is_close_to_linear(i, j, k)
+                || molecule.angle_is_close_to_linear(j, k, l){
+                // Bad things happen when dihedrals with close to linear angles are included
                 continue;
             }
 
@@ -295,6 +304,9 @@ impl Forcefield for UFF {
             let mut atom_type = ATOM_TYPES[best_match].clone();
             atom_type.set_coordination_environment(atom);
 
+            // TODO: Remove dihedrals close to zero angle
+
+            println!("{} {:?}", atom.idx, atom_type.name);
             self.atom_types.push(atom_type);
         }
     }

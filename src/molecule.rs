@@ -1,15 +1,17 @@
 use std::cmp::Ordering::Equal;
 use std::collections::HashSet;
+use std::f64::consts::PI;
 use log::info;
 use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
 use crate::connectivity::dihedrals::{ProperDihedral, ImproperDihedral};
-use crate::coordinates::{Point, Vector3D};
+use crate::coordinates::{angle_value, Point, Vector3D};
 use crate::opt::sd::SteepestDecentOptimiser;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
 use crate::Forcefield;
+use crate::utils::is_close;
 
 
 pub struct Molecule{
@@ -253,7 +255,8 @@ impl Molecule{
         for atom in atoms.iter(){
 
             if atom.is_hypervalent(&bonds) && atom.period() == 2{
-                atom.reduce_bond_orders_to_aromatic(&mut bonds);
+                atom.reduce_two_double_bonds_to_aromatic(&mut bonds);
+                atom.reduce_triple_bond_to_single(&mut bonds);
             }
         }
 
@@ -400,6 +403,11 @@ impl Molecule{
 
     }
 
+    /// Is an angle close to linear?
+    pub(crate) fn angle_is_close_to_linear(&self, i: usize, j: usize, k: usize) -> bool{
+
+        is_close(angle_value(i, j, k, &self.coordinates), PI, 1E-1)
+    }
 }
 
 #[derive(Default, Debug)]
@@ -891,7 +899,7 @@ mod tests{
         let mut bonds: Vec<Bond> = mol.bonds().clone().into_iter().collect();
 
         for atom in mol.atoms().iter(){
-            atom.reduce_bond_orders_to_aromatic(&mut bonds);
+            atom.reduce_two_double_bonds_to_aromatic(&mut bonds);
         }
 
         for bond in bonds.iter(){

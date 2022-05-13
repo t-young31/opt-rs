@@ -160,7 +160,7 @@ impl Atom {
     }
 
     /// Attempt to reduce any double bonds to aromatic
-    pub fn reduce_bond_orders_to_aromatic(&self, bonds: &mut Vec<Bond>){
+    pub fn reduce_two_double_bonds_to_aromatic(&self, bonds: &mut Vec<Bond>){
 
         let n_double_bonds: usize = bonds.iter()
             .filter(|b| b.contains(self) && b.order == BondOrder::Double)
@@ -173,6 +173,19 @@ impl Atom {
         for bond in bonds.iter_mut(){
             if bond.contains(self) && bond.order == BondOrder::Double{
                 bond.order = BondOrder::Aromatic;
+            }
+        }
+    }
+
+    /// TODO
+    pub fn reduce_triple_bond_to_single(&self, bonds: &mut Vec<Bond>){
+
+        for bond in bonds.iter_mut(){
+            if bond.contains(self)
+                && bond.order == BondOrder::Triple
+                && self.bonded_neighbours.len() > 2{
+
+                bond.order = BondOrder::Single;
             }
         }
     }

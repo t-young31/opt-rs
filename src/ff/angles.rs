@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use crate::coordinates::{Point, Vector3D};
+use crate::coordinates::{angle_value, Point, Vector3D};
 use crate::ff::forcefield::EnergyFunction;
 
 
@@ -182,16 +182,6 @@ fn theta(angle:       &dyn HarmonicAngle,
          coordinates: &Vec<Point>) -> f64{
 
     angle_value(angle.i(), angle.j(), angle.k(), coordinates)
-}
-
-/// Value of the angle between three atoms (i, j, k)
-#[inline(always)]
-pub fn angle_value(i: usize, j: usize, k: usize, coordinates: &Vec<Point>) -> f64{
-
-    let r_ij: Vector3D = &coordinates[i] - &coordinates[j];
-    let r_kj: Vector3D = &coordinates[k] - &coordinates[j];
-
-    (r_ij.dot(&r_kj) / (r_ij.length() * r_kj.length())).acos()
 }
 
 
