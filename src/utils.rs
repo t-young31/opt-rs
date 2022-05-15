@@ -4,6 +4,7 @@ pub fn is_very_close(x: f64, y: f64) -> bool{
 }
 
 
+#[inline(always)]
 pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
     // Are two numbers close to within an absolute tolerance?
 
@@ -11,7 +12,7 @@ pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
         return true
     }
 
-    println!("\nleft = {}\nright = {}", x, y);
+    // println!("\nleft = {}\nright = {}", x, y);
     return false
 }
 
@@ -154,5 +155,25 @@ C         -3.99338        0.82887        0.00000\n\
 C         -2.79056        0.90688        0.00000\n\
 H         -5.04954        0.76038       -0.00000\n\
 H         -1.73439        0.97537        0.00000\n")
+        .expect(filename)
+}
+
+pub(crate) fn print_ph_ene_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "14\n\n
+C         -2.45353       -0.18354        0.00485\n\
+C         -2.40963       -1.58150       -0.02148\n\
+C         -1.26583        0.55451        0.01877\n\
+C         -0.03251       -0.10452        0.00639\n\
+C          0.01489       -1.50241       -0.01994\n\
+C         -1.17447       -2.24441       -0.03394\n\
+C         -1.12784       -3.68294       -0.06108\n\
+C         -1.08938       -4.88772       -0.08386\n\
+H         -1.05597       -5.94527       -0.10388\n\
+H          0.97559       -2.00320       -0.02935\n\
+H         -1.30118        1.63608        0.03914\n\
+H          0.88620        0.46764        0.01719\n\
+H         -3.40763        0.32742        0.01445\n\
+H         -3.33559       -2.14389       -0.03210\n")
         .expect(filename)
 }

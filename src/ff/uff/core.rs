@@ -159,8 +159,15 @@ impl UFF {
                 &self.atom_types[j], &self.atom_types[k]
             );
 
+
             if !central_bond.contains_only_main_group_elements(){
                 // Only main group atoms have non-zero torsional potentials
+                continue;
+            }
+
+            if molecule.angle_is_close_to_linear(i, j, k)
+                || molecule.angle_is_close_to_linear(j, k, l){
+                // Bad things happen when dihedrals with close to linear angles are included
                 continue;
             }
 
@@ -294,6 +301,7 @@ impl Forcefield for UFF {
 
             let mut atom_type = ATOM_TYPES[best_match].clone();
             atom_type.set_coordination_environment(atom);
+            // println!("{:?}", atom_type);
 
             self.atom_types.push(atom_type);
         }
@@ -338,7 +346,7 @@ impl Forcefield for UFF {
 
 #[cfg(test)]
 mod tests{
-
+    use std::f64::consts::PI;
     use crate::connectivity::bonds::{Bond, BondOrder};
     use crate::ff::uff::atom_typing::Hybridisation;
     use crate::pairs::distance;
@@ -668,5 +676,32 @@ mod tests{
         }
 
         remove_file_or_panic(filename);
+    }
+
+    #[test]
+    fn test_phenyl_acetylene_has_correct_topology(){
+
+        let filename = "phenylacetylene_tpahct.xyz";
+        print_ph_ene_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
+        remove_file_or_panic(filename);
+
+        let num_triple_bonds = mol.bonds().iter()
+            .filter(|b| b.order == BondOrder::Triple)
+            .count();
+        assert_eq!(num_triple_bonds, 1);
+
+        let ff = UFF::new(&mol);
+
+        let num_linear_carbons = ff.atom_types.iter()
+            .filter(|x| x.name == "C_1")
+            .count();
+        assert_eq!(num_linear_carbons, 2);
+
+        let num_linear_carbon_bends = ff.atom_types.iter()
+            .filter(|x| x.atomic_symbol == "C" && is_close(x.theta, PI, 1E-3))
+            .count();
+        assert_eq!(num_linear_carbon_bends, 2);
+
     }
 }

@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::BondOrder;
-use crate::ff::angles::angle_value;
+use crate::coordinates::angle_value;
 use crate::Molecule;
 
 /// See Table 1 in J. Am. Chem. Soc. 1992, 114, 25, 10024–10035
@@ -160,7 +160,7 @@ impl UFFAtomType {
     pub fn bend_n(&self) -> f64{
 
         match self.environment {
-            CoordinationEnvironment::Linear =>         1.,
+            CoordinationEnvironment::Linear =>         4., // This differs from the UFF paper
             CoordinationEnvironment::TrigonalPlanar => 3.,
             CoordinationEnvironment::SquarePlanar =>   4.,
             CoordinationEnvironment::Octahedral =>     4.,

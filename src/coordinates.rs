@@ -142,6 +142,17 @@ impl IndexMut<usize> for Point {
 }
 
 
+/// Value of the angle between three atoms (i, j, k)
+#[inline(always)]
+pub fn angle_value(i: usize, j: usize, k: usize, coordinates: &Vec<Point>) -> f64{
+
+    let r_ij: Vector3D = &coordinates[i] - &coordinates[j];
+    let r_kj: Vector3D = &coordinates[k] - &coordinates[j];
+
+    (r_ij.dot(&r_kj) / (r_ij.length() * r_kj.length())).acos()
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
