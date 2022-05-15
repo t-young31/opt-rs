@@ -177,7 +177,8 @@ impl Atom {
         }
     }
 
-    /// TODO
+    /// If this atom is hypervalent and includes a triple bond reduce the bond order to 1,
+    /// i.e. a regular single bond
     pub fn reduce_triple_bond_to_single(&self, bonds: &mut Vec<Bond>){
 
         for bond in bonds.iter_mut(){
