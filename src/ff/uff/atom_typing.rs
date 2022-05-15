@@ -160,7 +160,7 @@ impl UFFAtomType {
     pub fn bend_n(&self) -> f64{
 
         match self.environment {
-            CoordinationEnvironment::Linear =>         1.,
+            CoordinationEnvironment::Linear =>         4., // This differs from the UFF paper
             CoordinationEnvironment::TrigonalPlanar => 3.,
             CoordinationEnvironment::SquarePlanar =>   4.,
             CoordinationEnvironment::Octahedral =>     4.,

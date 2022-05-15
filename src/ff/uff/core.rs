@@ -50,8 +50,6 @@ impl UFF {
 
         for bond in molecule.bonds(){
 
-            println!("{:?}", bond);
-
             let i = bond.pair.i;
             let j = bond.pair.j;
             let r0 = self.r0(i, j, bond.order.value());
@@ -304,9 +302,6 @@ impl Forcefield for UFF {
             let mut atom_type = ATOM_TYPES[best_match].clone();
             atom_type.set_coordination_environment(atom);
 
-            // TODO: Remove dihedrals close to zero angle
-
-            println!("{} {:?}", atom.idx, atom_type.name);
             self.atom_types.push(atom_type);
         }
     }
