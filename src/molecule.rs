@@ -20,7 +20,7 @@ pub struct Molecule{
     pub coordinates:  Vec<Point>,
     atomic_numbers:   Vec<AtomicNumber>,
     connectivity:     Connectivity,
-    pub(crate) non_bonded_pairs: HashSet<NBPair>,
+    pub(crate) non_bonded_pairs: Vec<NBPair>,
 }
 
 impl Molecule{
@@ -384,7 +384,7 @@ impl Molecule{
     /// interactions, in a classical MM forcefield
     pub(crate) fn add_non_bonded_pairs(&mut self){
 
-        self.non_bonded_pairs = HashSet::with_capacity(self.num_atoms().pow(2));
+        self.non_bonded_pairs = Vec::with_capacity(self.num_atoms().pow(2));
 
         for atom_i in self.atoms().iter(){
             for atom_j in self.atoms().iter(){
@@ -397,7 +397,7 @@ impl Molecule{
                     continue;  // Only add unique pairs
                 }
 
-                self.non_bonded_pairs.insert(NBPair::from_atoms(atom_i, atom_j));
+                self.non_bonded_pairs.push(NBPair::from_atoms(atom_i, atom_j));
             }
         }
 
