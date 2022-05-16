@@ -2,6 +2,7 @@ use std::cmp::Ordering::Equal;
 use std::collections::HashSet;
 use std::f64::consts::PI;
 use log::info;
+use rand::Rng;
 use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
@@ -9,7 +10,7 @@ use crate::connectivity::dihedrals::{ProperDihedral, ImproperDihedral};
 use crate::coordinates::{angle_value, Point, Vector3D};
 use crate::opt::sd::SteepestDecentOptimiser;
 use crate::io::xyz::XYZFile;
-use crate::pairs::NBPair;
+use crate::pairs::{distance, NBPair};
 use crate::ff::forcefield::Forcefield;
 use crate::utils::is_close;
 
@@ -47,7 +48,6 @@ impl Molecule{
 
     /// Construct a molecule from atomic symbols, where all atomic positions are at the origin
     /// and an exception is thrown if the atomic number cannot be created
-    #[cfg(test)]
     pub fn from_atomic_symbols(symbols: &[&str]) -> Self{
 
         let mut atomic_numbers: Vec<AtomicNumber> = Default::default();
@@ -410,6 +410,46 @@ impl Molecule{
     pub(crate) fn angle_is_close_to_linear(&self, i: usize, j: usize, k: usize) -> bool{
 
         is_close(angle_value(i, j, k, &self.coordinates), PI, 1E-1)
+    }
+
+    /// Evaluate the minimum atom-atom distance (Å) in this molecule
+    fn minimum_pairwise_distance(&self) -> f64{
+
+        let mut min_distance = f64::MAX;
+
+        for i in 0..self.num_atoms(){
+            for j in i+1..self.num_atoms(){
+
+                let distance = distance(i, j, &self.coordinates);
+                if distance < min_distance{
+                    min_distance = distance;
+                }
+            }
+        }
+
+        min_distance
+    }
+
+    /// Randomise the coordinates of this molecule within a cubic box with side length chosen to
+    /// generate an atomic density of ~0.1 atom/Å^3
+    pub fn randomise_coordinates(&mut self){
+
+        let mut rng = rand::thread_rng();
+        let box_side_length = ((self.num_atoms() as f64) / 0.1).powf(1./3.);
+        let max_num_iterations: usize = 1000;
+
+        for _ in 0..max_num_iterations{
+
+            for coord in self.coordinates.iter_mut(){
+                for (k, _) in ['x', 'y', 'z'].iter().enumerate(){
+                    coord[k] = rng.gen_range(0.0..box_side_length);
+                }
+            }
+
+            if self.minimum_pairwise_distance() > 0.5 {  // Don't want any very small distances
+                break;
+            }
+        }
     }
 }
 
@@ -952,5 +992,36 @@ mod tests{
         ch4.optimise(&mut ff);
 
         assert!(init_energy > ch4.energy(&mut ff));
+    }
+
+    /// Ensure the atom-atom distance function is correct for a simple water molecule
+    #[test]
+    fn test_min_atom_atom_distance(){
+
+        let mut mol = Molecule::from_atomic_symbols(&["H", "O", "H"]);
+
+        mol.coordinates[0].x = -1.0;
+        mol.coordinates[2].x = 1.1;
+
+        assert!(is_very_close(mol.minimum_pairwise_distance(), 1.0));
+    }
+
+    /// Test that randomising coordinates in a molecule both generates coordinates with no
+    /// short pairwise distance
+    #[test]
+    fn test_randomise_coordinates(){
+
+        let mut mol = Molecule::from_atomic_symbols(&["H", "O", "H"]);
+
+        let mut r = 0.;
+
+        for _ in 0..100{
+            mol.randomise_coordinates();
+            let new_r = mol.minimum_pairwise_distance();
+            assert!(new_r > 0.5);
+            assert!(!is_very_close(new_r, r));
+
+            r = new_r;
+        }
     }
 }

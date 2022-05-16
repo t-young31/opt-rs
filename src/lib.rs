@@ -13,19 +13,48 @@ mod utils;
 mod pairs;
 mod coordinates;
 
-/// Optimise an xyz file
-#[pyfunction]
-fn optimise(filename: &str){
-    let mut mol = Molecule::from_xyz_file(filename);
-
-    mol.optimise(&mut UFF::new(&mol));
-    mol.write_xyz_file("opt.xyz")
-}
 
 /// A Python module implemented in Rust.
 #[pymodule]
 fn mors(_py: Python, m: &PyModule) -> PyResult<()> {
-    // m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
-    m.add_function(wrap_pyfunction!(optimise, m)?)?;
+
+    m.add_class::<PyMoleculeWrapper>()?;
     Ok(())
+}
+
+/// Wrapper class over the rust-implemented Molecule struct
+#[pyclass (name="Molecule")]
+struct PyMoleculeWrapper {
+    molecule: Molecule,
+}
+
+/// Methods for wrapper
+#[pymethods]
+impl PyMoleculeWrapper {
+
+    /// Generate a wrapped molecule from a xyz file that exists
+    #[staticmethod]
+    fn from_xyz_file(filename: &str) -> Self {
+        PyMoleculeWrapper { molecule: Molecule::from_xyz_file(filename) }
+    }
+
+    /// Generate a wrapped molecule from a set of atomic symbols and set some random coordinates
+    #[staticmethod]
+    fn from_atomic_symbols(symbols: Vec<&str>) -> Self{
+
+        let mut mol = Molecule::from_atomic_symbols(&symbols);
+        mol.randomise_coordinates();
+
+        PyMoleculeWrapper { molecule:  mol}
+    }
+
+    /// Given a vector of bond orders for all pairwise interactions
+    fn set_bond_orders(&self, bond_orders: Vec<f64>){
+        // todo!()
+    }
+
+    pub fn optimise(&mut self) {
+        self.molecule.optimise(&mut UFF::new(&self.molecule));
+        self.molecule.write_xyz_file("opt.xyz");
+    }
 }
