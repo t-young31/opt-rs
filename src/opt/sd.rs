@@ -1,7 +1,8 @@
 // Steepest decent optimisation
 use log::info;
 use crate::coordinates::Vector3D;
-use crate::{Forcefield, Molecule};
+use crate::molecule::Molecule;
+use crate::ff::forcefield::Forcefield;
 
 
 pub struct SteepestDecentOptimiser{

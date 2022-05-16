@@ -10,7 +10,7 @@ use crate::coordinates::{angle_value, Point, Vector3D};
 use crate::opt::sd::SteepestDecentOptimiser;
 use crate::io::xyz::XYZFile;
 use crate::pairs::NBPair;
-use crate::Forcefield;
+use crate::ff::forcefield::Forcefield;
 use crate::utils::is_close;
 
 
@@ -26,6 +26,7 @@ pub struct Molecule{
 impl Molecule{
 
     /// A blank molecule containing no atoms
+    #[cfg(test)]
     pub fn blank() -> Self{ Molecule::from_atomic_symbols(&[]) }
 
     /// Create a Molecule from a .xyz filename
@@ -46,6 +47,7 @@ impl Molecule{
 
     /// Construct a molecule from atomic symbols, where all atomic positions are at the origin
     /// and an exception is thrown if the atomic number cannot be created
+    #[cfg(test)]
     pub fn from_atomic_symbols(symbols: &[&str]) -> Self{
 
         let mut atomic_numbers: Vec<AtomicNumber> = Default::default();
@@ -89,6 +91,7 @@ impl Molecule{
     }
 
     /// Numerical gradient evaluated using central differences
+    #[cfg(test)]
     pub fn numerical_gradient(&mut self,
                               forcefield: &mut dyn Forcefield) -> Vec<Vector3D>{
 

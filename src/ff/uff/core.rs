@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use crate::{Forcefield, Molecule};
+use crate::molecule::Molecule;
+use crate::ff::forcefield::Forcefield;
 use crate::coordinates::{Point, Vector3D};
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
@@ -15,7 +16,7 @@ use crate::pairs::AtomPair;
 
 
 #[derive(Default)]
-pub(crate) struct UFF{
+pub struct UFF{
 
     atom_types:       Vec<UFFAtomType>,
     energy_functions: Vec<Box<dyn EnergyFunction>>,

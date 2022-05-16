@@ -1,5 +1,5 @@
 use crate::coordinates::{Point, Vector3D};
-use crate::Molecule;
+use crate::molecule::Molecule;
 
 pub trait Forcefield {
 
