@@ -14,3 +14,7 @@ clap = { version = "3.1.6", features = ["derive"] }
 log = "0.4"
 rand = "0.8.5"
 pyo3 = { version = "0.16.3", features = ["extension-module"] }
+
+
+[profile.release]
+debug = 1

@@ -60,6 +60,7 @@ impl PyMoleculeWrapper {
             panic!("Cannot set the bond orders. Must have a flat array with (N_atoms)^2 items in");
         }
 
+        self.molecule.connectivity.clear(); 
         let mut i = 0;
 
         for (k, bond_order) in bond_orders.iter().enumerate(){
@@ -79,6 +80,9 @@ impl PyMoleculeWrapper {
             }
         }
 
+        self.molecule.add_angles();
+        self.molecule.add_dihedrals();
+        self.molecule.add_non_bonded_pairs();
     }
 
     pub fn optimise(&mut self) {
