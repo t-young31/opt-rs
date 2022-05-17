@@ -3,10 +3,9 @@ pub fn is_very_close(x: f64, y: f64) -> bool{
     is_close(x, y, 1E-8)
 }
 
-
+/// Are two numbers close to within an absolute tolerance?
 #[inline(always)]
 pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
-    // Are two numbers close to within an absolute tolerance?
 
     if (x - y).abs() <= atol{
         return true
@@ -15,6 +14,30 @@ pub fn is_close(x: f64, y: f64, atol: f64) -> bool{
     // println!("\nleft = {}\nright = {}", x, y);
     return false
 }
+
+pub trait IsVeryClose{
+    fn is_very_close(&self, other: &f64) -> bool;
+}
+
+impl IsVeryClose for f64 {
+
+    fn is_very_close(&self, other: &f64) -> bool{
+        (*self - *other).abs() < 1E-8
+    }
+}
+
+#[cfg(test)]
+pub trait IsPerfectSquare {
+    fn is_perfect_square(&self) -> bool;
+}
+
+#[cfg(test)]
+impl IsPerfectSquare for usize {
+    fn is_perfect_square(&self) -> bool {
+        *self == ((*self as f64).sqrt() as usize).pow(2)
+    }
+}
+
 
 #[cfg(test)]
 pub(crate) fn remove_file_or_panic(filename: &str){
@@ -176,4 +199,30 @@ H          0.88620        0.46764        0.01719\n\
 H         -3.40763        0.32742        0.01445\n\
 H         -3.33559       -2.14389       -0.03210\n")
         .expect(filename)
+}
+
+
+
+/*
+   /$$                           /$$
+  | $$                          | $$
+ /$$$$$$    /$$$$$$   /$$$$$$$ /$$$$$$   /$$$$$$$
+|_  $$_/   /$$__  $$ /$$_____/|_  $$_/  /$$_____/
+  | $$    | $$$$$$$$|  $$$$$$   | $$   |  $$$$$$
+  | $$ /$$| $$_____/ \____  $$  | $$ /$$\____  $$
+  |  $$$$/|  $$$$$$$ /$$$$$$$/  |  $$$$//$$$$$$$/
+   \___/   \_______/|_______/    \___/ |_______/
+ */
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_perfect_square(){
+        assert!((9 as usize).is_perfect_square());
+        assert!(!(10 as usize).is_perfect_square());
+        assert!((1 as usize).is_perfect_square());
+        assert!((144 as usize).is_perfect_square());
+    }
 }

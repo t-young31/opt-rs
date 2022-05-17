@@ -1,6 +1,8 @@
 use std::ops::Index;
+use std::slice::Iter;
 use crate::atoms::Atom;
 use crate::pairs::AtomPair;
+use crate::utils::IsVeryClose;
 
 
 #[derive(Default, Debug, Clone, Hash)]
@@ -88,7 +90,6 @@ impl Index<usize> for Bond {
 }
 
 
-
 #[derive(Debug, Hash, PartialEq, Clone)]
 pub enum BondOrder{
     Single,
@@ -107,6 +108,11 @@ impl Default for BondOrder {
 
 impl BondOrder {
 
+    fn iterator() ->  Iter<'static, BondOrder>{
+        [BondOrder::Single, BondOrder::Aromatic, BondOrder::Double,
+            BondOrder::Triple, BondOrder::Quadruple].iter()
+    }
+
     /// Determine the fractional bond order as a floa
     pub(crate) fn value(&self) -> f64{
         match self {
@@ -118,6 +124,17 @@ impl BondOrder {
         }
     }
 
+    /// Create a bond order given the value e.g. 1.0 -> BondOrder::Single
+    pub(crate) fn from_value(value: &f64) -> Self{
+
+        for bond_order in BondOrder::iterator(){
+            if bond_order.value().is_very_close(value){
+                return bond_order.clone();
+            }
+        }
+
+        panic!("Failed to create a bond order. Unsupported value");
+    }
 }
 
 

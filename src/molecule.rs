@@ -20,7 +20,7 @@ pub struct Molecule{
     pub charge:       i32,
     pub coordinates:  Vec<Point>,
     atomic_numbers:   Vec<AtomicNumber>,
-    connectivity:     Connectivity,
+    pub(crate) connectivity:     Connectivity,
     pub(crate) non_bonded_pairs: Vec<NBPair>,
 }
 
@@ -502,7 +502,7 @@ impl Neighbours {
 }
 
 #[derive(Default)]
-struct Connectivity{
+pub(crate) struct Connectivity{
     /*
     Connectivity of a molecule defined in terms of 'bonds'. Includes information about the pairs,
     triples and quadruples which define the bonds, angle and dihedral components required to
@@ -1024,4 +1024,22 @@ mod tests{
             r = new_r;
         }
     }
+
+    /// Test that bond orders can be initialised from their numerical value
+    #[test]
+    fn test_setting_bond_orders_from_values(){
+
+        assert_eq!(BondOrder::from_value(&1.0), BondOrder::Single);
+        assert_eq!(BondOrder::from_value(&4.0), BondOrder::Quadruple);
+
+    }
+
+    /// Cannot set a bond order from a value that is not close to something known
+    #[should_panic]
+    #[test]
+    fn test_setting_bond_orders_from_invalid_values(){
+
+        assert_eq!(BondOrder::from_value(&-1.0), BondOrder::Single);
+    }
+
 }

@@ -1,7 +1,11 @@
+extern crate core;
+
 use pyo3::prelude::*;
+use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::ff::forcefield::Forcefield;
 use crate::ff::uff::core::UFF;
 use crate::molecule::Molecule;
+use crate::utils::IsVeryClose;
 
 mod molecule;
 mod atoms;
@@ -48,9 +52,33 @@ impl PyMoleculeWrapper {
         PyMoleculeWrapper { molecule:  mol}
     }
 
-    /// Given a vector of bond orders for all pairwise interactions
-    fn set_bond_orders(&self, bond_orders: Vec<f64>){
-        // todo!()
+    /// Given a vector of bond orders for all pairwise interactions. This function is expecting a
+    /// flat array in row major layout defining the bond order between atoms i,j
+    fn set_bond_orders(&mut self, bond_orders: Vec<f64>){
+
+        if bond_orders.len() != self.molecule.num_atoms().pow(2) {
+            panic!("Cannot set the bond orders. Must have a flat array with (N_atoms)^2 items in");
+        }
+
+        let mut i = 0;
+
+        for (k, bond_order) in bond_orders.iter().enumerate(){
+            let j = k % self.molecule.num_atoms();
+
+            if j <= i || bond_order.is_very_close(&0.){
+                continue; // Only want unique pairs to be added
+            }
+
+            let mut bond = Bond::from_atom_indices(i, j);
+            bond.order = BondOrder::from_value(bond_order);
+
+            self.molecule.connectivity.bonds.insert(bond);
+
+            if j == 0{
+                i += 1;
+            }
+        }
+
     }
 
     pub fn optimise(&mut self) {
@@ -58,3 +86,4 @@ impl PyMoleculeWrapper {
         self.molecule.write_xyz_file("opt.xyz");
     }
 }
+
