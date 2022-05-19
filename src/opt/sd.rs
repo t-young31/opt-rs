@@ -22,7 +22,7 @@ impl SteepestDecentOptimiser {
         SteepestDecentOptimiser{
             alpha:              0.0001,
             iteration:          0,
-            max_num_iterations: 1000,
+            max_num_iterations: 500,
             grad_rms_tolerance: 0.1,
             energy_history:     Default::default(),
             init_coordinates:   Default::default()
@@ -53,7 +53,7 @@ impl SteepestDecentOptimiser {
 
             if self.energy_is_rising(){
                 self.alpha /= 2.;  // Reduce the step size by half
-                // and re-initalise the coordinates and saved energies
+                //                    and re-initialise the coordinates and saved energies
                 self.energy_history.clear();
                 molecule.coordinates = self.init_coordinates.clone();
             }
@@ -72,7 +72,7 @@ impl SteepestDecentOptimiser {
             }
 
             self.iteration += 1;
-            // println!("E = {}", forcefield.energy(&molecule.coordinates));
+            println!("E = {}", forcefield.energy(&molecule.coordinates));
         }
     }
 

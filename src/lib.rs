@@ -46,7 +46,7 @@ impl PyMoleculeWrapper {
     #[staticmethod]
     fn from_atomic_symbols(symbols: Vec<&str>) -> Self{
 
-        let mut mol = Molecule::from_atomic_symbols(&symbols);
+        let mol = Molecule::from_atomic_symbols(&symbols);
         PyMoleculeWrapper { molecule:  mol}
     }
 
@@ -98,7 +98,10 @@ impl PyMoleculeWrapper {
     /// Optimise the structure using the best FF possible
     pub fn optimise(&mut self) {
         self.molecule.optimise(&mut UFF::new(&self.molecule));
-        self.molecule.write_xyz_file("opt.xyz");
+
     }
+
+    /// Write a .xyz file of this structure with a defined filename
+    pub fn write_xyz_file(&self, filename: &str){ self.molecule.write_xyz_file(filename); }
 }
 

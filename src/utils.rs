@@ -29,6 +29,7 @@ impl IsVeryClose for f64 {
 
 
 /// Is a analytical gradient close to a numerical one?
+#[cfg(test)]
 pub(crate) fn num_and_anal_gradient_are_close(mol: &mut Molecule, ff: &mut dyn Forcefield) -> bool{
 
     let grad = mol.gradient(ff);

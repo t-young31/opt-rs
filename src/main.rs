@@ -29,11 +29,11 @@ use crate::ff::uff::core::UFF;
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct CommandLineArguments {
-    #[clap(short, long)]
+    #[clap(index = 1)]
     xyz_filename: String,
 
-    #[clap(short, long)]
-    forcefield_name: String,
+    #[clap(short, long, default_value="UFF")]
+    forcefield: String,
 }
 
 
@@ -41,7 +41,7 @@ fn run(args: CommandLineArguments) {
 
     let mut mol = Molecule::from_xyz_file(&args.xyz_filename);
 
-    match args.forcefield_name.as_str() {
+    match args.forcefield.as_str() {
         "UFF" => mol.optimise(&mut UFF::new(&mol)),
         "RB" => mol.optimise(&mut RB::new(&mol)),
         _ => panic!("Cannot set a forcefield. Unknown type")
@@ -79,7 +79,7 @@ mod tests{
         print_dihydrogen_xyz_file(filename);
 
         let args = CommandLineArguments{xyz_filename: filename.to_string(),
-                                        forcefield_name: "UFF".to_string()};
+                                        forcefield: "UFF".to_string()};
         run(args);
 
         remove_file_or_panic(filename);

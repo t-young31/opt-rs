@@ -4,3 +4,4 @@
 **build
 /Cargo.lock
 .env/
+examples/*opt.xyz

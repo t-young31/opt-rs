@@ -92,7 +92,6 @@ impl Molecule{
     }
 
     /// Numerical gradient evaluated using central differences
-    #[cfg(test)]
     pub fn numerical_gradient(&mut self,
                               forcefield: &mut dyn Forcefield) -> Vec<Vector3D>{
 
@@ -463,7 +462,6 @@ impl Molecule{
 
         gradient
     }
-
 
     /// Build a possible 3d structure of a molecule structure using iterative bond
     /// addition and minimising with a repulsion+bonded forcefield
