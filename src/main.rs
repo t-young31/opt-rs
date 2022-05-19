@@ -22,6 +22,7 @@ use clap::Parser;
 
 use crate::molecule::Molecule;
 use crate::ff::forcefield::Forcefield;
+use crate::ff::rb::core::RB;
 use crate::ff::uff::core::UFF;
 
 
@@ -42,6 +43,7 @@ fn run(args: CommandLineArguments) {
 
     match args.forcefield_name.as_str() {
         "UFF" => mol.optimise(&mut UFF::new(&mol)),
+        "RB" => mol.optimise(&mut RB::new(&mol)),
         _ => panic!("Cannot set a forcefield. Unknown type")
     }
 

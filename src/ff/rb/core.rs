@@ -43,7 +43,7 @@ impl RB {
             let r0 = atoms[i].covalent_radius() + atoms[j].covalent_radius();
 
             // yes, k is hard coded
-            self.energy_functions.push(Box::new(HarmonicBond{i, j, r0, k_ij: 0.1}));
+            self.energy_functions.push(Box::new(HarmonicBond{i, j, r0, k_ij: 1000.}));
         }
     }
 
@@ -56,7 +56,7 @@ impl RB {
                 RepulsiveInverseDistance{
                     i: nb_pair.pair.i,
                     j: nb_pair.pair.j,
-                    c: 0.1, // hard coded :-(
+                    c: 10., // hard coded :-(
                     exponent: self.exponent.clone()
                 }
             ));

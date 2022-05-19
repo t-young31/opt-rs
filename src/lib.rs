@@ -47,8 +47,6 @@ impl PyMoleculeWrapper {
     fn from_atomic_symbols(symbols: Vec<&str>) -> Self{
 
         let mut mol = Molecule::from_atomic_symbols(&symbols);
-        mol.randomise_coordinates();
-
         PyMoleculeWrapper { molecule:  mol}
     }
 
@@ -85,6 +83,19 @@ impl PyMoleculeWrapper {
         self.molecule.add_non_bonded_pairs();
     }
 
+    /// Build the 3d structure of a molecule using iterative addition of bonds into the system
+    /// with minimisation using a repulsion+bonded (RB) forcefield after each addition
+    fn build_3d(&mut self){
+
+        if self.molecule.num_atoms() > 1 && self.molecule.bonds().len() == 0{
+            panic!("Cannot build a 3d structure without any bonds. \
+                   Consider calling set_bond_orders()");
+        }
+
+        self.molecule.build_3d()
+    }
+
+    /// Optimise the structure using the best FF possible
     pub fn optimise(&mut self) {
         self.molecule.optimise(&mut UFF::new(&self.molecule));
         self.molecule.write_xyz_file("opt.xyz");

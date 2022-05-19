@@ -29,6 +29,15 @@ impl SteepestDecentOptimiser {
         }
     }
 
+    /// Optimiser with a defined number of maximum steps
+    pub fn from_max_iterations(max_num_iterations: usize) -> Self{
+
+        let mut optimiser = SteepestDecentOptimiser::default();
+        optimiser.max_num_iterations = max_num_iterations;
+
+        optimiser
+    }
+
     /// Optimise a molecule with a steepest decent step
     pub fn optimise(&mut self,
                     molecule:   &mut Molecule,
@@ -63,7 +72,7 @@ impl SteepestDecentOptimiser {
             }
 
             self.iteration += 1;
-            println!("E = {}", forcefield.energy(&molecule.coordinates));
+            // println!("E = {}", forcefield.energy(&molecule.coordinates));
         }
     }
 

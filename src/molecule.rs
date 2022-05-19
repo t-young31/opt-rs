@@ -12,6 +12,7 @@ use crate::opt::sd::SteepestDecentOptimiser;
 use crate::io::xyz::XYZFile;
 use crate::pairs::{distance, NBPair};
 use crate::ff::forcefield::Forcefield;
+use crate::ff::rb::core::RB;
 use crate::utils::is_close;
 
 
@@ -452,6 +453,7 @@ impl Molecule{
         }
     }
 
+    /// Construct a zero gradient vector over all atoms
     pub fn blank_gradient(&self) -> Vec<Vector3D>{
 
         let mut gradient: Vec<Vector3D> = Default::default();
@@ -460,6 +462,27 @@ impl Molecule{
         }
 
         gradient
+    }
+
+
+    /// Build a possible 3d structure of a molecule structure using iterative bond
+    /// addition and minimising with a repulsion+bonded forcefield
+    pub fn build_3d(&mut self){
+
+        self.randomise_coordinates();
+
+        let all_bonds = self.connectivity.bonds.clone();
+        self.connectivity.bonds.clear();
+
+        for bond in all_bonds{
+            let mut optimiser = SteepestDecentOptimiser::from_max_iterations(20);
+            optimiser.optimise(self, &mut RB::new(&self));
+
+            self.connectivity.bonds.insert(bond);
+        }
+
+        let mut optimiser = SteepestDecentOptimiser::default();
+        optimiser.optimise(self, &mut RB::new(&self));
     }
 }
 
@@ -1056,4 +1079,18 @@ mod tests{
         assert_eq!(BondOrder::from_value(&-1.0), BondOrder::Single);
     }
 
+    /// Test that building a molecule results in reasonable molecules
+    #[test]
+    fn test_methane_structure_can_be_built(){
+        let mut methane = Molecule::from_atomic_symbols(&["C", "H", "H", "H", "H"]);
+
+        for i in 1..5{
+            methane.connectivity.bonds.insert(Bond::from_atom_indices(0, i));
+        }
+
+        methane.build_3d();
+
+        let mut ff = UFF::new(&methane);
+        assert!(methane.energy(&mut ff) < 5.);
+    }
 }
