@@ -36,16 +36,6 @@ impl UFF {
         }
     }
 
-    /// Zero an existing gradient vector
-    fn zero_gradient(&mut self){
-
-        for vec in self.gradient.iter_mut(){
-            vec.x = 0.0;
-            vec.y = 0.0;
-            vec.z = 0.0;
-        }
-    }
-
     /// Add a bond stretching term to the FF for all bonds present in a molecule
     fn add_bond_stretches(&mut self, molecule: &Molecule){
 
@@ -323,7 +313,7 @@ impl Forcefield for UFF {
     /// Evaluate the gradient {dE/dX_ik, ...} for atom i and Cartesian component k
     fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D>{
 
-        self.zero_gradient();
+        self.gradient.iter_mut().for_each(|v| v.zero());
 
         for function in self.energy_functions.iter(){
             function.add_gradient(coordinates, &mut self.gradient);
