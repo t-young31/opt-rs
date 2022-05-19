@@ -1,3 +1,4 @@
+use crate::{Forcefield, Molecule};
 
 pub fn is_very_close(x: f64, y: f64) -> bool{
     is_close(x, y, 1E-8)
@@ -25,6 +26,23 @@ impl IsVeryClose for f64 {
         (*self - *other).abs() < 1E-8
     }
 }
+
+
+/// Is a analytical gradient close to a numerical one?
+pub(crate) fn num_and_anal_gradient_are_close(mol: &mut Molecule, ff: &mut dyn Forcefield) -> bool{
+
+    let grad = mol.gradient(ff);
+    let num_grad = mol.numerical_gradient(ff);
+
+    for i in 0..grad.len(){
+        if !grad[i].is_close_to(&num_grad[i], 1E-6){
+            println!("{:?} not close to {:?}", grad[i], num_grad[i]);
+            return false;
+        }
+    }
+    true
+}
+
 
 #[cfg(test)]
 pub trait IsPerfectSquare {

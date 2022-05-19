@@ -5,8 +5,6 @@ pub trait Forcefield {
 
     fn new(molecule: &Molecule) -> Self where Self: Sized;
 
-    fn set_atom_types(&mut self, molecule: &Molecule);
-
     fn energy(&mut self, coordinates: &Vec<Point>) -> f64;
 
     fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D>;

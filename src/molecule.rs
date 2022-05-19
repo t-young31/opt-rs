@@ -451,13 +451,25 @@ impl Molecule{
             }
         }
     }
+
+    pub fn blank_gradient(&self) -> Vec<Vector3D>{
+
+        let mut gradient: Vec<Vector3D> = Default::default();
+        for _ in 0..self.num_atoms(){
+            gradient.push(Vector3D::default());
+        }
+
+        gradient
+    }
 }
+
 
 #[derive(Default, Debug)]
 struct Neighbour{
     atom:     Atom,
     distance: f64
 }
+
 
 #[derive(Default, Debug)]
 struct Neighbours{
@@ -501,6 +513,7 @@ impl Neighbours {
 
 }
 
+
 #[derive(Default)]
 pub(crate) struct Connectivity{
     /*
@@ -533,6 +546,7 @@ impl Connectivity {
         }
     }
 }
+
 
 /// Number of bonds present for two atoms
 struct NBonds {

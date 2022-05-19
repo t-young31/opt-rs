@@ -38,7 +38,6 @@ impl EnergyFunction for HarmonicBond {
         let y_j = coordinates[self.j].y;
         let z_j = coordinates[self.j].z;
 
-
         let v0 = x_i - x_j;
         let v1 = (z_i - z_j).powi(2);
         let v2 = (y_i - y_j).powi(2);
