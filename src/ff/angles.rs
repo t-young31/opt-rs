@@ -108,7 +108,7 @@ impl EnergyFunction for HarmonicAngleTypeB {
     /// Energy: k(c0 + c1 cos(θ) + c2 cos(2θ))
     fn energy(&self, coordinates: &Vec<Point>) -> f64 {
 
-       let theta = theta(self, coordinates);
+        let theta = theta(self, coordinates);
 
         self.k_ijk * (self.c0 + self.c1 * theta.cos() + self.c2 * (2. * theta).cos())
     }
