@@ -103,5 +103,29 @@ impl PyMoleculeWrapper {
 
     /// Write a .xyz file of this structure with a defined filename
     pub fn write_xyz_file(&self, filename: &str){ self.molecule.write_xyz_file(filename); }
+
+    /// Set the coordinates using a flat list of coordinates
+    pub fn set_coordinates(&mut self, coordinates: Vec<f64>){
+
+        if coordinates.len() != 3*self.molecule.num_atoms(){
+            panic!("Cannot set the coordinates. Must have a flat list with length 3xN_atoms");
+        }
+
+        for (i, coord) in self.molecule.coordinates.iter_mut().enumerate(){
+            for (k, _) in ['x', 'y', 'z'].iter().enumerate(){
+                coord[k] = coordinates[3*i + k].clone();
+            }
+        }
+
+    }
+
+    pub fn generate_connectivty(&mut self){
+        self.molecule.connectivity.clear();
+        
+        self.molecule.add_bonds();
+        self.molecule.add_angles();
+        self.molecule.add_dihedrals();
+        self.molecule.add_non_bonded_pairs();
+    }
 }
 

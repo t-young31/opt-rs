@@ -72,7 +72,7 @@ impl SteepestDecentOptimiser {
             }
 
             self.iteration += 1;
-            println!("E = {}", forcefield.energy(&molecule.coordinates));
+            // println!("E = {}", forcefield.energy(&molecule.coordinates));
         }
     }
 
