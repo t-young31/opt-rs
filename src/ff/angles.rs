@@ -175,8 +175,6 @@ fn involves_idxs(angle: &dyn HarmonicAngle, idxs: Vec<usize>) -> bool {
     idxs.len() == 3 && HashSet::from([angle.i(), angle.j(), angle.k()]) == HashSet::from_iter(idxs)
 }
 
-
-
 #[inline(always)]
 fn theta(angle:       &dyn HarmonicAngle,
          coordinates: &Vec<Point>) -> f64{

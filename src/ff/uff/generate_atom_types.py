@@ -12,7 +12,7 @@ n_to_desc = {
 }
 
 n_to_valency = {
-    '1': 2,
+    '1': None,  # Depends on group
     '2': 3,
     'R': 3,
     '3': None,  # Depends on group
@@ -69,6 +69,7 @@ class AtomType:
         self.v_torsion = sp3_torsional_barriers.get(self.name, 0.0)
 
     def _valency(self) -> int:
+        """Valency given a name"""
 
         if self.name.endswith('_'):
             return 1
@@ -84,17 +85,21 @@ class AtomType:
         if isinstance(val, int):
             return val
 
-        if self.name[2] != '3':
-            raise RuntimeError
+        if self.name[2] == '3':  # a tetrahedral atom
+            if self.atomic_symbol in group14_elements:
+                return 4
 
-        if self.atomic_symbol in group14_elements:
-            return 4
+            elif self.atomic_symbol in group15_elements:
+                return 3
 
-        elif self.atomic_symbol in group15_elements:
-            return 3
+            elif self.atomic_symbol in group16_elements:
+                return 2
 
-        elif self.atomic_symbol in group16_elements:
-            return 2
+        if self.name[2] == '1':  # a linear atom
+            if self.atomic_symbol in group14_elements:
+                return 2
+
+            return 1
 
         return 4
 
@@ -130,13 +135,15 @@ class AtomType:
 
 if __name__ == '__main__':
 
-    atom_types = [AtomType(line) for line in open('atom_types.txt', 'r')]
+    atom_types = [AtomType(line) for line in open('atom_types.txt', 'r')
+                  if not line.startswith('#')]
+    n = len(atom_types)
 
     with open('atom_types.rs', 'w') as file:
 
         print('use crate::ff::uff::atom_typing::{CoordinationEnvironment, '
               'UFFAtomType};\n\n\n'
-              'pub(crate) const ATOM_TYPES: [UFFAtomType; 127] = [', file=file)
+              f'pub(crate) const ATOM_TYPES: [UFFAtomType; {n}] = [', file=file)
 
         for atom_type in atom_types:
             print(f'{atom_type.rust_struct}, ', file=file)

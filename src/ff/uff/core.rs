@@ -683,7 +683,7 @@ mod tests{
     fn test_atom_typing_water(){
 
         let filename = "water_tatw.xyz";
-        print_water_xyz_file(filename);
+        print_distorted_water_xyz_file(filename);
         let mol = Molecule::from_xyz_file(filename);
         remove_file_or_panic(filename);
 
@@ -694,6 +694,5 @@ mod tests{
             .unwrap();
 
         assert_eq!(o_type.name, "O_3");
-        assert!(is_close(o_type.theta, 1.8238, 1E-2));
     }
 }
