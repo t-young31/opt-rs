@@ -63,7 +63,7 @@ impl Atom {
     pub fn maximal_valence(&self) -> usize{ self.atomic_number.maximal_valence() }
 
     /// Covalent radius of this atom
-    fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
+    pub fn covalent_radius(&self) -> f64{ self.atomic_number.covalent_radius() }
 
     /// Group that this atom is in within the periodic table
     pub fn group(&self) -> usize{ self.atomic_number.group() }

@@ -86,6 +86,13 @@ impl Vector3D {
         && is_close(self.y, other.y, tol)
         && is_close(self.z, other.z, tol)
     }
+
+    /// Zero this vector
+    pub fn zero(&mut self){
+        self.x = 0.;
+        self.y = 0.;
+        self.z = 0.;
+    }
 }
 
 impl Neg for Vector3D {

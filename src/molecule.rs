@@ -2,6 +2,7 @@ use std::cmp::Ordering::Equal;
 use std::collections::HashSet;
 use std::f64::consts::PI;
 use log::info;
+use rand::Rng;
 use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::angles::Angle;
@@ -9,8 +10,9 @@ use crate::connectivity::dihedrals::{ProperDihedral, ImproperDihedral};
 use crate::coordinates::{angle_value, Point, Vector3D};
 use crate::opt::sd::SteepestDecentOptimiser;
 use crate::io::xyz::XYZFile;
-use crate::pairs::NBPair;
-use crate::Forcefield;
+use crate::pairs::{distance, NBPair};
+use crate::ff::forcefield::Forcefield;
+use crate::ff::rb::core::RB;
 use crate::utils::is_close;
 
 
@@ -19,13 +21,14 @@ pub struct Molecule{
     pub charge:       i32,
     pub coordinates:  Vec<Point>,
     atomic_numbers:   Vec<AtomicNumber>,
-    connectivity:     Connectivity,
-    pub(crate) non_bonded_pairs: HashSet<NBPair>,
+    pub(crate) connectivity:     Connectivity,
+    pub(crate) non_bonded_pairs: Vec<NBPair>,
 }
 
 impl Molecule{
 
     /// A blank molecule containing no atoms
+    #[cfg(test)]
     pub fn blank() -> Self{ Molecule::from_atomic_symbols(&[]) }
 
     /// Create a Molecule from a .xyz filename
@@ -384,7 +387,7 @@ impl Molecule{
     /// interactions, in a classical MM forcefield
     pub(crate) fn add_non_bonded_pairs(&mut self){
 
-        self.non_bonded_pairs = HashSet::with_capacity(self.num_atoms().pow(2));
+        self.non_bonded_pairs = Vec::with_capacity(self.num_atoms().pow(2));
 
         for atom_i in self.atoms().iter(){
             for atom_j in self.atoms().iter(){
@@ -397,7 +400,7 @@ impl Molecule{
                     continue;  // Only add unique pairs
                 }
 
-                self.non_bonded_pairs.insert(NBPair::from_atoms(atom_i, atom_j));
+                self.non_bonded_pairs.push(NBPair::from_atoms(atom_i, atom_j));
             }
         }
 
@@ -408,13 +411,86 @@ impl Molecule{
 
         is_close(angle_value(i, j, k, &self.coordinates), PI, 1E-1)
     }
+
+    /// Evaluate the minimum atom-atom distance (Å) in this molecule
+    fn minimum_pairwise_distance(&self) -> f64{
+
+        let mut min_distance = f64::MAX;
+
+        for i in 0..self.num_atoms(){
+            for j in i+1..self.num_atoms(){
+
+                let distance = distance(i, j, &self.coordinates);
+                if distance < min_distance{
+                    min_distance = distance;
+                }
+            }
+        }
+
+        min_distance
+    }
+
+    /// Randomise the coordinates of this molecule within a cubic box with side length chosen to
+    /// generate an atomic density of ~0.1 atom/Å^3
+    pub fn randomise_coordinates(&mut self){
+
+        let mut rng = rand::thread_rng();
+        let box_side_length = ((self.num_atoms() as f64) / 0.1).powf(1./3.);
+        let max_num_iterations: usize = 1000;
+
+        for _ in 0..max_num_iterations{
+
+            for coord in self.coordinates.iter_mut(){
+                for (k, _) in ['x', 'y', 'z'].iter().enumerate(){
+                    coord[k] = rng.gen_range(0.0..box_side_length);
+                }
+            }
+
+            if self.minimum_pairwise_distance() > 0.5 {  // Don't want any very small distances
+                break;
+            }
+        }
+    }
+
+    /// Construct a zero gradient vector over all atoms
+    pub fn blank_gradient(&self) -> Vec<Vector3D>{
+
+        let mut gradient: Vec<Vector3D> = Default::default();
+        for _ in 0..self.num_atoms(){
+            gradient.push(Vector3D::default());
+        }
+
+        gradient
+    }
+
+    /// Build a possible 3d structure of a molecule structure using iterative bond
+    /// addition and minimising with a repulsion+bonded forcefield
+    pub fn build_3d(&mut self){
+
+        self.randomise_coordinates();
+
+        let all_bonds = self.connectivity.bonds.clone();
+        self.connectivity.bonds.clear();
+
+        for bond in all_bonds{
+            let mut optimiser = SteepestDecentOptimiser::from_max_iterations(20);
+            optimiser.optimise(self, &mut RB::new(&self));
+
+            self.connectivity.bonds.insert(bond);
+        }
+
+        let mut optimiser = SteepestDecentOptimiser::default();
+        optimiser.optimise(self, &mut RB::new(&self));
+    }
 }
+
 
 #[derive(Default, Debug)]
 struct Neighbour{
     atom:     Atom,
     distance: f64
 }
+
 
 #[derive(Default, Debug)]
 struct Neighbours{
@@ -458,8 +534,9 @@ impl Neighbours {
 
 }
 
+
 #[derive(Default)]
-struct Connectivity{
+pub(crate) struct Connectivity{
     /*
     Connectivity of a molecule defined in terms of 'bonds'. Includes information about the pairs,
     triples and quadruples which define the bonds, angle and dihedral components required to
@@ -490,6 +567,7 @@ impl Connectivity {
         }
     }
 }
+
 
 /// Number of bonds present for two atoms
 struct NBonds {
@@ -949,5 +1027,68 @@ mod tests{
         ch4.optimise(&mut ff);
 
         assert!(init_energy > ch4.energy(&mut ff));
+    }
+
+    /// Ensure the atom-atom distance function is correct for a simple water molecule
+    #[test]
+    fn test_min_atom_atom_distance(){
+
+        let mut mol = Molecule::from_atomic_symbols(&["H", "O", "H"]);
+
+        mol.coordinates[0].x = -1.0;
+        mol.coordinates[2].x = 1.1;
+
+        assert!(is_very_close(mol.minimum_pairwise_distance(), 1.0));
+    }
+
+    /// Test that randomising coordinates in a molecule both generates coordinates with no
+    /// short pairwise distance
+    #[test]
+    fn test_randomise_coordinates(){
+
+        let mut mol = Molecule::from_atomic_symbols(&["H", "O", "H"]);
+
+        let mut r = 0.;
+
+        for _ in 0..100{
+            mol.randomise_coordinates();
+            let new_r = mol.minimum_pairwise_distance();
+            assert!(new_r > 0.5);
+            assert!(!is_very_close(new_r, r));
+
+            r = new_r;
+        }
+    }
+
+    /// Test that bond orders can be initialised from their numerical value
+    #[test]
+    fn test_setting_bond_orders_from_values(){
+
+        assert_eq!(BondOrder::from_value(&1.0), BondOrder::Single);
+        assert_eq!(BondOrder::from_value(&4.0), BondOrder::Quadruple);
+
+    }
+
+    /// Cannot set a bond order from a value that is not close to something known
+    #[should_panic]
+    #[test]
+    fn test_setting_bond_orders_from_invalid_values(){
+
+        assert_eq!(BondOrder::from_value(&-1.0), BondOrder::Single);
+    }
+
+    /// Test that building a molecule results in reasonable molecules
+    #[test]
+    fn test_methane_structure_can_be_built(){
+        let mut methane = Molecule::from_atomic_symbols(&["C", "H", "H", "H", "H"]);
+
+        for i in 1..5{
+            methane.connectivity.bonds.insert(Bond::from_atom_indices(0, i));
+        }
+
+        methane.build_3d();
+
+        let mut ff = UFF::new(&methane);
+        assert!(methane.energy(&mut ff) < 5.);
     }
 }

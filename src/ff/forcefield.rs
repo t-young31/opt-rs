@@ -1,11 +1,9 @@
 use crate::coordinates::{Point, Vector3D};
-use crate::Molecule;
+use crate::molecule::Molecule;
 
 pub trait Forcefield {
 
     fn new(molecule: &Molecule) -> Self where Self: Sized;
-
-    fn set_atom_types(&mut self, molecule: &Molecule);
 
     fn energy(&mut self, coordinates: &Vec<Point>) -> f64;
 

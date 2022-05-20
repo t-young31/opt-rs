@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use crate::{Forcefield, Molecule};
+use crate::molecule::Molecule;
+use crate::ff::forcefield::Forcefield;
 use crate::coordinates::{Point, Vector3D};
 use crate::ff::angles::{HarmonicAngleTypeA, HarmonicAngleTypeB};
 use crate::ff::bonds::HarmonicBond;
@@ -15,7 +16,7 @@ use crate::pairs::AtomPair;
 
 
 #[derive(Default)]
-pub(crate) struct UFF{
+pub struct UFF{
 
     atom_types:       Vec<UFFAtomType>,
     energy_functions: Vec<Box<dyn EnergyFunction>>,
@@ -27,22 +28,37 @@ pub(crate) struct UFF{
 
 impl UFF {
 
-    /// Set a zero gradient for all atoms that this force field applies to
-    fn set_zero_gradient(&mut self, molecule: &Molecule){
+    /// Generate atom types for each atom in a molecule, defined by the connectivity and charge on
+    /// each atom. As each atom may have multiple matches this function should set the best match
+    /// to each atom
+    fn set_atom_types(&mut self, molecule: &Molecule) {
 
-        for _ in 0..molecule.num_atoms(){
-            self.gradient.push(Vector3D::default());
+        let mut match_qualities: [f64; ATOM_TYPES.len()] = [0.; ATOM_TYPES.len()];
+
+        for atom in molecule.atoms().iter(){
+
+            for (i, atom_type) in ATOM_TYPES.iter().enumerate(){
+                match_qualities[i] = atom_type.match_quality(atom, molecule);
+            }
+
+            let best_match = match_qualities
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
+                .map(|(index, _)| index)
+                .expect("Failed to find a best match");
+
+            let mut atom_type = ATOM_TYPES[best_match].clone();
+            atom_type.set_coordination_environment(atom);
+            // println!("{:?}", atom_type);
+
+            self.atom_types.push(atom_type);
         }
     }
 
-    /// Zero an existing gradient vector
-    fn zero_gradient(&mut self){
-
-        for vec in self.gradient.iter_mut(){
-            vec.x = 0.0;
-            vec.y = 0.0;
-            vec.z = 0.0;
-        }
+    /// Set a zero gradient for all atoms that this force field applies to
+    fn set_zero_gradient(&mut self, molecule: &Molecule){
+        self.gradient = molecule.blank_gradient();
     }
 
     /// Add a bond stretching term to the FF for all bonds present in a molecule
@@ -264,12 +280,13 @@ impl UFF {
 
 impl Forcefield for UFF {
 
-    /// Create a new, bespoke, forcefield for a molecule by setting atom types which
+    /// Create a new, bespoke, UFF forcefield for a molecule
     fn new(molecule: &Molecule) -> Self{
 
         let mut ff = UFF::default();
-        ff.set_atom_types(molecule);
+
         ff.set_zero_gradient(molecule);
+        ff.set_atom_types(molecule);
         ff.add_bond_stretches(molecule);
         ff.add_angle_bends(molecule);
         ff.add_dihedral_torsions(molecule);
@@ -277,34 +294,6 @@ impl Forcefield for UFF {
         ff.add_vdw(molecule);
 
         ff
-    }
-
-    /// Generate atom types for each atom in a molecule, defined by the connectivity and charge on
-    /// each atom. As each atom may have multiple matches this function should set the best match
-    /// to each atom
-    fn set_atom_types(&mut self, molecule: &Molecule) {
-
-        let mut match_qualities: [f64; ATOM_TYPES.len()] = [0.; ATOM_TYPES.len()];
-
-        for atom in molecule.atoms().iter(){
-
-            for (i, atom_type) in ATOM_TYPES.iter().enumerate(){
-                match_qualities[i] = atom_type.match_quality(atom, molecule);
-            }
-
-            let best_match = match_qualities
-                .iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
-                .map(|(index, _)| index)
-                .expect("Failed to find a best match");
-
-            let mut atom_type = ATOM_TYPES[best_match].clone();
-            atom_type.set_coordination_environment(atom);
-            // println!("{:?}", atom_type);
-
-            self.atom_types.push(atom_type);
-        }
     }
 
     /// Evaluate the total energy of the sustem
@@ -322,7 +311,7 @@ impl Forcefield for UFF {
     /// Evaluate the gradient {dE/dX_ik, ...} for atom i and Cartesian component k
     fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D>{
 
-        self.zero_gradient();
+        self.gradient.iter_mut().for_each(|v| v.zero());
 
         for function in self.energy_functions.iter(){
             function.add_gradient(coordinates, &mut self.gradient);
@@ -361,21 +350,6 @@ mod tests{
         mol.add_bonds();
 
         mol
-    }
-
-    /// Is a analytical gradient close to a numerical one?
-    fn num_and_anal_gradient_are_close(mol: &mut Molecule, ff: &mut UFF) -> bool{
-
-        let grad = mol.gradient(ff);
-        let num_grad = mol.numerical_gradient(ff);
-
-        for i in 0..grad.len(){
-            if !grad[i].is_close_to(&num_grad[i], 1E-6){
-                println!("{:?} not close to {:?}", grad[i], num_grad[i]);
-                return false;
-            }
-        }
-        true
     }
 
     /// Find a UFFAtomType from a string label of it
