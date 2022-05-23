@@ -69,6 +69,10 @@ impl UFFAtomType {
             value += 10.;
         }
 
+        if self.name == "O_3_z"{
+            return 0.  // Noting is considered a zeolite
+        }
+
         let num_neighbours = atom.bonded_neighbours.len();
         value -= (num_neighbours as f64 - self.valency as f64).abs();
 
@@ -91,7 +95,7 @@ impl UFFAtomType {
             value += 5.;
         };
 
-        // TODO: Match on more things
+        // TODO: Match on more things?
 
         value
     }

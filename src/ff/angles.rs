@@ -108,7 +108,7 @@ impl EnergyFunction for HarmonicAngleTypeB {
     /// Energy: k(c0 + c1 cos(θ) + c2 cos(2θ))
     fn energy(&self, coordinates: &Vec<Point>) -> f64 {
 
-       let theta = theta(self, coordinates);
+        let theta = theta(self, coordinates);
 
         self.k_ijk * (self.c0 + self.c1 * theta.cos() + self.c2 * (2. * theta).cos())
     }
@@ -174,8 +174,6 @@ impl HarmonicAngle for HarmonicAngleTypeB {
 fn involves_idxs(angle: &dyn HarmonicAngle, idxs: Vec<usize>) -> bool {
     idxs.len() == 3 && HashSet::from([angle.i(), angle.j(), angle.k()]) == HashSet::from_iter(idxs)
 }
-
-
 
 #[inline(always)]
 fn theta(angle:       &dyn HarmonicAngle,

@@ -219,6 +219,15 @@ H         -3.40763        0.32742        0.01445\n\
 H         -3.33559       -2.14389       -0.03210\n")
         .expect(filename)
 }
+#[cfg(test)]
+pub(crate) fn print_distorted_water_xyz_file(filename: &str){
+    std::fs::write(filename,
+                   "3\n\n
+O     2.208695   1.357633   2.375361\n\
+H     2.434634   2.077241   2.871151\n\
+H     1.697517   0.615572   2.323087\n")
+        .expect(filename)
+}
 
 
 

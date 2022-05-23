@@ -32,7 +32,8 @@ electronegativity.
 where $\lambda = 0.1332$ and $n$ the bond order. For example, $n=1.5$ for aromatic bonds.
 
 \begin{equation}
-    r_\text{EN} = r_i r_j \frac{(\sqrt{\chi_i} - \sqrt{\chi_j})^2}{\chi_i r_i \chi_j r_j}
+    r_\text{EN} = r_i r_j \frac{(\sqrt{\chi_i} - \sqrt{\chi_j})^2}
+                               {\chi_i r_i \chi_j r_j}
 \end{equation}
 
 where $\chi_k$ is the GMP electronegativity of atom $k$. The energy is then a simple
@@ -45,7 +46,8 @@ harmonic
 The derivative is
 
 \begin{equation}
-    \frac{\partial E}{\partial{X_{i, n}}} = k_{ij}\left(1 - \frac{r_0}{r}\right) (X_{i, n} - X_{j, n})
+    \frac{\partial E}{\partial{X_{i, n}}} = k_{ij}
+    \left(1 - \frac{r_0}{r}\right) (X_{i, n} - X_{j, n})
 \end{equation}
 
 where $X_{i, n}$ is the $n^\text{th}$ component of the Cartesian coordinate of
@@ -180,6 +182,30 @@ where $r_{ij}$ are the distance between atoms $i$ and $j$ and the distance
 terms $\sigma_{ij}$ are generated using geometric mixing
 $\sigma_{ij} = \sqrt{r_i r_j}$ and likewise for the well depth
 $D_{ij} = \sqrt{D_i D_j}$ where $r_k, D_k$ are tabulated parameters.
+
+
+\section{RB}
+The theory here is based on T. Young et. al, ACIE, 2021.
+
+\subsection{Bonds}
+Bonds between atoms are described by harmonic terms
+
+\begin{equation}
+    E_{b} = \frac{k}{2}(r - r_0)^2
+\end{equation}
+where $k$ is constant for all bonds and $r_0$ is simply the sum of covalent
+radii of atoms $i$ and $j$.
+
+\subsection{Repulsion}
+To simulate angle, torsional and repulsive non-bonded terms of a standard forcefields
+a repulsion between all atom pairs is added.\footnote{This implementation adds
+bonded pair exclusions.} Attractive dispersive terms are neglected.
+
+\begin{equation}
+    E_{r} = \frac{c}{r_{ij}^n}
+\end{equation}
+where $c$ is a fixed constant, $r_{ij}$ is the distance between atoms $i$ and
+$j$ and $n$ is a flexible positive integer e.g. 2.
 
 
 \end{document}

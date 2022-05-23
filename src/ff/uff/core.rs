@@ -353,8 +353,8 @@ mod tests{
     }
 
     /// Find a UFFAtomType from a string label of it
-    fn atom_type(string: &str) -> UFFAtomType{
-        ATOM_TYPES.iter().filter(|t| t.name ==string).next().unwrap().clone()
+    fn atom_type(name: &str) -> UFFAtomType{
+        ATOM_TYPES.iter().filter(|t| t.name == name).next().unwrap().clone()
     }
 
     /// Given a H atom then the optimal atom type should be selected
@@ -677,5 +677,22 @@ mod tests{
             .count();
         assert_eq!(num_linear_carbon_bends, 2);
 
+    }
+
+    #[test]
+    fn test_atom_typing_water(){
+
+        let filename = "water_tatw.xyz";
+        print_distorted_water_xyz_file(filename);
+        let mol = Molecule::from_xyz_file(filename);
+        remove_file_or_panic(filename);
+
+        let ff = UFF::new(&mol);
+        let o_type = ff.atom_types.iter()
+            .filter(|a| a.atomic_symbol == "O")
+            .next()
+            .unwrap();
+
+        assert_eq!(o_type.name, "O_3");
     }
 }
