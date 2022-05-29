@@ -1,4 +1,6 @@
-use crate::{Forcefield, Molecule};
+use crate::ff::forcefield::Forcefield;
+use crate::molecule::Molecule;
+
 
 pub fn is_very_close(x: f64, y: f64) -> bool{
     is_close(x, y, 1E-8)

@@ -16,12 +16,26 @@ mod opt;
 mod utils;
 mod pairs;
 mod coordinates;
+mod cli;
+
+
+use clap::Parser;
+use crate::cli::{run, CommandLineArguments};
+
+
+/// Command line interface
+#[pyfunction]
+fn main() -> PyResult<()> {
+    run(CommandLineArguments::parse());
+    Ok(())
+}
 
 
 /// A Python module implemented in Rust.
 #[pymodule]
 fn optrs(_py: Python, m: &PyModule) -> PyResult<()> {
 
+    m.add_function(wrap_pyfunction!(main, m)?)?;
     m.add_class::<PyMoleculeWrapper>()?;
     Ok(())
 }

@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Tom Young"]
 
-
 [lib]
 name = "optrs"
 crate-type = ["cdylib"]
@@ -13,8 +12,5 @@ crate-type = ["cdylib"]
 clap = { version = "3.1.6", features = ["derive"] }
 log = "0.4"
 rand = "0.8.5"
-pyo3 = { version = "0.16.3", features = ["extension-module"] }
+pyo3 = { version = "0.16.5", features = ["extension-module"] }
 
-
-[profile.release]
-debug = 1

@@ -2,7 +2,7 @@ use std::f64::consts::PI;
 use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::bonds::BondOrder;
 use crate::coordinates::angle_value;
-use crate::Molecule;
+use crate::molecule::Molecule;
 
 /// See Table 1 in J. Am. Chem. Soc. 1992, 114, 25, 10024–10035
 /// https://doi.org/10.1021/ja00051a040

@@ -591,7 +591,7 @@ struct NBonds {
 #[cfg(test)]
 mod tests{
     use crate::pairs::{AtomPair, distance};
-    use crate::UFF;
+    use crate::ff::uff::core::UFF;
     use super::*;
     use crate::utils::*;
 

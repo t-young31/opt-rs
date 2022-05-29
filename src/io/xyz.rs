@@ -5,7 +5,7 @@ use std::io::{self, BufRead, Write};
 use log::{info, warn};
 use crate::atoms::AtomicNumber;
 use crate::coordinates::Point;
-use crate::Molecule;
+use crate::molecule::Molecule;
 
 
 #[derive(Default)]

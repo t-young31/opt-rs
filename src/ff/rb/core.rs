@@ -3,7 +3,7 @@ use crate::coordinates::{Point, Vector3D};
 use crate::ff::bonds::HarmonicBond;
 use crate::ff::forcefield::EnergyFunction;
 use crate::ff::nonbonded::RepulsiveInverseDistance;
-use crate::Molecule;
+use crate::molecule::Molecule;
 
 
 #[derive(Default)]
