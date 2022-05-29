@@ -37,7 +37,7 @@ impl Molecule{
     /// * `filename` - Name of the .xyz file defining the strucure
     ///
     /// # Examples
-    /// use mors::Molecule;
+    /// use optrs::Molecule;
     /// let mol = Molecule::from_xyz_file("name");
     ///
     pub fn from_xyz_file(filename: &str) -> Self{

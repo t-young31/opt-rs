@@ -20,7 +20,7 @@ mod coordinates;
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn mors(_py: Python, m: &PyModule) -> PyResult<()> {
+fn optrs(_py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_class::<PyMoleculeWrapper>()?;
     Ok(())

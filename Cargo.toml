@@ -1,12 +1,12 @@
 [package]
-name = "mors"
+name = "optrs"
 version = "0.1.0"
 edition = "2021"
 authors = ["Tom Young"]
 
 
 [lib]
-name = "mors"
+name = "optrs"
 crate-type = ["cdylib"]
 
 [dependencies]

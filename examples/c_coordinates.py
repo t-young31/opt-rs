@@ -1,7 +1,7 @@
 """
 Atomic coordinates can be set from the Python API
 """
-import mors
+import optrs
 
 try:
     import autode as ade
@@ -14,7 +14,7 @@ except ModuleNotFoundError:
 symbols = ade.Molecule('metallocage.xyz').atomic_symbols
 coordinates = ade.Molecule('metallocage.xyz').coordinates.flatten().tolist()
 
-mol = mors.Molecule.from_atomic_symbols(symbols)
+mol = optrs.Molecule.from_atomic_symbols(symbols)
 mol.set_coordinates(coordinates)
 
 mol.generate_connectivty()  # Then build the connectivity (bonds, angles etc.),
