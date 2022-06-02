@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Tom Young"]
 
-[[bin]]
+[lib]
+path = "../src/lib.rs"
 name = "optrs"
-path = "src/main.rs"
+crate-type = ["cdylib"]
 
 [dependencies]
 clap = { version = "3.1.6", features = ["derive"] }

@@ -2,9 +2,9 @@
 Molecular structures can be built from only atomic symbols and the bond order
 matrix (defined between all pairs of atoms):
 """
-import mors
+import optrs
 
-mol = mors.Molecule.from_atomic_symbols(["O", "H", "H"])
+mol = optrs.Molecule.from_atomic_symbols(["O", "H", "H"])
 
 mol.set_bond_orders([0., 1., 1.,
                      1., 0., 0.,

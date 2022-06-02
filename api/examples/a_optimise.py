@@ -1,6 +1,6 @@
 """Optimise a structure using the default (UFF) forcefield:"""
-import mors
+import optrs
 
-mol = mors.Molecule.from_xyz_file("metallocage.xyz")
+mol = optrs.Molecule.from_xyz_file("metallocage.xyz")
 mol.optimise()
 mol.write_xyz_file("metallocage_opt.xyz")
