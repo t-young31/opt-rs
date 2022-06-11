@@ -18,3 +18,9 @@ Upload to TestPyPI first with
 python3 -m twine upload --repository testpypi target/wheels/*
 ```
 
+and then to the 'real' PyPI
+
+```bash
+python3 -m twine upload target/wheels/*
+```
+
