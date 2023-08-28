@@ -41,10 +41,12 @@ jobs:
 
   mac:
     runs-on: "macos-latest"
+    environment: pypi
     strategy:
       fail-fast: true
       matrix:
         python-version: [ "3.9", "3.10", "3.11" ]
+        arch: [ "x86_64-apple-darwin", "aarch64-apple-darwin" ]
 
     steps:
       - name: Checkout repository
@@ -58,15 +60,21 @@ jobs:
       - name: Install maturin
         run: pip install maturin
 
+      - name: Create publish script
+        run: |
+          cat <<EOF > publish.sh
+          #!/bin/bash
+          maturin build --release --strip --target ${{ matrix.arch }}
+          # maturin publish
+          EOF
+          chmod +x publish.sh
+
       - name: Publish optrs
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.OPT_RS_UPLOAD_TOKEN }}
-        run: |
-          maturin build --release --strip --universal2 #&& maturin publish
+        run: ./publish.sh
 
       - name: Publish optrs-api
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.OPT_RS_API_UPLOAD_TOKEN }}
-        run: |
-          cd api
-          maturin build --release --strip --universal2 #&& maturin publish
+        run: cd api && ../publish.sh
