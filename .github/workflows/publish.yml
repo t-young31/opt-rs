@@ -69,6 +69,10 @@ jobs:
           EOF
           chmod +x publish.sh
 
+      - name: Allow cross compiling
+        if: ${{ matrix.arch == aarch64-apple-darwin }}
+        run: rustup target add ${{ matrix.arch }}
+
       - name: Publish optrs
         env:
           MATURIN_PYPI_TOKEN: ${{ secrets.OPT_RS_UPLOAD_TOKEN }}
