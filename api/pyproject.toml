@@ -1,9 +1,6 @@
-[build-system]
-requires = ["maturin>=0.12,<0.13"]
-build-backend = "maturin"
-
 [project]
 name = "optrs-api"
+version = "0.1.1"
 requires-python = ">=3.6"
 dependencies = [
     "optrs",
@@ -13,3 +10,11 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+strip = true
+release = true
