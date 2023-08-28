@@ -23,21 +23,24 @@ jobs:
         run: |
           cat <<EOF > publish.sh
           #!/bin/bash
-          docker run --rm -v \$(pwd):/io ghcr.io/pyo3/maturin \
-            build --interpreter ${{ matrix.python-version }} --release --strip
-          docker run --rm -v \$(pwd):/io -e MATURIN_PYPI_TOKEN="\$1" \
-            ghcr.io/pyo3/maturin publish --interpreter ${{ matrix.python-version }} --skip-existing
+          cd "\${DIR:-.}" || exit
+          maturin build --interpreter ${{ matrix.python-version }} --release --strip
+          maturin publish --interpreter ${{ matrix.python-version }} --skip-existing
           EOF
           chmod +x publish.sh
 
       - name: Publish optrs
         run: |
-          ./publish.sh "${{ secrets.OPT_RS_UPLOAD_TOKEN }}"
+          docker run --rm -v $(pwd):/io \
+            -e MATURIN_PYPI_TOKEN="${{ secrets.OPT_RS_UPLOAD_TOKEN }}" \
+            --entrypoint ./publish.sh ghcr.io/pyo3/maturin
 
       - name: Publish optrs-api
         run: |
-          cd api
-          ../publish.sh "${{ secrets.OPT_RS_API_UPLOAD_TOKEN }}"
+          docker run --rm -v $(pwd):/io \
+            -e MATURIN_PYPI_TOKEN="${{ secrets.OPT_RS_API_UPLOAD_TOKEN }}" \
+            -e DIR="api" \
+            --entrypoint ./publish.sh ghcr.io/pyo3/maturin
 
   mac:
     runs-on: "macos-latest"
