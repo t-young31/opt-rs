@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - "0.*"
+    branches: [ "fix_ci" ]
 
 jobs:
   linux:
@@ -70,7 +71,7 @@ jobs:
           chmod +x publish.sh
 
       - name: Allow cross compiling
-        if: ${{ matrix.arch == aarch64-apple-darwin }}
+        if: ${{ matrix.arch == 'aarch64-apple-darwin' }}
         run: rustup target add ${{ matrix.arch }}
 
       - name: Publish optrs
