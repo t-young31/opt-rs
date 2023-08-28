@@ -5,4 +5,3 @@ fit:
 
 clean:
 	rm *.xyz *.inp* *.pdf
-

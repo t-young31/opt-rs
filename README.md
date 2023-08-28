@@ -5,7 +5,7 @@
 **optrs** is a lightweight molecular mechanics optimisation code written in rust.
 
 ***
-### Installation 
+### Installation
 Install the binary with
 
 ```bash
@@ -22,7 +22,7 @@ Optimise a molecule provided as a [.xyz](https://en.wikipedia.org/wiki/XYZ_file_
 optrs molecule.xyz
 ```
 
-which will generate _opt.xyz_ in working directory. 
+which will generate _opt.xyz_ in working directory.
 [API examples](https://github.com/t-young31/opt-rs/tree/main/api/examples).
 
 ***
