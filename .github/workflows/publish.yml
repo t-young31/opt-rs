@@ -5,7 +5,6 @@ on:
   push:
     tags:
       - "0.*"
-    branches: [ "tmp" ]
 
 jobs:
   linux:
@@ -24,7 +23,7 @@ jobs:
         run: |
           cat <<EOF > publish.sh
           #!/bin/bash
-          cd "${DIR:-.}" || exit
+          cd "\${DIR:-.}" || exit
           maturin build --interpreter ${{ matrix.python-version }} --release --strip
           maturin publish --interpreter ${{ matrix.python-version }} --skip-existing
           EOF
@@ -41,7 +40,7 @@ jobs:
           docker run --rm -v $(pwd):/io \
             -e MATURIN_PYPI_TOKEN="${{ secrets.OPT_RS_API_UPLOAD_TOKEN }}" \
             -e DIR="api" \
-            --entrypoint bash -c "$command" ghcr.io/pyo3/maturin
+            --entrypoint ./publish.sh ghcr.io/pyo3/maturin
 
   #mac:
   #  runs-on: "macos-latest"
