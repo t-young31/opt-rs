@@ -20,12 +20,12 @@ impl EnergyFunction for HarmonicBond {
     }
 
     /// Energy: k/2 (r-r_0)^2
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &[Point]) -> f64 {
         self.k_ij / 2.0 * (distance(self.i, self.j, coordinates) - self.r0).powi(2)
     }
 
     /// Add the gradient for this term
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>) {
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>) {
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
         let z_i = coordinates[self.i].z;

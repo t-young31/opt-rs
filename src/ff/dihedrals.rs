@@ -5,11 +5,12 @@ use std::collections::HashSet;
 
 /// Dihedral angle
 ///
+/// ```text
 ///       i  ---  j
 ///                 \  φ
 ///                  \
 ///                    k ---- l
-///
+/// ```
 pub struct TorsionalDihedral {
     pub(crate) i: usize,
     pub(crate) j: usize,
@@ -38,12 +39,12 @@ impl EnergyFunction for TorsionalDihedral {
     }
 
     /// E = V/2 (1 - cos(n φ_0)cos(n φ))
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &[Point]) -> f64 {
         let phi = phi(self, coordinates);
         self.half_v_phi() * (1. - (self.n_phi * self.phi0).cos() * (self.n_phi * phi).cos())
     }
 
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>) {
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>) {
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
         let z_i = coordinates[self.i].z;
@@ -1005,7 +1006,7 @@ impl EnergyFunction for TorsionalDihedral {
 }
 
 /// Value of the torsional dihedral
-fn phi(dihedral: &TorsionalDihedral, coordinates: &Vec<Point>) -> f64 {
+fn phi(dihedral: &TorsionalDihedral, coordinates: &[Point]) -> f64 {
     let r_ij = &coordinates[dihedral.i] - &coordinates[dihedral.j];
     let r_lk = &coordinates[dihedral.l] - &coordinates[dihedral.k];
     let mut r_kj = &coordinates[dihedral.k] - &coordinates[dihedral.j];
@@ -1022,13 +1023,14 @@ fn phi(dihedral: &TorsionalDihedral, coordinates: &Vec<Point>) -> f64 {
 }
 
 /// Improper dihedral defining inversion about a centre
-///
+/// ```text
 ///                    j
 ///                  /
 ///        i  ---  c    ω
 ///                 \
 ///                  \
 ///                    k
+/// ```
 ///
 /// where the angle is between the c-k axis and the plane
 /// formed by atoms c,i,j. It may also be defined by the
@@ -1071,14 +1073,14 @@ impl EnergyFunction for InversionDihedral {
         self.k_cijk
     }
 
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &[Point]) -> f64 {
         (self.e_gamma(gamma(self.c, self.i, self.j, self.k, coordinates))
             + self.e_gamma(gamma(self.c, self.k, self.i, self.j, coordinates))
             + self.e_gamma(gamma(self.c, self.j, self.k, self.i, coordinates)))
             / 3.
     }
 
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>) {
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>) {
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
         let z_i = coordinates[self.i].z;
@@ -3139,7 +3141,7 @@ impl EnergyFunction for InversionDihedral {
 
 /// Inversion angle γ
 #[inline(always)]
-fn gamma(c: usize, i: usize, j: usize, k: usize, coordinates: &Vec<Point>) -> f64 {
+fn gamma(c: usize, i: usize, j: usize, k: usize, coordinates: &[Point]) -> f64 {
     let v0 = &coordinates[i] - &coordinates[c];
     let v1 = &coordinates[j] - &coordinates[c];
 

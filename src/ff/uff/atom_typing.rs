@@ -26,8 +26,9 @@ pub(crate) struct UFFAtomType {
     pub v_phi: f64, // Torsional potential for an sp3-bonded pair
 }
 
-#[derive(Debug, Hash, PartialEq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Default)]
 pub enum CoordinationEnvironment {
+    #[default]
     None,
     Linear,
     Bent,
@@ -40,14 +41,8 @@ pub enum CoordinationEnvironment {
     Unknown,
 }
 
-impl Default for CoordinationEnvironment {
-    fn default() -> Self {
-        CoordinationEnvironment::None
-    }
-}
-
 /// sp 'hybridisation' of a particular element
-#[derive(Debug, Hash, PartialEq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Hybridisation {
     SP3,
     SP2,
@@ -186,7 +181,7 @@ impl UFFAtomType {
 
     /// Is this atom type from the main group block of the periodic table?
     pub fn is_main_group(&self) -> bool {
-        return Atom::from_atomic_symbol(self.atomic_symbol).is_main_group();
+        Atom::from_atomic_symbol(self.atomic_symbol).is_main_group()
     }
 
     /// Hybridisation of this atom type

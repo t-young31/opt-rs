@@ -1,3 +1,6 @@
+use crate::ff::forcefield::Forcefield;
+use crate::molecule::Molecule;
+
 pub fn is_very_close(x: f64, y: f64) -> bool {
     is_close(x, y, 1E-8)
 }
@@ -10,7 +13,7 @@ pub fn is_close(x: f64, y: f64, atol: f64) -> bool {
     }
 
     // println!("\nleft = {}\nright = {}", x, y);
-    return false;
+    false
 }
 
 pub trait IsVeryClose {

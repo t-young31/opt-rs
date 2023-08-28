@@ -6,9 +6,9 @@ pub trait Forcefield {
     where
         Self: Sized;
 
-    fn energy(&mut self, coordinates: &Vec<Point>) -> f64;
+    fn energy(&mut self, coordinates: &[Point]) -> f64;
 
-    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D>;
+    fn gradient(&mut self, coordinates: &[Point]) -> &Vec<Vector3D>;
 }
 
 pub trait EnergyFunction {
@@ -16,7 +16,7 @@ pub trait EnergyFunction {
 
     fn force_constant(&self) -> f64;
 
-    fn energy(&self, coordinates: &Vec<Point>) -> f64;
+    fn energy(&self, coordinates: &[Point]) -> f64;
 
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>);
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>);
 }

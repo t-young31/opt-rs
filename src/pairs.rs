@@ -1,9 +1,10 @@
 use crate::atoms::Atom;
+use crate::connectivity::traits::OrderedAtomIndexes;
 use crate::coordinates::Point;
 use std::hash::{Hash, Hasher};
 
 #[inline(always)]
-pub fn distance(i: usize, j: usize, x: &Vec<Point>) -> f64 {
+pub fn distance(i: usize, j: usize, x: &[Point]) -> f64 {
     ((x[i].x - x[j].x).powi(2) + (x[i].y - x[j].y).powi(2) + (x[i].z - x[j].z).powi(2)).sqrt()
 }
 
@@ -13,9 +14,19 @@ pub(crate) struct AtomPair {
     pub j: usize,
 }
 
+impl OrderedAtomIndexes for AtomPair {
+    fn ordered(&self) -> Vec<usize> {
+        if self.i < self.j {
+            vec![self.i, self.j]
+        } else {
+            vec![self.j, self.i]
+        }
+    }
+}
+
 impl PartialEq for AtomPair {
     fn eq(&self, other: &Self) -> bool {
-        self.i == other.i && self.j == other.j || self.i == other.j && self.j == other.i
+        self.ordered() == other.ordered()
     }
 }
 
@@ -23,17 +34,17 @@ impl Eq for AtomPair {}
 
 impl Hash for AtomPair {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        Vec::from([self.i, self.j]).sort().hash(state);
+        self.ordered().hash(state);
     }
 }
 
-#[derive(Default, Hash, Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub(crate) struct NBPair {
     pub(crate) pair: AtomPair,
 }
 
 impl NBPair {
-    /// Construct a non-bonded pair from teo atoms
+    /// Construct a non-bonded pair from two atoms
     pub fn from_atoms(atom_i: &Atom, atom_j: &Atom) -> Self {
         if atom_i == atom_j {
             panic!("Cannot create a non-bonded pair between identical atoms")

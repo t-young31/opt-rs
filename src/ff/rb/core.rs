@@ -71,7 +71,7 @@ impl Forcefield for RB {
         ff
     }
 
-    fn energy(&mut self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&mut self, coordinates: &[Point]) -> f64 {
         self.energy = self
             .energy_functions
             .iter()
@@ -80,7 +80,7 @@ impl Forcefield for RB {
         self.energy
     }
 
-    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D> {
+    fn gradient(&mut self, coordinates: &[Point]) -> &Vec<Vector3D> {
         self.gradient.iter_mut().for_each(|v| v.zero());
         self.energy_functions
             .iter()

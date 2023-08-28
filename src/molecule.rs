@@ -1,6 +1,6 @@
 use crate::atoms::{Atom, AtomicNumber};
 use crate::connectivity::angles::Angle;
-use crate::connectivity::bonds::{Bond};
+use crate::connectivity::bonds::{Bond, BondOrder};
 use crate::connectivity::dihedrals::{ImproperDihedral, ProperDihedral};
 use crate::coordinates::{angle_value, Point, Vector3D};
 use crate::ff::forcefield::Forcefield;
@@ -121,7 +121,7 @@ impl Molecule {
 
     /// Write a .xyz file for this molecule
     pub fn write_xyz_file(&self, filename: &str) {
-        XYZFile::write(filename, &self);
+        XYZFile::write(filename, self);
     }
 
     /// Get a copy of set of atoms associated with this molecule
@@ -189,17 +189,17 @@ impl Molecule {
 
     /// Number of atoms in this molecule
     pub(crate) fn num_atoms(&self) -> usize {
-        return self.atomic_numbers.len();
+        self.atomic_numbers.len()
     }
 
     /// Bonds within this molecule
     pub(crate) fn bonds(&self) -> &HashSet<Bond> {
-        return &self.connectivity.bonds;
+        &self.connectivity.bonds
     }
 
     /// Angles within this molecule
     pub(crate) fn angles(&self) -> &HashSet<Angle> {
-        return &self.connectivity.angles;
+        &self.connectivity.angles
     }
 
     /// Dihedrals within this molecule
@@ -212,7 +212,7 @@ impl Molecule {
 
     /// Does this molecule have any associated bonds?
     fn has_bonds(&self) -> bool {
-        return !self.connectivity.bonds.is_empty();
+        !self.connectivity.bonds.is_empty()
     }
 
     /// Does this molecule contain a particular bond?
@@ -296,11 +296,12 @@ impl Molecule {
 
     /// Add angles between triples of mutually bonded atoms. For example,
     ///
+    ///```text
     ///     j     k
     ///     /----
     ///    /
     ///   i
-    ///
+    /// ```
     pub(crate) fn add_angles(&mut self) {
         if self.num_atoms() < 3 || !self.has_bonds() {
             return; // No MM angles in molecules with < 3 atoms or that doesn't have any bonds
@@ -340,7 +341,7 @@ impl Molecule {
     }
 
     /// Add proper dihedrals between sequentially bonded dihedrals: i -- j -- k -- l
-    fn add_proper_dihedrals(&mut self, all_neighbours: &Vec<Vec<usize>>) {
+    fn add_proper_dihedrals(&mut self, all_neighbours: &[Vec<usize>]) {
         for bond in self.connectivity.bonds.iter() {
             for neighbour_i in all_neighbours[bond.pair.i].iter() {
                 if neighbour_i == &bond.pair.j {
@@ -353,10 +354,10 @@ impl Molecule {
                     }
 
                     let dihedral = ProperDihedral {
-                        i: neighbour_i.clone(),
+                        i: *neighbour_i,
                         j: bond.pair.i,
                         k: bond.pair.j,
-                        l: neighbour_j.clone(),
+                        l: *neighbour_j,
                     };
 
                     self.connectivity.proper_dihedrals.insert(dihedral);
@@ -370,7 +371,7 @@ impl Molecule {
     ///          /
     ///     i --c-- k
     ///
-    fn add_improper_dihedrals(&mut self, all_neighbours: &Vec<Vec<usize>>) {
+    fn add_improper_dihedrals(&mut self, all_neighbours: &[Vec<usize>]) {
         for c in 0..self.num_atoms() {
             if all_neighbours[c].len() != 3 {
                 continue; // Impropers are defined for a central atom bonded to exactly 3 others
@@ -471,13 +472,13 @@ impl Molecule {
 
         for bond in all_bonds {
             let mut optimiser = SteepestDecentOptimiser::from_max_iterations(20);
-            optimiser.optimise(self, &mut RB::new(&self));
+            optimiser.optimise(self, &mut RB::new(self));
 
             self.connectivity.bonds.insert(bond);
         }
 
         let mut optimiser = SteepestDecentOptimiser::default();
-        optimiser.optimise(self, &mut RB::new(&self));
+        optimiser.optimise(self, &mut RB::new(self));
     }
 }
 
@@ -576,6 +577,7 @@ struct NBonds {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::connectivity::bonds::BondOrder;
     use crate::ff::uff::core::UFF;
     use crate::pairs::{distance, AtomPair};
     use crate::utils::*;

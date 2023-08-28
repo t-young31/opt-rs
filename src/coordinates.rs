@@ -74,7 +74,7 @@ impl Vector3D {
     }
 
     /// Construct a 3D vector from a vector of at least 3 components. Unsafe
-    pub fn from_vector(vector: &Vec<f64>) -> Self {
+    pub fn from_vector(vector: &[f64]) -> Self {
         Vector3D {
             x: vector[0],
             y: vector[1],
@@ -160,7 +160,7 @@ impl IndexMut<usize> for Point {
 
 /// Value of the angle between three atoms (i, j, k)
 #[inline(always)]
-pub fn angle_value(i: usize, j: usize, k: usize, coordinates: &Vec<Point>) -> f64 {
+pub fn angle_value(i: usize, j: usize, k: usize, coordinates: &[Point]) -> f64 {
     let r_ij: Vector3D = &coordinates[i] - &coordinates[j];
     let r_kj: Vector3D = &coordinates[k] - &coordinates[j];
 

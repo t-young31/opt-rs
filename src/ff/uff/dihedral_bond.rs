@@ -35,7 +35,7 @@ impl DihedralBond {
 
     /// Does this bond only contain main group elements?
     pub fn contains_only_main_group_elements(&self) -> bool {
-        return self.type_j.is_main_group() && self.type_k.is_main_group();
+        self.type_j.is_main_group() && self.type_k.is_main_group()
     }
 
     /// Does this bond only contain main group elements?
@@ -44,7 +44,7 @@ impl DihedralBond {
             Atom::from_atomic_symbol(atom_type.atomic_symbol).group() == 16
         }
 
-        return is_group_16(&self.type_j) && is_group_16(&self.type_k);
+        is_group_16(&self.type_j) && is_group_16(&self.type_k)
     }
 
     /// Joint hybridisation of both atoms within this bond
@@ -105,7 +105,7 @@ impl DihedralBond {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum JointHybridisation {
     SP3SP3,
     SP2SP3,

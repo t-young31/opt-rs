@@ -26,14 +26,14 @@ impl EnergyFunction for HarmonicAngleTypeA {
     }
 
     /// Energy: k/n^2 (1-cos(nθ))
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &[Point]) -> f64 {
         let theta = theta(self, coordinates);
 
         (self.k_ijk / self.n.powi(2)) * (1.0 - (self.n * theta).cos())
     }
 
     /// Add the gradient for this term
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>) {
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>) {
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
         let z_i = coordinates[self.i].z;
@@ -139,14 +139,14 @@ impl EnergyFunction for HarmonicAngleTypeB {
     }
 
     /// Energy: k(c0 + c1 cos(θ) + c2 cos(2θ))
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &[Point]) -> f64 {
         let theta = theta(self, coordinates);
 
         self.k_ijk * (self.c0 + self.c1 * theta.cos() + self.c2 * (2. * theta).cos())
     }
 
     /// Add the gradient for this term
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>) {
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>) {
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
         let z_i = coordinates[self.i].z;
@@ -261,7 +261,7 @@ fn involves_idxs(angle: &dyn HarmonicAngle, idxs: Vec<usize>) -> bool {
 }
 
 #[inline(always)]
-fn theta(angle: &dyn HarmonicAngle, coordinates: &Vec<Point>) -> f64 {
+fn theta(angle: &dyn HarmonicAngle, coordinates: &[Point]) -> f64 {
     angle_value(angle.i(), angle.j(), angle.k(), coordinates)
 }
 

@@ -20,14 +20,14 @@ impl EnergyFunction for LennardJones12x6 {
     }
 
     /// Energy: D_ij ((σ/r)^12 - 2(σ/r)^6)
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &[Point]) -> f64 {
         let r = distance(self.i, self.j, coordinates);
 
         self.d * ((self.sigma / r).powi(12) - 2. * (self.sigma / r).powi(6))
     }
 
     /// Add the gradient for this term
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>) {
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>) {
         let x_i = coordinates[self.i].x;
         let y_i = coordinates[self.i].y;
         let z_i = coordinates[self.i].z;
@@ -77,12 +77,12 @@ impl EnergyFunction for RepulsiveInverseDistance {
     }
 
     /// E = c/r_ij^n  for an exponent n
-    fn energy(&self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&self, coordinates: &[Point]) -> f64 {
         self.c / distance(self.i, self.j, coordinates).powi(self.exponent.value)
     }
 
     /// Gradient of the repulsion
-    fn add_gradient(&self, coordinates: &Vec<Point>, gradient: &mut Vec<Vector3D>) {
+    fn add_gradient(&self, coordinates: &[Point], gradient: &mut Vec<Vector3D>) {
         let n = self.exponent.value;
 
         let x_i = coordinates[self.i].x;

@@ -1,10 +1,12 @@
 use crate::atoms::Atom;
+use crate::connectivity::traits::OrderedAtomIndexes;
 use crate::pairs::AtomPair;
 use crate::utils::IsVeryClose;
+use std::hash::{Hash, Hasher};
 use std::ops::Index;
 use std::slice::Iter;
 
-#[derive(Default, Debug, Clone, Hash)]
+#[derive(Default, Debug, Clone)]
 pub struct Bond {
     pub(crate) pair: AtomPair,
     pub(crate) order: BondOrder,
@@ -51,7 +53,7 @@ impl Bond {
     }
 
     /// Set a best guess of a bond order given the connectivity
-    pub fn set_possible_bond_order(&mut self, atoms: &Vec<Atom>) {
+    pub fn set_possible_bond_order(&mut self, atoms: &[Atom]) {
         self.order = BondOrder::Single; // Default to a single bond
 
         let atom_i = &atoms[self.pair.i];
@@ -78,9 +80,22 @@ impl Bond {
     }
 }
 
+impl OrderedAtomIndexes for Bond {
+    fn ordered(&self) -> Vec<usize> {
+        self.pair.ordered()
+    }
+}
+
+impl Hash for Bond {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.pair.hash(state);
+        self.ordered().hash(state);
+    }
+}
+
 impl PartialEq for Bond {
     fn eq(&self, other: &Self) -> bool {
-        self.pair == other.pair
+        self.ordered() == other.ordered()
     }
 }
 
@@ -99,7 +114,7 @@ impl Index<usize> for Bond {
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum BondOrder {
     Single,
     Aromatic,
@@ -221,5 +236,11 @@ mod tests {
         assert!(BondOrder::Aromatic.value() < BondOrder::Double.value());
         assert!(BondOrder::Double.value() < BondOrder::Triple.value());
         assert!(BondOrder::Triple.value() < BondOrder::Quadruple.value());
+    }
+
+    /// Test that an ordered bond returns atom indices low->high
+    #[test]
+    fn test_bond_ordering() {
+        assert_eq!(Bond::from_atom_indices(0, 1).ordered(), vec![0, 1]);
     }
 }

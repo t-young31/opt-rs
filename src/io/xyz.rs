@@ -38,7 +38,7 @@ impl XYZFile {
             }
         }
 
-        if xyz_file.coordinates.len() == 0 {
+        if xyz_file.coordinates.is_empty() {
             return Err("Failed to find any coordinates");
         }
 
@@ -48,7 +48,7 @@ impl XYZFile {
     /// Write an xyz file given
     pub fn write(filename: &str, molecule: &Molecule) {
         // Open a file in write-only mode, returns `io::Result<File>`
-        let mut file = match File::create(&Path::new(filename)) {
+        let mut file = match File::create(Path::new(filename)) {
             Err(why) => panic!("Couldn't create {}", why),
             Ok(file) => file,
         };
@@ -72,7 +72,8 @@ impl XYZFile {
 
     /// Write a single line to an open file
     fn write_line(string: String, file: &mut File) {
-        file.write((string + "\n").as_bytes())
+        let _ = file
+            .write((string + "\n").as_bytes())
             .expect("Failed to write line");
     }
 

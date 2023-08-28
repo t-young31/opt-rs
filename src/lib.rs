@@ -91,7 +91,7 @@ impl PyMoleculeWrapper {
     /// Build the 3d structure of a molecule using iterative addition of bonds into the system
     /// with minimisation using a repulsion+bonded (RB) forcefield after each addition
     fn build_3d(&mut self) {
-        if self.molecule.num_atoms() > 1 && self.molecule.bonds().len() == 0 {
+        if self.molecule.num_atoms() > 1 && self.molecule.bonds().is_empty() {
             panic!(
                 "Cannot build a 3d structure without any bonds. \
                    Consider calling set_bond_orders()"
@@ -119,7 +119,7 @@ impl PyMoleculeWrapper {
 
         for (i, coord) in self.molecule.coordinates.iter_mut().enumerate() {
             for (k, _) in ['x', 'y', 'z'].iter().enumerate() {
-                coord[k] = coordinates[3 * i + k].clone();
+                coord[k] = coordinates[3 * i + k];
             }
         }
     }

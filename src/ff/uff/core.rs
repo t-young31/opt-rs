@@ -295,7 +295,7 @@ impl Forcefield for UFF {
     }
 
     /// Evaluate the total energy of the sustem
-    fn energy(&mut self, coordinates: &Vec<Point>) -> f64 {
+    fn energy(&mut self, coordinates: &[Point]) -> f64 {
         self.energy = 0.0;
 
         for function in self.energy_functions.iter() {
@@ -306,7 +306,7 @@ impl Forcefield for UFF {
     }
 
     /// Evaluate the gradient {dE/dX_ik, ...} for atom i and Cartesian component k
-    fn gradient(&mut self, coordinates: &Vec<Point>) -> &Vec<Vector3D> {
+    fn gradient(&mut self, coordinates: &[Point]) -> &Vec<Vector3D> {
         self.gradient.iter_mut().for_each(|v| v.zero());
 
         for function in self.energy_functions.iter() {

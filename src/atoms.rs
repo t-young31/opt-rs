@@ -260,7 +260,7 @@ impl AtomicNumber {
             return 2.0;
         }
 
-        return radius.unwrap().clone() * PICOMETERS_TO_ANGSTROMS;
+        *radius.unwrap() * PICOMETERS_TO_ANGSTROMS
     }
 
     /// The maximum number of bonds that this atom can form under 'reasonable' circumstances
@@ -275,13 +275,13 @@ impl AtomicNumber {
             return 6;
         }
 
-        return valance.unwrap().clone();
+        *valance.unwrap()
     }
 
     /// GMP (generalized Mulliken-Pauling) electronegativity from https://doi.org/10.1021/j100161a070
     pub fn gmp_electronegativity(&self) -> f64 {
         match GMP_ELECTRONEGATIVITIES.get(self.index()) {
-            Some(value) => value.clone(),
+            Some(value) => *value,
             None => {
                 warn!("Using a default value of the electronegativity");
                 5.0
@@ -298,7 +298,7 @@ impl AtomicNumber {
             return 1;
         }
 
-        if index >= 56 && index <= 70 || index >= 88 && index <= 102 {
+        if (56..=70).contains(&index) || (88..=102).contains(&index) {
             info!("Lanthanides and actinides do not have a defined group. Returning 0");
             return 0;
         }
@@ -360,7 +360,7 @@ impl PartialEq for AtomicNumber {
     }
 }
 
-static ELEMENTS: [&'static str; 118] = [
+static ELEMENTS: [&str; 118] = [
     "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl",
     "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As",
     "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In",
@@ -371,7 +371,7 @@ static ELEMENTS: [&'static str; 118] = [
     "Fl", "Mc", "Lv", "Ts", "Og",
 ];
 
-static METALLIC_ELEMENTS: [&'static str; 92] = [
+static METALLIC_ELEMENTS: [&str; 92] = [
     "Li", "Be", "Na", "Mg", "Al", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu",
     "Zn", "Ga", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn",
     "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
@@ -380,7 +380,7 @@ static METALLIC_ELEMENTS: [&'static str; 92] = [
     "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv",
 ];
 
-static MAIN_GROUP_ELEMENTS: [&'static str; 36] = [
+static MAIN_GROUP_ELEMENTS: [&str; 36] = [
     "B", "C", "N", "O", "F", "Ne", "Al", "Si", "P", "S", "Cl", "Ar", "Ga", "Ge", "As", "Se", "Br",
     "Kr", "In", "Sn", "Sb", "Te", "I", "Xe", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Nh", "Fl", "Mc",
     "Lv", "Ts", "Og",
