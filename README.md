@@ -1,4 +1,4 @@
-[![Test](https://github.com/t-young31/opt-rs/actions/workflows/test.yml/badge.svg)](https://github.com/t-young31/opt-rs/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/t-young31/mors/branch/main/graph/badge.svg?token=5KTYG2WJ9L)](https://codecov.io/gh/t-young31/mors)
+[![Test](https://github.com/t-young31/opt-rs/actions/workflows/test.yml/badge.svg)](https://github.com/t-young31/opt-rs/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/t-young31/opt-rs/graph/badge.svg?token=5KTYG2WJ9L)](https://codecov.io/gh/t-young31/opt-rs)
 
 ![alt text](src/common/logo.png)
 

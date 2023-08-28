@@ -23,10 +23,10 @@ jobs:
         run: |
           cat <<EOF > publish.sh
           #!/bin/bash
-          docker run --rm -v $(pwd):/io ghcr.io/pyo3/maturin \
+          docker run --rm -v \$(pwd):/io ghcr.io/pyo3/maturin \
             build --interpreter ${{ matrix.python-version }} --release --strip
-          docker run --rm -v $(pwd):/io -e MATURIN_PYPI_TOKEN="\$1" \
-            ghcr.io/pyo3/maturin publish --interpreter ${{ matrix.python-version }}
+          docker run --rm -v \$(pwd):/io -e MATURIN_PYPI_TOKEN="\$1" \
+            ghcr.io/pyo3/maturin publish --interpreter ${{ matrix.python-version }} --skip-existing
           EOF
           chmod +x publish.sh
 
@@ -65,7 +65,7 @@ jobs:
           cat <<EOF > publish.sh
           #!/bin/bash
           maturin build --release --strip --target ${{ matrix.arch }}
-          maturin publish
+          maturin publish --skip-existing
           EOF
           chmod +x publish.sh
 
