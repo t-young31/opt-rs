@@ -23,4 +23,3 @@ and then to the 'real' PyPI
 ```bash
 python3 -m twine upload target/wheels/*
 ```
-

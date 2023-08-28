@@ -8,19 +8,21 @@ Notes and warnings:
  */
 extern crate core;
 
-mod molecule;
 mod atoms;
+mod cli;
 mod connectivity;
+mod coordinates;
 mod ff;
 mod io;
+mod molecule;
 mod opt;
-mod utils;
 mod pairs;
-mod coordinates;
-mod cli;
+mod utils;
 
 use clap::Parser;
 
 use crate::cli::{run, CommandLineArguments};
 
-fn main() { run(CommandLineArguments::parse()) }
+fn main() {
+    run(CommandLineArguments::parse())
+}

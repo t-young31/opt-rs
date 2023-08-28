@@ -1,10 +1,10 @@
 use std::hash::{Hash, Hasher};
 
 #[derive(Default, Debug)]
-pub struct Angle{
+pub struct Angle {
     pub i: usize,
     pub j: usize,
-    pub k: usize
+    pub k: usize,
 }
 
 impl PartialEq for Angle {

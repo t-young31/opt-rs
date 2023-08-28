@@ -1,5 +1,5 @@
-mod atom_typing;
 mod atom_types;
-mod dihedral_bond;
+mod atom_typing;
 pub mod core;
+mod dihedral_bond;
 pub(crate) mod inversion_centers;
